@@ -1,0 +1,3998 @@
+#! /bin/sh
+# This is a shell archive.  Remove anything before this line, then unpack
+# it by saving it into a file and typing "sh file".  To overwrite existing
+# files, type "sh file -c".  You can also feed this as standard input via
+# unshar, or by typing "sh <file", e.g..  If this archive is complete, you
+# will see the following message at the end:
+#		"End of shell archive."
+# Contents:  addpt2ch.m adjspx.m area.m binary.m bodyang.m centroid.m
+#   circmsph.m circmsph0.m combin.m convexh.m cvxadd.m delaunay.m
+#   dlndemo.m eqdsph.m fitplane.m initspx.m inspx0.m intsecl.m
+#   iscross.m isdln.m isinpoly.m inpolyhd.m isintpl.m isrect.m
+#   linechk.m mapsph.m perimetr.m planerot.m polybool.m polydiff.m
+#   polyints.m polyinfo polyuni.m polyxor.m project.m randisph.m
+#   randsph.m reflect.m rotmat.m rotmat3.m rotsolve.m sphangle.m
+#   spx2fac.m spx2nbr.m unique.m volspx.m voronoi2.m z2rot.m
+# Wrapped by kirill@gyre on Thu Oct 26 21:08:45 1995
+PATH=/bin:/usr/bin:/usr/ucb ; export PATH
+if test -f 'addpt2ch.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'addpt2ch.m'\"
+else
+echo shar: Extracting \"'addpt2ch.m'\" \(1119 characters\)
+sed "s/^X//" >'addpt2ch.m' <<'END_OF_FILE'
+Xfunction [No,mi] = addpt2ch(R,Ni,nn,Nrm)
+X% ADDPT2CH Adding external point to an convex hull
+X%	[NO,MI] = ADDPT2CH(R,NI,NN,NRM) Adds a point
+X%	with index NN from data set R to a (partial)
+X%	convex hull NI of set R. Returns new convex 
+X%	hull index matrix NO and a mask MI into rows
+X%	of old convex hull NI (0 - for eliminated
+X%	facets).
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%       kirill@plume.mit.edu
+X%       05/18/95
+X
+X % Sizes ..................
+X[n_fac,d] = size(Ni);
+Xod = ones(d,1);
+X
+X % Inside point ...........
+Xn_pts = size(R,1);
+Xa = zeros(n_pts,1);
+Xa(Ni) = ones(size(Ni));
+Xr0 = mean(R(a,:));
+X
+X % Calculate normals ......
+Xif nargin<4, Nrm=zeros(size(Ni)); end
+Xif all(all(~Nrm))
+X  for jj=1:n_fac
+X    Nrm(jj,:) = (R(Ni(jj,:),:)\od)';
+X  end
+X  ii = find(Nrm*r0'>1);
+X  Nrm(ii,:) = -Nrm(ii,:);
+Xend
+X
+X % Find which facets are "inside"
+Xmi = Nrm*R(nn,:)'<=1;  % 0-out, 1-stay
+X
+X % Create new facets .....................
+XNin = Ni(~mi,:);
+XNo = spx2fac([Nin nn(ones(size(Nin,1),1))],0);
+XNo = sort(No')';
+X[No,ii,cnt] = unique([Nin; No]);
+XNo = No(cnt<2,:);
+X
+X % Combine ald and new facets ............
+XNo = [Ni(mi,:); No];
+END_OF_FILE
+if test 1119 -ne `wc -c <'addpt2ch.m'`; then
+    echo shar: \"'addpt2ch.m'\" unpacked with wrong size!
+fi
+chmod +x 'addpt2ch.m'
+# end of 'addpt2ch.m'
+fi
+if test -f 'adjspx.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'adjspx.m'\"
+else
+echo shar: Extracting \"'adjspx.m'\" \(1907 characters\)
+sed "s/^X//" >'adjspx.m' <<'END_OF_FILE'
+Xfunction [Na,Np] = adjspx(N)
+X% ADJSPX  Finding adjacent simplices of triangulation.
+X%	NA = ADJSPX(N)  where N is d+1 by n_spx -
+X%	triangulation (tesselation) index matrix into d-
+X%	dimensional set of points.
+X%	[NA,NP] = ADJSPX(N) also returns a matrix of "opposite
+X%	points" NP of the same size as NA whith indices of the
+X%	points belonging to given simplices themselves but not
+X%	to their adjacent ones.
+X%	When elements of NA (and correspondingly NP) are 
+X%	zero it means that a corresponging facet is not 
+X%	shared by any other simplex, e.g. lies on the 
+X%	boundary of the convex hull of a triangulated set.
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%       kirill@plume.mit.edu
+X%       05/10/95
+X
+X % Handle input ..................
+Xif nargin==0, help adjspx, return, end
+X
+X % Sizes and dimensions ..........
+X[d,n_spx] = size(N);
+Xif d>n_spx, N = N'; end
+X[d,n_spx] = size(N);
+Xn_pts = max(max(N));
+X
+X % Auxillary .....................
+Xod = ones(d,1);
+Xa = (1:n_spx);
+XA = a(od,:);
+X
+X % Create sparse matrix with (I,J) elements = 1
+X % if there is I_th  point in J-th simplex
+XS = sparse(N,A,1);
+X
+X % Scalar product with itself
+XS1 = S'*S;
+XS1 = S1==d-1;
+X[i1,i2] = find(S1);
+X
+X % Total number of adjacent simplices for each simplex
+Xn_adj = full(sum(S1));
+Xvv = (1:d)';
+XNp = vv(:,ones(1,n_spx));
+XNp = find(Np<=n_adj(od,:));
+XNa = zeros(size(N));   % Initialize
+XNa(Np) = i1;           % Insert indices of adjacent simplices
+X
+X
+X % Now find the "opposite point" for each adjacent simplex
+Xif nargout<2, Np = [], return; end
+XNp = zeros(size(N));
+Xfor jj = 1:d
+X
+X  % Find where there is an adjacent facet
+X  [i1,i2,n_adj] = find(Na(jj,:));
+X
+X  % Add point counts in those adjacent facets
+X  S1 = S+sparse(N(:,n_adj),A(:,i2),2,n_pts,n_spx);
+X
+X  % For points belonging to both simplices S=3,
+X  % For points belonging to adjacent simplices S2,
+X  % For "opposite points" S=1
+X  [i1,n_adj,a] = find(S1(:,i2)==1);
+X  Np(jj,i2) = i1';
+X
+Xend
+X
+END_OF_FILE
+if test 1907 -ne `wc -c <'adjspx.m'`; then
+    echo shar: \"'adjspx.m'\" unpacked with wrong size!
+fi
+chmod +x 'adjspx.m'
+# end of 'adjspx.m'
+fi
+if test -f 'area.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'area.m'\"
+else
+echo shar: Extracting \"'area.m'\" \(627 characters\)
+sed "s/^X//" >'area.m' <<'END_OF_FILE'
+Xfunction  a = area(x,y)
+X% AREA  Area of a planar polygon.
+X%	AREA(X,Y) Calculates the area of a 2-dimensional
+X%	polygon formed by vertices with coordinate vectors
+X%	X and Y. The result is direction-sensitive: the
+X%	area is positive if the bounding contour is counter-
+X%	clockwise and negative if it is clockwise.
+X%
+X%	See also TRAPZ.
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov,
+X%	kirill@plume.mit.edu.
+X%	04/20/94, 05/20/95  
+X
+X % Make polygon closed .............
+Xx = [x(:); x(1)];
+Xy = [y(:); y(1)];
+X
+X % Calculate contour integral Int -y*dx  (same as Int x*dy).
+Xlx = length(x);
+Xa = -(x(2:lx)-x(1:lx-1))'*(y(1:lx-1)+y(2:lx))/2;
+END_OF_FILE
+if test 627 -ne `wc -c <'area.m'`; then
+    echo shar: \"'area.m'\" unpacked with wrong size!
+fi
+chmod +x 'area.m'
+# end of 'area.m'
+fi
+if test -f 'binary.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'binary.m'\"
+else
+echo shar: Extracting \"'binary.m'\" \(422 characters\)
+sed "s/^X//" >'binary.m' <<'END_OF_FILE'
+Xfunction b = binary(x)
+X
+X% BINARY  Binary representation of decimal integers.
+X%	B=BINARY(X) Returns matrx B with rows 
+X%	representing binary form of each element of
+X%	vector X.
+X
+X%  Kirill K. Pankratov, kirill@plume.mit.edu
+X%  03/02/95
+X
+Xx = x(:);
+X
+Xm2 = nextpow2(max(x));
+Xv2 = 2.^(0:m2);
+Xb = zeros(length(x),m2);
+Xaf = x-floor(x);
+X
+Xfor jj = m2:-1:1
+X  a = x>=v2(jj);
+X  x = x-a*v2(jj);
+X  b(:,m2-jj+1) = a+1/2*(af>1/v2(jj));
+Xend
+END_OF_FILE
+if test 422 -ne `wc -c <'binary.m'`; then
+    echo shar: \"'binary.m'\" unpacked with wrong size!
+fi
+chmod +x 'binary.m'
+# end of 'binary.m'
+fi
+if test -f 'bodyang.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'bodyang.m'\"
+else
+echo shar: Extracting \"'bodyang.m'\" \(3743 characters\)
+sed "s/^X//" >'bodyang.m' <<'END_OF_FILE'
+Xfunction  ba = bodyang(R1,R2,R3)
+X% BODYANG  Body (solid) angle computation.
+X%	BA = BODYANG(R1,R2,R3)  Calculates body
+X%	(solid) angle formed by 3 points with
+X%	coordinates R1, R2, R3 (R1=[x1 y1 z1],...)
+X%	as seen from origin of coordinate system.
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov. 
+X%	kirill@plume.mit.edu
+X%	11/16/94, 
+X
+X % Defaults and parameters ...............................
+Xtol = 4*eps;         % Tolerance for angles
+Xnull_value = nan;    % Value for the case of 
+X                     % zero-length vectors
+X
+X % Handle input ******************************************
+Xif nargin==0, help bodyang, return, end  % Help
+Xif nargin==1  % If input is [R1;R2;R3] or [az1 el1; .. az3,el3]
+X  sz = size(R1);
+X  if all(sz==[2 2]), R1 = [0 0; R1];
+X  elseif all(sz==[2 3]), R1 = R1'; end
+X  if all(size(R1)==[3 2])
+X    [R1,R2,R3] = sph2cart(R1(:,1)',R1(:,2)',1);
+X  end
+X  if all(sz==[3 3]),
+X    R2=R1(2,:)'; R3=R1(3,:)'; R1=R1(1,:)';
+X  elseif any(sz>3)|any(sz<2)
+X    error('  Input matrix must be 3 by 3 or 3 by 2')
+X  end
+Xend
+Xif nargin==2
+X  error('  Must be 1 or 3 input arguments.')
+Xend
+Xif nargin==3
+X  sz = [size(R1); size(R2); size(R3)];
+X  if any(diff(prod(sz')))    % Check sizes
+X    error('  Arguments R1,R2,R3 must have the same size')
+X  end
+X  is3 = all(any(sz'==3));
+X  is2 = all(any(sz'==2));
+X  if is3
+X    nn = find(sz(:,1)==3);
+X    for jj = 1:3
+X      nn = find(sz(jj,:)==3);
+X      if nn(1)>1
+X        eval(['R' num2str(jj) '=R' num2str(jj) ''';']);
+X      end
+X    end
+X  elseif is2
+X  else, error(' Input matrices must be N by 3')
+X  end
+Xend
+X
+X
+X % Auxillary ...............
+Xo3 = ones(3,1);
+X
+X % Lengths of all vectors
+Xnormal12 = [sqrt(sum(R1.^2)); sqrt(sum(R2.^2)); sqrt(sum(R3.^2))];
+Xnumnull = find(~(any(normal12))); % Find vectors with zero length
+Xnormal12(:,numnull) = ones(3,length(numnull));
+X
+X % Make all vectors to have unit length
+Xa23 = normal12(1,:);
+XR1 = R1./a23(o3,:);
+XR2 = R2./normal12(2*o3,:);
+XR3 = R3./normal12(3*o3,:);
+X
+X % Find normals
+Xnormal12 = cross(R1,R2);         % Cross product
+Xln12 = sqrt(sum(normal12.^2));   % Length of normal vectors
+Xnormal12 = normal12./ln12(o3,:); % Make normal unit length
+Xnormal13 = cross(R1,R3);         %   The same for R1,R3
+Xln13 = sqrt(sum(normal13.^2));
+Xnormal13 = normal13./ln13(o3,:);
+Xnormal23 = cross(R2,R3);         %   The same for R2,R3
+Xln23 = sqrt(sum(normal23.^2));
+Xnormal23 = normal23./ln23(o3,:);
+X
+X
+X % Angles between planes 
+Xang1 = acos(abs(sum(normal12.*normal13)));  % (0,1,2),(0,1,3)
+Xang2 = acos(abs(sum(normal12.*normal23)));  % (0,1,2),(0,2,3)
+Xnumnorm = find(ang1+ang2>=pi-tol);
+X
+X % Calculate projection of R3 into plane (0,R1,R2)
+Xprjn = sum(R3.*normal12);        % Scalar product with normal
+XR3prj = R3-normal12.*prjn(o3,:); % Projection into (0,1,2) plane
+Xa12 = sqrt(sum(R3prj.^2));
+Xa12(numnorm) = ones(size(numnorm));
+XR3prj = R3prj./a12(o3,:);
+X
+X % Plane angles in the (0,1,2) plane
+Xa12 = acos(sum(R1.*R2));      % Between (0,1) and (0,2)
+Xa13 = acos(sum(R1.*R3prj));      % (0,1) and (0,3prj)
+Xa23 = acos(sum(R2.*R3prj));      % (0,2) and (0,3prj)
+X
+X % Partial body angles .......
+Xba = a13>pi/2;  % Is span more than pi/2
+Xba1 = abs(2*ang1.*ba-asin(sin(ang1).*sin(a13)));
+Xba = a23>pi/2;  % Is span more than pi/2
+Xba2 = abs(2*ang1.*ba-asin(sin(ang2).*sin(a23)));
+X
+X
+X % Find if projection of R3 is between  R1 and R2 (ba = ba1+ba2)
+X % or outside (ba = |ba1-ba2|)
+Xln13 = (a12+a13+a23)>=(2*pi-tol);  % If sum of 3 angles is 2*pi
+Xln12 = ~ln13&(a13>a12|a23>a12);
+Xln12 = ln12*2-1;
+X
+X % Composite body angle ......
+Xba = abs(ba1-ba2.*ln12);      % ba1+ba2 or |ba1-ba2|
+Xba(ln13) = 2*pi-ba(ln13);     % When encircling the North pole
+X
+X % Special cases ..............
+Xba(numnorm) = a12(numnorm);   % When R3 is normal to (0,R1,R2)
+Xba(numnull) = ba(numnull)*null_value;  % Zero-length vectors
+END_OF_FILE
+if test 3743 -ne `wc -c <'bodyang.m'`; then
+    echo shar: \"'bodyang.m'\" unpacked with wrong size!
+fi
+chmod +x 'bodyang.m'
+# end of 'bodyang.m'
+fi
+if test -f 'centroid.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'centroid.m'\"
+else
+echo shar: Extracting \"'centroid.m'\" \(2064 characters\)
+sed "s/^X//" >'centroid.m' <<'END_OF_FILE'
+Xfunction [x0,y0] = centroid(x,y)
+X% CENTROID Center of mass of a polygon.
+X%	[X0,Y0] = CENTROID(X,Y) Calculates centroid 
+X%	(center of mass) of planar polygon with vertices 
+X%	coordinates X, Y.
+X%	Z0 = CENTROID(X+i*Y) returns Z0=X0+i*Y0 the same
+X%	as CENTROID(X,Y).
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov,
+X%       kirill@plume.mit.edu.
+X%       06/01/95, 06/07/95
+X
+X% Algorithm:
+X%  X0 = Int{x*ds}/Int{ds}, where ds - area element
+X%  so that Int{ds} is total area of a polygon.
+X%    Using Green's theorem the area integral can be 
+X%  reduced to a contour integral:
+X%  Int{x*ds} = -Int{x^2*dy}, Int{ds} = Int{x*dy} along
+X%  the perimeter of a polygon.
+X%    For a polygon as a sequence of line segments
+X%  this can be reduced exactly to a sum:
+X%  Int{x^2*dy} = Sum{ (x_{i}^2+x_{i+1}^2+x_{i}*x_{i+1})*
+X%  (y_{i+1}-y_{i})}/3;
+X%  Int{x*dy} = Sum{(x_{i}+x_{i+1})(y_{i+1}-y_{i})}/2.
+X%    Similarly
+X%  Y0 = Int{y*ds}/Int{ds}, where
+X%  Int{y*ds} = Int{y^2*dx} = 
+X%  = Sum{ (y_{i}^2+y_{i+1}^2+y_{i}*y_{i+1})*
+X%  (x_{i+1}-x_{i})}/3.
+X
+X % Handle input ......................
+Xif nargin==0, help centroid, return, end
+Xif nargin==1
+X  sz = size(x);
+X  if sz(1)==2      % Matrix 2 by n
+X    y = x(2,:); x = x(1,:);
+X  elseif sz(2)==2  % Matrix n by 2
+X    y = x(:,2); x = x(:,1);
+X  else
+X    y = imag(x);
+X    x = real(x);
+X  end
+Xend 
+X
+X % Make a polygon closed ..............
+Xx = [x(:); x(1)];
+Xy = [y(:); y(1)];
+X
+X % Check length .......................
+Xl = length(x);
+Xif length(y)~=l
+X  error(' Vectors x and y must have the same length')
+Xend
+X
+X % X-mean: Int{x^2*dy} ................
+Xdel = y(2:l)-y(1:l-1);
+Xv = x(1:l-1).^2+x(2:l).^2+x(1:l-1).*x(2:l);
+Xx0 = v'*del;
+X
+X % Y-mean: Int{y^2*dx} ................
+Xdel = x(2:l)-x(1:l-1);
+Xv = y(1:l-1).^2+y(2:l).^2+y(1:l-1).*y(2:l);
+Xy0 = v'*del;
+X
+X % Calculate area: Int{y*dx} ..........
+Xa = (y(1:l-1)+y(2:l))'*del;
+Xtol= 2*eps;
+Xif abs(a)<tol
+X  disp(' Warning: area of polygon is close to 0')
+X  a = a+sign(a)*tol+(~a)*tol;
+Xend
+X % Multiplier
+Xa = 1/3/a;
+X
+X % Divide by area .....................
+Xx0 = -x0*a;
+Xy0 =  y0*a;
+X
+Xif nargout < 2, x0 = x0+i*y0; end
+END_OF_FILE
+if test 2064 -ne `wc -c <'centroid.m'`; then
+    echo shar: \"'centroid.m'\" unpacked with wrong size!
+fi
+chmod +x 'centroid.m'
+# end of 'centroid.m'
+fi
+if test -f 'circmsph.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'circmsph.m'\"
+else
+echo shar: Extracting \"'circmsph.m'\" \(1973 characters\)
+sed "s/^X//" >'circmsph.m' <<'END_OF_FILE'
+Xfunction [c,a] = circmsph(R,N)
+X% CIRCMSPH  Circumspheres for n-dimensional simplices
+X%	(triangles for 2-d, tetrahedra for 3-d, etc.).
+X%	[C,A] = CIRCMSPH(R) where R is d+1 by d matrix of 
+X%	coordinates of d-dimensional simplex, calculate 
+X%	center C and radius A of its circumspere.
+X%
+X%	[C,A] = CIRCMSPH(R,N)  calculate circumspere centers
+X%	C and radii A for each simplices described by matrices
+X%	R and N.  R is coordinates of data set (row per point)
+X%	and N is index matrix of simplices (each row consist of
+X%	indices into rows of R of points constituing a simplex).
+X%
+X%	(Index matrix N is likely to be output of a 
+X%	triangulation/tesselation program, such as TRIANGUL.M,
+X%	DELAUNAY.M).
+X
+X%	Front-end routine, calls primitive CIRCMSPH0.
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	05/10/95
+X
+X % Handle input ..............................................
+Xif nargin==0, help circmsph, return, end
+Xif nargin==1
+X  szR = size(R);
+X  if diff(szR)>0, R = R'; szR = fliplr(szR); end
+X  d = szR(2);                  % Dimension
+X  [c,a] = circmsph0(R);        % Call the primitive
+X  return
+Xend
+X
+XszR = size(R);
+XszN = size(N);
+Xlim1 = [min(min(R)); max(max(R))];
+Xlim2 = [min(min(N)); max(max(N))];
+XisN(1) = all(all(round(R)==R));
+XisN(2) = all(all(round(N)==N));
+XisN = isN.*[lim1(1)>0 lim2(1)>0]; % Find which argument is index matrix
+X
+Xif diff(isN)<0
+X  c = N; N = R; R = c;
+Xend
+X
+Xif ~any(isN)
+X  error('   Second argument must be an index matrix')
+Xend
+X
+XszR = size(R);
+XszN = size(N);
+Xif diff(szR)>0, R = R'; szR = fliplr(szR); end
+Xd = szR(2);             % Dimension
+X
+Xif ~any(szN==d+1)
+X  error('  Index matrix N must have d+1 columns')
+Xend
+Xif szN(1)==d+1, N = N'; szN = fliplr(szN); end
+X
+Xn_spx = szN(1);  % Number of simplices (rows in matrix N)
+X
+X
+X % Calculate centers and radii of circumspheres 
+X % for each simplex 
+Xc = zeros(n_spx,d);
+Xa = zeros(n_spx,1);
+Xfor jj = 1:n_spx
+X  rs = R(N(jj,:),:);
+X  [cc,ca] = circmsph0(rs);
+X  c(jj,:) = cc;
+X  a(jj) = ca;
+Xend
+X    
+END_OF_FILE
+if test 1973 -ne `wc -c <'circmsph.m'`; then
+    echo shar: \"'circmsph.m'\" unpacked with wrong size!
+fi
+chmod +x 'circmsph.m'
+# end of 'circmsph.m'
+fi
+if test -f 'circmsph0.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'circmsph0.m'\"
+else
+echo shar: Extracting \"'circmsph0.m'\" \(870 characters\)
+sed "s/^X//" >'circmsph0.m' <<'END_OF_FILE'
+Xfunction [c,a] = circmsph0(R)
+X% CIRCMSPH0  Circumsphere for d-dimensional simplex
+X%	(Primitive for CIRCUMSPH).
+X%	[C,A] = CIRCMSPH0(R) Accepts matrix R (d+1 by d)
+X%	with coordinates of d-dimensional simplex (each
+X%	row is cordinates of a point).
+X%	Computes the center C and radius A of 
+X%	circumsphere (d-dimensional sphere passing
+X%	through all points of a simplex).
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	05/10/95
+X
+Xd = size(R,2);  % Dimension
+Xod = ones(d,1); % Auxillary unit vector
+X
+X % Make 1st point origin of coordinate system
+Xr1 = R(1,:);
+XR = (R(2:d+1,:)-r1(od,:))';
+X
+X % Calculate squared length of each edge
+Xs = sum(R.^2);
+XR = R./s(od,:);
+X
+X % Center relative to 1st point - intersection of d
+X % planes normal to all edges with 1st point
+Xc = (R'\od);
+Xc = c'/2;
+X
+Xa = sqrt(c*c'); % Radius
+X
+Xc = r1+c;       % Add reference (1st) point
+X
+END_OF_FILE
+if test 870 -ne `wc -c <'circmsph0.m'`; then
+    echo shar: \"'circmsph0.m'\" unpacked with wrong size!
+fi
+chmod +x 'circmsph0.m'
+# end of 'circmsph0.m'
+fi
+if test -f 'combin.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'combin.m'\"
+else
+echo shar: Extracting \"'combin.m'\" \(1003 characters\)
+sed "s/^X//" >'combin.m' <<'END_OF_FILE'
+Xfunction  C = combin(n,m)
+X% COMBIN  Combinations of N choose M.
+X%	C=COMBIN(M,N) where N>=M, M and N are
+X%	positive integers returns a matrix C of the
+X%	size N!/(M!*(N-M)!) by N with rows containing
+X%	all possible combinations of N choose M.
+X
+X%  Kirill K. Pankratov,  kirill@plume.mit.edu
+X%  03/19/95
+X
+X % Handle input ..........................
+Xif nargin<2,
+X  error('  Not enough input arguments.')
+Xend
+Xm = fix(m(1));
+Xn = fix(n(1));
+Xif n<0 | m<0
+X  error(' In COMBIN(N,M) N and M must be positive integers')
+Xend
+Xif m>n
+X  error(' In COMBIN(N,M) N must be greater than M')
+Xend
+X
+X % Take care of simple cases .............
+Xif m==0,   C = zeros(1,m); return, end
+Xif m==n,   C = ones(1,m);  return, end
+Xif m==1,   C = eye(n);     return, end
+Xif m==n-1, C = ~eye(n);    return, end
+X
+X % Calculate sizes and limits ............
+Xn2 = 2^n-1;
+Xm2 = 2^m-1;
+Xmn2 = 2^(m-n)-1;
+X
+X % Binary representation .................
+XC = binary(m2:n2-mn2);
+X
+X % Now choose only those with sum equal m
+Xs = sum(C');
+XC = C(find(s==m),:);
+X
+END_OF_FILE
+if test 1003 -ne `wc -c <'combin.m'`; then
+    echo shar: \"'combin.m'\" unpacked with wrong size!
+fi
+chmod +x 'combin.m'
+# end of 'combin.m'
+fi
+if test -f 'convexh.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'convexh.m'\"
+else
+echo shar: Extracting \"'convexh.m'\" \(3393 characters\)
+sed "s/^X//" >'convexh.m' <<'END_OF_FILE'
+Xfunction [Facets,Nrm,Q] = convexh(x,y,z)
+X% CONVEXH  Convex hull of arbitrary-dimensional set.
+X%	FAC = CONVEXH(R) returns convex hull FAC of a set
+X%	with coordinates R. Each row of a matrix R 
+X%	represents coordinates of a point in a set,
+X%	such as [xi yi zi ...] while each row of output
+X%	FAC represent indices of points in a facet in a
+X%	convex hull.
+X%	CONVEXH(X,Y,Z) can be used for 3-d sets with
+X%	coordinates X, Y, Z, and is the same as 
+X%	CONVEXH([X(:) Y(:) Z(:)]).
+X%
+X%	[FAC,NRM] = CONVEXH(...) also returns the outer
+X%	normal vectors to each facet, size(NRM)=size(FAC).
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	05/05/95
+X
+X % Handle input ...........................................
+Xif nargin==0, help convexh, return, end
+Xstr_err = '  Error: arguments must be of the same size';
+X
+Xif nargin>1            % Add y to R
+X  if length(x(:))~=length(y(:))
+X    error(str_err)
+X  end
+X  R = [x(:) y(:)];
+X  if nargin>2          % Add z to R
+X    if length(x(:))~=length(z(:))
+X      error(str_err)
+X    end
+X    R = [R z(:)];
+X  end
+Xelse                   % 1 input argument
+X  R = x;
+Xend
+X
+X[n_pts,dim] = size(R); % Dimensions of data set
+X
+X % Check rank of a set, if deficient, reduce dimension
+X % and calculate effective phase space ...............
+Xc_fac = mean(R);
+XR = R-c_fac(ones(n_pts,1),:);
+Xrnk = rank(R);
+Xif nargout>2, Q=eye(dim); end
+Xif rnk<dim         % If rank is deficient
+X  Q = orth(R');
+X  R = R*Q;
+X  dim = rnk;
+X  s = '\n Warning: rank = %i is deficient. ';
+X  s = [s 'Projecting into lower-dimension space.\n'];
+X  fprintf(s,rnk);
+X  [Facets,Nrm] = convexh(R);
+X  return
+Xend
+X
+Xif dim==1 % One-dimensional case .....................
+X  [Nrm,d0] = min(R);
+X  [Nrm,d] = max(R);
+X  Facets = [d0; d];
+X  return
+Xend
+X
+Xif dim==2 % Two-dimensional case .....................
+X  [Facets,Nrm] = convex2(R);
+X  return
+Xend
+X
+X
+X % If the program continues, dimension is more than 2.
+X % Employ general method (add external points to the 
+X % existing hull untill all points are inside or on the
+X % hull itself
+X
+Xodim = ones(dim,1);  % Auxillary vector
+X
+X % Initialize a polyhedron (simplex)
+X[c_fac,Facets] = initspx(R);
+XFacets = sort(Facets')';
+Xr0 = mean(R(c_fac,:));     % Center of init. simplex
+XR = R-r0(ones(n_pts,1),:); % Change coordinate origin
+X
+X % Control point (a point inside initial polyhedron)
+Xr0 = R(Facets(1),:)/2;
+X
+X % Calculate normals to initial simplex
+Xactive_fac = ones(dim+1,1);
+XNrm = zeros(size(Facets));
+Xfor jj = 1:dim+1
+X  % Normal to a current facet
+X  c_fac = Facets(jj,:);
+X  c_nrm = R(c_fac,:)\odim;
+X  t = R*c_nrm;     % Coordinate along the normal
+X  sgn = -sign(r0*c_nrm-1);
+X  Nrm(jj,:) = sgn*c_nrm';
+X  t = t*sgn;
+X  t(c_fac) = -odim;
+X  [cc,nn] = max(t);
+X  active_fac(jj) = nn*(cc>1);   % Outermost point
+Xend
+X
+X % Initialize active points mask - zeros for points 
+X % belonging to initial facets and their outermost points
+Xactive_pts = ones(n_pts,1);
+Xactive_pts(c_fac) = zeros(size(c_fac));
+Xc_fac = find(active_fac);
+X
+X % Sort initial simplex so that active facets are first
+X % Find active facets
+Xi_fac = [find(active_fac); find(~active_fac)];
+XFacets = Facets(i_fac,:);
+XNrm = Nrm(i_fac,:);
+Xactive_fac = active_fac(i_fac);
+X
+Xwhile active_fac(1) % While there are "active" facets ```
+X
+X  % Add new point to a convex hull
+X  [Facets,Nrm,active_fac,active_pts] = cvxadd(Facets,Nrm,...
+X        active_fac,R,active_pts,r0);
+X
+Xend % End while (no more active facets) '''''''''''''''''
+X
+END_OF_FILE
+if test 3393 -ne `wc -c <'convexh.m'`; then
+    echo shar: \"'convexh.m'\" unpacked with wrong size!
+fi
+chmod +x 'convexh.m'
+# end of 'convexh.m'
+fi
+if test -f 'cvxadd.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'cvxadd.m'\"
+else
+echo shar: Extracting \"'cvxadd.m'\" \(2855 characters\)
+sed "s/^X//" >'cvxadd.m' <<'END_OF_FILE'
+Xfunction [Fo,Nrmo,afo,apo] = cvxadd(Fi,Nrmi,afi,R,api,r0)
+X% CVXADD Adding an outer point to a convex hull.
+X%	[FO,NRMO,AFO] = CVXADD(FI,NRMI,AFI,R,NP,R0),
+X%	   where the input parameters are:
+X%	FI   - List of facets indices
+X%	NRMI - Outer normals to these facets
+X%	AFI  - Boolean vector active/inactive facets
+X%	R    - Coordinartes of a set of points
+X%	API  - Boolean vector active/inactive points
+X%	R0   - Coordinates of a "control point" (inside an 
+X%	       existing convex hull.
+X%	   Output parameters:
+X%	FO   - New facets indices
+X%	NRMO - New outer normals
+X%	AFO  - Boolean vector for active/inactive facets
+X%	APO  - Boolean vector for active/inactive facets
+X%
+X%  Used inside CONVEXH.M (convex hull computation).
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	05/01/95, 05/08/95
+X
+X[n_fac,d] = size(Fi);
+X
+X % Check whether a point is "internal" or "external"
+X % for active facets
+Xnn = afi(1);
+Xc_pt = R(nn,:);        % Coordinates of added point
+Xi_fac = Nrmi*c_pt'>1;  % Boolean (1-external)
+X
+X % Construct new facets from all facets for which the
+X % point is external
+Xind = find(i_fac);
+Xn_new = length(ind);
+XEdge = Fi(i_fac,:);    % Get facets to become inside
+X
+X % Auxillary for indexing
+Xod = ones(d,1);
+XI = (1:n_new);
+XI = I(od,:);
+XI = I(:);
+XEdge = Edge(I,:)';
+X
+XE = ~eye(d);
+XI = (1:d)';
+XI = I(:,ones(n_new,1));
+XI = I(:);
+XE = E(I,:)';
+XEdge = Edge(E);
+XEdge = reshape(Edge,d-1,n_new*d)';
+X
+X % Make a unique edge list
+X[Edge,ind,cnt] = unique(Edge);
+X
+X % Remove duplicated edges which would form "folded" facets 
+XEdge = Edge(find(cnt<2),:);
+Xn_new = size(Edge,1);
+X
+X % Add the current outer point to form new facets
+XFo = [Edge nn(ones(n_new,1))]';
+XFo = sort(Fo)';
+X
+X % Calculate normals to the new facets
+XNrmo = zeros(size(Fo));
+Xfor jj=1:n_new
+X  c_nrm = R(Fo(jj,:),:)\od;
+X  Nrmo(jj,:) = c_nrm';
+Xend
+X
+X % Check sign to ensure it points outward
+Xcnt = Nrmo*r0'>1;
+Xind = find(cnt);
+XNrmo(ind,:) = -Nrmo(ind,:);
+X
+X % Remove outermost points of all facets from the active
+X % points list
+Xapo = api;
+Xapo(nn) = 0;
+Xapo(Fo) = zeros(size(Fo));
+X%apo0=apo;apo(Fo) = zeros(size(Fo));any(apo~=apo0)
+X
+X % Check whether new facets are active (have outer points)
+Xind = find(apo);
+XEdge = R(ind,:);
+Xafo = zeros(n_new,1);
+Xif Edge~=[]
+X  for jj=1:n_new
+X    c_pt = Nrmo(jj,:);
+X    [c_pt,nn] = max(Edge*c_pt');
+X    afo(jj) = nn*(c_pt>1);
+X  end
+Xend
+X
+X % Map indices from active to all points
+Xcnt = find(afo);
+Xafo(cnt) = ind(afo(cnt));
+X
+X % Make a new list of facets and normals - combine
+X % new facets and the old ones to which the current point
+X % is internal
+Xind = find(~i_fac);  % Find remaining facets
+XFo = [Fo; Fi(ind,:)];             % Facets
+XNrmo = [Nrmo; Nrmi(ind,:)];       % Normals
+Xafo = [afo; afi(ind)];  % "Active facets" mask
+X
+X % Sort output so that active facets are first
+Xind = [find(afo); find(~afo)];
+XFo = Fo(ind,:);
+XNrmo = Nrmo(ind,:);
+Xafo = afo(ind,:);
+X
+END_OF_FILE
+if test 2855 -ne `wc -c <'cvxadd.m'`; then
+    echo shar: \"'cvxadd.m'\" unpacked with wrong size!
+fi
+chmod +x 'cvxadd.m'
+# end of 'cvxadd.m'
+fi
+if test -f 'delaunay.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'delaunay.m'\"
+else
+echo shar: Extracting \"'delaunay.m'\" \(1056 characters\)
+sed "s/^X//" >'delaunay.m' <<'END_OF_FILE'
+Xfunction [D,Ro] = delaunay(R)
+X% DELAUNAY Delaunay tesselation of n-dimensional sets.
+X% 	D = DELAUNAY(R) where R is n_pts by d matrix
+X%	of coordinates of n_pts d-dimensional points
+X%	computes Delaunay tesselation and returns
+X%	index matrix D (n_spx by d+1) of
+X%	d-dimensional simplices (polyhedra of d+1 points).
+X
+X% ALGORITHM:
+X%	1. Map data R onto d+1 - dimensional paraboloid
+X%	2. Compute convex hull of this set in d+1 dimensions
+X%	3. Remove facets pointing "downward"
+X%	   You get Delaunay.
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	05/10/95, 09/01/95 (paraboloid)
+X
+X % Handle input ........................
+Xif nargin==0, help delaunay, return, end
+X
+XRo = R;
+X[n_pts,d] = size(Ro);
+Xif n_pts<d, Ro = Ro'; [n_pts,d] = size(Ro); end
+X
+X % Map to a paraboloid of d+1 dimension ...............
+X%Ro = mapsph(Ro,-2*pi);  % Sphere ca
+XsqR = sum((Ro.^2)');
+XRo = [Ro sqR'];
+X
+X % Compute convex hull ............................
+X[D,Nrm] = convexh(Ro);
+X
+X % Remove "bottom" facets .........................
+Xs = find(Nrm(:,d+1)>=0);
+XD(s,:) = [];
+END_OF_FILE
+if test 1056 -ne `wc -c <'delaunay.m'`; then
+    echo shar: \"'delaunay.m'\" unpacked with wrong size!
+fi
+chmod +x 'delaunay.m'
+# end of 'delaunay.m'
+fi
+if test -f 'dlndemo.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'dlndemo.m'\"
+else
+echo shar: Extracting \"'dlndemo.m'\" \(2338 characters\)
+sed "s/^X//" >'dlndemo.m' <<'END_OF_FILE'
+X% DLNDEMO  Demonstration of Delaunay triangulation.
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	05/10/95
+X
+Xecho on
+X
+X%     Welcome to the demonstration of Delaunay 
+X%      triangulation/tesselation programs!
+X%
+X% In this demo we shall see how to create and 
+X% visualize ...
+X
+X pause  % Hit any key to continue...
+X
+X% Generate a set of random points on a plane
+X% and triangulate it while watching the process 
+X% (flag 1 as a third argument):
+X
+X  x = rand(100,1); y = rand(100,1);
+X  clg
+X  N = triangul(x,y,1);
+X
+X pause  % Hit any key to continue...
+X
+X% Now make a similar triangulation but plot only final result
+X% (flag=2)
+X% Again generate a few random points X, Y:
+X
+X  n = 8; x = rand(n,1); y = rand(n,1);
+X
+X% Set flag to 2:
+X
+X  clg,
+X  N = triangul(x,y,2);
+X  colormap cool
+X  caxis([0 5])
+X
+X pause  % Hit any key to continue...
+X
+X%   How can we determine if this triangulation is a 
+X% Delaunay one or not?
+X%   One very important and useful property of Delaunay 
+X% triangulation/tesselation in arbitrary dimension is the 
+X% following: inside a circle (circumsphere) of each triangle 
+X% (simplex) there must be no other points.
+X%
+X%   At first let's make a visual check by plotting
+X% circles through all triangles. One can use a program
+X% CIRCMSPH to compute centers and  radii of circles or
+X% spheres around simplices in any dimensions:
+X
+X  [c,r] = circmsph([x y],N);
+X
+X%   Plot circles through each triangle. We shall use a
+X% routine CIRCLE to do this:
+X
+X  axis(axis)
+X  circle(r,c(:,1),c(:,2),'y',1)
+X
+X% Make proportions right:
+X  axis equal, axis square,
+X
+X% Add title and labels
+X  %set(gca,'xticklabels','','yticklabels','')
+X  title(['Delaunay triangulation and circles around'...
+X       ' each triangle'],'fontsize',14)
+X
+X pause  % Hit any key to continue...
+X
+X%   Now make a rigorous computational check whether this 
+X% is a Delaunay triangulation.
+X%
+X%  One can use the program ISDLN for this purpose.
+X
+X  isdln(N,[x,y])
+X
+X pause  % Hit any key to continue...
+X
+X
+X%   Now let's try multi-dimensional DELAUNAY
+X% triangulation.  It is more difficult to visualize, but
+X% still is a very important tool for geometric analysis.
+X% the program DELAUNAY can perform Delaunay triangulation
+X
+X
+X%   First generate a few random points 
+X
+X  R = rand(10,4);
+X  N = delaunay(R)
+X
+X% Check if the triangulation is a Delaunay one:
+X
+X  isdln(N,R)
+X
+Xecho off
+X
+END_OF_FILE
+if test 2338 -ne `wc -c <'dlndemo.m'`; then
+    echo shar: \"'dlndemo.m'\" unpacked with wrong size!
+fi
+chmod +x 'dlndemo.m'
+# end of 'dlndemo.m'
+fi
+if test -f 'eqdsph.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'eqdsph.m'\"
+else
+echo shar: Extracting \"'eqdsph.m'\" \(2247 characters\)
+sed "s/^X//" >'eqdsph.m' <<'END_OF_FILE'
+Xfunction [x,y,z] = eqdsph(n,tol)
+X%  EQDSPH  Equilibrium distribution of points on a sphere
+X%	[X,Y,Z] = EQDSPH(N)  Calculates "equilibrium" 
+X%	distribution of N points on a unit sphere.
+X%	EQDSPH(N,TOL) also can specify the tolerance for
+X%	the disbalanve of "forces".
+X%
+X%	EQDSPH uses "electron dynamics" method - that is
+X%	"solves" kinetic equation for repellent points
+X%	moving freely along the sphere until reaching
+X%	approximately equilibrium positions.
+X	
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%       kirill@plume.mit.edu
+X%       05/10/95
+X
+X % Defaults and parameters
+Xtol_dflt = 1e-3;    % Default for tolerance
+Xiter_max = 200;
+Xl_ch = 20;
+Xpart = 1/5;
+Xa = .6;
+Xe = 1e-8;           % Substitute for zero
+X
+Xif nargin<2, tol = tol_dflt; end
+X
+X % Scale ..................
+Xd = sqrt(2*pi/n);
+Xtol = tol*sqrt(n);
+X
+X % Auxillary ..............
+Xl_ch = min(l_ch,n);
+Xn_chunk = ceil(n/l_ch);
+Xo_ch = ones(1,l_ch);
+Xon = ones(n,1);
+X
+X % Initialization .........
+XR = randsph(n);
+Xx = R(:,1);
+Xy = R(:,2);
+Xz = R(:,3);
+X
+X % Iterate - solve "charged particles dynamics" equation
+X % until (approximate) equilibrium
+Xvx = zeros(size(x)); vy = vx; vz = vx;
+Xvmax = 1;
+Xiter = 0;
+Xwhile vmax>tol & iter<iter_max
+X  iter=iter+1;
+X  part = part*.978;
+X  a = a*.99;
+X
+X  for jj=1:n_chunk
+X    i_ch = (1:l_ch)+(jj-1)*l_ch;
+X    if jj==n_chunk, i_ch = n-l_ch+1:n; end
+X
+X    vv = x(i_ch)';
+X    Xd = x(:,o_ch)-vv(on,:);
+X    vv = y(i_ch)';
+X    Yd = y(:,o_ch)-vv(on,:);
+X    vv = z(i_ch)';
+X    Zd = z(:,o_ch)-vv(on,:);
+X    R2 = -(Xd.^2+Yd.^2+Zd.^2+e).^(-1);
+X
+X    Xd = Xd.*R2;
+X    Yd = Yd.*R2;
+X    Zd = Zd.*R2;
+X
+X    % Velocities
+X    vx(i_ch) = sum(Xd)';
+X    vy(i_ch) = sum(Yd)';
+X    vz(i_ch) = sum(Zd)';
+X  end
+X
+X  % Project velocities on a surface
+X  pr = x.*vx+y.*vy+z.*vz;
+X  vx = vx-pr.*x;
+X  vy = vy-pr.*y;
+X  vz = vz-pr.*z;
+X
+X  if iter==1, vxh = vx; vyh = vy; vzh = vz; end
+X  vx = vxh*(1-a)+vx*a;
+X  vy = vyh*(1-a)+vy*a;
+X  vz = vzh*(1-a)+vz*a;
+X  vxh = vx; vyh = vy; vzh = vz;
+X
+X  % Timestep
+X  v2 = sqrt(vx.^2+vy.^2+vz.^2);
+X  vmax = max(v2);
+X  vmean = sqrt(mean(v2));
+X  dt = part*d/vmax;
+X
+X  % Update coordinates
+X  x = x+dt*vx;
+X  y = y+dt*vy;
+X  z = z+dt*vz;
+X
+X  % Normalize
+X  pr = sqrt(x.^2+y.^2+z.^2);
+X  x = x./pr;
+X  y = y./pr;
+X  z = z./pr;
+X
+X
+X%[vmax part vx(1)]
+Xend
+X
+Xif nargout < 2, x = [x y z]; end
+END_OF_FILE
+if test 2247 -ne `wc -c <'eqdsph.m'`; then
+    echo shar: \"'eqdsph.m'\" unpacked with wrong size!
+fi
+chmod +x 'eqdsph.m'
+# end of 'eqdsph.m'
+fi
+if test -f 'fitplane.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'fitplane.m'\"
+else
+echo shar: Extracting \"'fitplane.m'\" \(1438 characters\)
+sed "s/^X//" >'fitplane.m' <<'END_OF_FILE'
+Xfunction  [n,d] = fitplane(x,y,z)
+X% FITPLANE Fitting of a plane or hyperplane to a set
+X%	of points.
+X%	[N,D] = FITPLANE(X,Y,Z) Calculates a least
+X%	squares fit to the normal N  to a plane through
+X%	a set of points with coordinates X,Y,Z in the
+X%	form  N(1)*X+N(2)*Y+N(3)*Z = D.
+X%	Normally N is normalized so that D = 1 unless
+X%	it is close to zero (a plane goes near
+X%	coordinate system origin).
+X%	[N,D] = FITPLANE(X,Y) calculates a similar fit
+X%	to a line, while
+X%	[N,D] = FITPLANE(R) calculates a fit to a
+X%	hyper-plane. In this case each row of R
+X%	must correspond to coordinates of a certain
+X%	point in a set, such as
+X%	R = [x1 y1 z1 t1; x2 y2 z2 t2; ...].
+X
+X%  Copyright (c) 1995  by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	02/09/95
+X
+Xtol = .01;  % Tolerance for canonocal form reduction
+X
+X % Handle input ............................
+Xif nargin==1      % Arbitrary dimension (hyperplane)
+X  R = x;
+X  if diff(size(R)) > 0, R = R'; end
+X
+Xelseif nargin==2  % 2-dimensional (line)
+X  R = [x(:) y(:)];
+X
+Xelse              % 3-dimensional (plane)
+X  R = [x(:) y(:) z(:)];
+X
+Xend
+X
+X % Auxillary
+XszR = size(R);
+Xo = ones(szR(1),1);
+X
+X % Make offset (so that plane will not go through
+X % the origin)
+Xr0 = 2*min(R)-max(R)-1;
+XR = R-r0(o,:);
+X
+X % Now the fit itself ......................
+Xn = R\o;
+Xd = 1+r0*n;  % Compensate offset
+X
+X % Try to reduce it to the canonical form
+X % (Nx*X + Ny*Y + Nz*Z = 1) if possible
+Xif abs(d) > tol
+X  n = n/d;
+X  d = 1;
+Xend
+X
+END_OF_FILE
+if test 1438 -ne `wc -c <'fitplane.m'`; then
+    echo shar: \"'fitplane.m'\" unpacked with wrong size!
+fi
+chmod +x 'fitplane.m'
+# end of 'fitplane.m'
+fi
+if test -f 'initspx.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'initspx.m'\"
+else
+echo shar: Extracting \"'initspx.m'\" \(1402 characters\)
+sed "s/^X//" >'initspx.m' <<'END_OF_FILE'
+Xfunction [spx,F] = initspx(R)
+X% INITSPX  Initialize a simplex out of a set of points.
+X%	S = INITSPX(R)  Returns indices to points of 
+X%	of a subset of R which forms a simplex in
+X%	n-dimensional space.
+X%	The program tried to choose a simplex with a 
+X%	maximum volume.
+X
+X%  Copyright (c) 1995  by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	05/03/95
+X
+X[n_pts,d] = size(R); % Nmb. of points and dimension
+Xod = ones(d,1);      % Auxillary vector
+X
+X % Make mean point origin od coord. system
+Xr0 = mean(R);
+XR = (R-r0(ones(n_pts,1),:))';
+X
+X % Successively extract the most distant point;
+X % Remove projection of all vectors to the vector
+X % to the most distant point, repeat the procedure 
+X % for until getting effectively 1-d array
+Xspx = zeros(1,d+1);
+Xfor jj=1:d-1
+X  r2 = sum(R.^2);
+X  [cc,nn] = max(r2);
+X  spx(jj) = nn;
+X
+X  nrm = R(:,nn);
+X  cc = sqrt(nrm'*nrm);
+X  nrm = nrm./(cc+(~cc));
+X
+X  proj = nrm'*R;  % Projections to a current direction
+X  R = R-nrm*proj; % Residuals
+Xend
+X
+X % Find the largest component of the 1-d residual 
+X % vector
+Xnrm = sum(abs(R'));
+X[cc,nn] = max(nrm);
+Xr2 = R(nn,:);  % Extract largest component
+X
+X[cc,nn] = min(r2);
+Xspx(d) = nn;
+X[cc,nn] = max(r2);
+Xspx(d+1) = nn;
+X
+X % Extract only unique points
+Xr0 = [1 find(diff(spx))];
+Xspx = spx(find(r0));
+X
+X % Make a matrix of facets if needed
+Xif nargout>1
+X  d = length(spx);
+X  r2 = ~eye(d);
+X  F = spx(ones(d,1),:)';
+X  F = reshape(F(r2),d-1,d)';
+Xend
+X
+END_OF_FILE
+if test 1402 -ne `wc -c <'initspx.m'`; then
+    echo shar: \"'initspx.m'\" unpacked with wrong size!
+fi
+chmod +x 'initspx.m'
+# end of 'initspx.m'
+fi
+if test -f 'inspx0.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'inspx0.m'\"
+else
+echo shar: Extracting \"'inspx0.m'\" \(2671 characters\)
+sed "s/^X//" >'inspx0.m' <<'END_OF_FILE'
+Xfunction is = inspx0(R,Rs,tol)
+X% INSPX0 True for points inside an n-dimensional simplex.
+X%	IS = INSPX0(R,RS,TOL)  Accepts coordinates R of 
+X%	the size NP by D, where NP is a number of points 
+X%	and D is dimension and coordinates RS (D+1 by D)
+X%	of the vertices of a simplex; also optional scalar
+X%	TOL (tolerance for distance to the boundary).
+X%	Returns (quasi)-boolean vector IS of the size
+X%	NP by 1 which is equal to 1 for points inside
+X%	the simplex and 0 otherwise.
+X%	For points within TOL distance to the boundary
+X%	(any facets of a simplex) IS  is equal to some
+X%	fractional number. Default for TOL is 10*eps.
+X%
+X%	Primitive for INPOLYHD routine.
+X
+X%  Copyright (c) 1995  by Kirill K. Pankratov
+X%       kirill@plume.mit.edu
+X%       09/22/95
+X
+X % Defaults and parameters .........................
+Xtol_dflt = 10*eps;
+Xmult = .001;
+X
+X % Handle input ....................................
+Xif nargin<3, tol = tol_dflt; end
+X
+X % Sizes and dimensions
+X[dd,d] = size(Rs);   % Dimension
+X[np,d1] = size(R);   % Number of points
+X
+X
+X % Auxillary .......................................
+Xod = ones(d,1);
+Xop = ones(np,1);
+Xis = zeros(np,1);
+X
+X
+X % 2-d case (triangles) ............................
+Xif d==2
+X
+X  Nrm = Rs([2 3 1],:)-Rs;
+X  ind = find(abs(Nrm(:,2))>=tol);
+X
+X  for jj = 1:length(ind)
+X    nn = ind(jj);
+X    b = Nrm(nn,:);
+X    n1 = (R(:,2)-Rs(nn,2))/b(2);
+X    xi = Rs(nn,1)+n1*b(1);
+X    n1 = (n1>=0) & (n1<=1);
+X
+X    a = xi-R(:,1);
+X    ii = [ii; find( (abs(a)<tol) & n1 )];
+X    is = is+(a>0 & n1);
+X  end
+X
+X  a = floor(is);
+X  is = a==1;
+X  is(ii) = mult*ones(size(ii));   
+X
+X  return
+Xend
+X
+X
+X % Shift coordinates so that the origin is outside
+Xsc = [min(Rs); max(Rs)];
+Xif any(sc(1,:)<=0 & sc(2,:)>=0)
+X  sc = diff(sc);
+X  r0 = (1+rand(1,d)).*sc;
+X  R = R+r0(ones(np,1),:);
+X  Rs = Rs+r0(ones(d+1,1),:);
+Xend
+X
+X
+X % Calculate normals ...................
+XNrm = eye(d+1);
+Xfor jj=1:d+1
+X  ii = find(~Nrm(:,jj));
+X  Nrm(1:d,jj) = Rs(ii,:)\od;
+Xend
+XNrm = Nrm(1:d,:)';
+X
+X
+X % Check if the first component is not 0
+Xwhile any(abs(Nrm(:,1))<tol)
+X  A = rotmat(d);  % Rotational matrix
+X  Nrm = Nrm*A;
+X  R = R*A;
+X  Rs = Rs*A;
+Xend
+X
+X
+X % Snip the first component ............
+Xn1 = Nrm(:,1); Nrm = Nrm(:,2:d);
+Xx1 = R(:,1); R = R(:,2:d);
+XRs = Rs(:,2:d);
+X
+XA = ~eye(d+1);
+Xis = zeros(np,1);
+Xfor jj = 1:d+1
+X  r0 = Nrm(jj,:);
+X  xi = R*r0';
+X  xi = (1-xi)./n1(jj);
+X
+X  % Take care of first coordinate
+X  a = xi-x1;
+X  ii = find(abs(a)<tol);
+X  a = a>0;
+X  a(ii) = mult*ones(size(ii));
+X
+X  % Recursive call
+X  io = inspx0(R,Rs(find(A(:,jj)),:));
+X
+X  io = io.*a;
+X
+X  is = is+io;
+X
+Xend
+X
+X % Check odd or even nmb. of intersections
+Xio = floor(is);
+Xii = find(is-io);      % Close to boundary
+Xis = io-2*floor(io/2);
+Xis(ii) = mult*ones(size(ii));
+END_OF_FILE
+if test 2671 -ne `wc -c <'inspx0.m'`; then
+    echo shar: \"'inspx0.m'\" unpacked with wrong size!
+fi
+chmod +x 'inspx0.m'
+# end of 'inspx0.m'
+fi
+if test -f 'intsecl.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'intsecl.m'\"
+else
+echo shar: Extracting \"'intsecl.m'\" \(4058 characters\)
+sed "s/^X//" >'intsecl.m' <<'END_OF_FILE'
+Xfunction [xo,yo] = intsecl(x1,y1,x2,y2,tol)
+X% INTSECL Intersection coordinates of two line segments.
+X%       [XI,YI] = INTSECL(X1,Y1,X2,Y2) where all 4
+X%	arguments are 2 by N matrices with coordinates
+X%	of ends of N pairs of line segments (so that 
+X%       the command such as PLOT(X1,Y1,X2,Y2) will plot 
+X%       these pairs of lines).
+X%       Returns 1 by N vectors XI and YI consisting of 
+X%       coordinates of intersection points of each of N
+X%	pairs of lines.
+X%
+X%	Special cases:
+X%	When a line segment is degenerate into a point
+X%	and does not lie on line through the other segment
+X%	of a pair returns XI=NaN while YI has the following
+X%	values: 1 - when the first segment in a pair is
+X%	degenerate, 2 - second segment, 0 - both segments
+X%	are degenerate.
+X%	When a pair of line segments is parallel, returns
+X%	XI = Inf while YI is 1 for coincident lines,
+X%	0 - for parallel non-coincident ones.
+X%	INTSECL(X1,Y1,X2,Y2,TOL) also specifies tolerance
+X%	in detecting coincident points in different line
+X%	segments.
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%       kirill@plume.mit.edu
+X%       04/15/94, 08/14/94, 05/10/95, 08/23/95
+X 
+X
+X % Defaults and parameters .........................
+Xtol_dflt = 0; % Tolerance for coincident points
+Xis_chk = 1;   % Check input arguments
+X
+X % Handle input ....................................
+Xif nargin==0, help intsecl, return, end
+Xif nargin<4           % Check if all 4 entered
+X  error('  Not enough input arguments')
+Xend
+Xif nargin<5, tol = tol_dflt; end
+Xif tol < 0, is_chk = 0; tol = 0; end
+X
+X % Check the format of arguments .......
+Xif is_chk
+X  [x1,y1,x2,y2] = linechk(x1,y1,x2,y2);
+Xend
+X
+X
+X % Auxillary
+Xo2 = ones(2,1);
+Xi_pt1 = []; i_pt2 = []; i_pt12 = [];
+X
+X % Make first points origins ...........
+Xxo = x1(1,:);
+Xyo = y1(1,:);
+Xx2 = x2-xo(o2,:);
+Xy2 = y2-yo(o2,:);
+X
+X % Differences of first segments .......
+Xa = x1(2,:)-x1(1,:);
+Xb = y1(2,:)-y1(1,:);
+Xs = sqrt(a.^2+b.^2);  % Lengths of first segments
+Xi_pt1 = find(~s);
+Xs(i_pt1) = ones(size(i_pt1));
+Xrr = rand(size(i_pt1));
+Xa(i_pt1) = cos(rr);
+Xb(i_pt1) = sin(rr);
+X
+X % Normalize by length .................
+Xa = a./s; b = b./s;
+X
+X % Rotate coordinates of the second segment
+Xtmp = x2.*a(o2,:)+y2.*b(o2,:);
+Xy2 = -x2.*b(o2,:)+y2.*a(o2,:);
+Xx2 = tmp;
+X
+X % Calculate differences in second segments
+Xs = x2(2,:)-x2(1,:);
+Xtmp = y2(2,:)-y2(1,:);
+Xcc = tmp(i_pt1);
+X
+X % Find some degenerate cases .......................
+X
+X % Find zeros in differences
+Xizy2 = find(~tmp);
+Xtmp(izy2) = ones(size(izy2));
+X
+X % Find degenerate and parallel segments
+Xbool = ~s(izy2);
+Xi_par = izy2(~bool);
+Xi_pt2 = izy2(bool);
+X
+Xbool = abs(y2(1,i_pt2))<=tol;
+Xi_pt2_off = i_pt2(~bool);
+Xi_pt2_on = i_pt2(bool);
+X
+Xif i_par~=[]
+X  bool = abs(y2(1,i_par))<=tol;
+X  i_par_off = i_par(~bool);
+X  i_par_on = i_par(bool);
+Xend
+X
+X % Calculate intercept with rotated x-axis ..........
+Xtmp = s./tmp;   % Slope
+Xtmp = x2(1,:)-y2(1,:).*tmp;
+X
+X
+X % Rotate and translate back to original coordinates
+Xxo = tmp.*a+xo;
+Xyo = tmp.*b+yo;
+X
+X % Mark special cases ...................................
+X % First segments are degenerate to points
+Xif i_pt1~=[]
+X  bool = ~s(i_pt1) & ~cc;
+X  i_pt12 = i_pt1(bool);
+X  i_pt1 = i_pt1(~bool);
+X
+X  bool = abs(tmp(i_pt1))<=tol;
+X  i_pt1_on = i_pt1(bool);
+X  i_pt1_off = i_pt1(~bool);
+X
+X  xo(i_pt1_on) = x1(1,i_pt1_on);
+X  yo(i_pt1_on) = y1(1,i_pt1_on);
+X
+X  oo = ones(size(i_pt1_off));
+X  xo(i_pt1_off) = nan*oo;
+X  yo(i_pt1_off) = oo;
+Xend
+X
+X % Second segments are degenerate to points ...
+Xif i_pt2~=[]
+X  oo = ones(size(i_pt2_off));
+X  xo(i_pt2_off) = nan*oo;
+X  yo(i_pt2_off) = 2*oo;
+Xend
+X
+X % Both segments are degenerate ...............
+Xif i_pt12~=[]
+X  bool = x1(i_pt12)==xo(i_pt12);
+X  i_pt12_on = i_pt12(bool);
+X  i_pt12_off = i_pt12(~bool);
+X
+X  xo(i_pt12_on) = x1(1,i_pt12_on);
+X  yo(i_pt12_on) = y1(1,i_pt12_on);
+X
+X  oo = ones(size(i_pt12_off));
+X  xo(i_pt12_off) = nan*oo;
+X  yo(i_pt12_off) = 0*oo;
+Xend
+X
+X % Parallel segments .........................
+Xif i_par~=[]
+X  oo = ones(size(i_par_on));
+X  xo(i_par_on) = inf*oo;
+X  yo(i_par_on) = oo;
+X
+X  oo = ones(size(i_par_off));
+X  xo(i_par_off) = inf*oo;
+X  yo(i_par_off) = 0*oo;
+Xend
+X
+X
+X
+X
+END_OF_FILE
+if test 4058 -ne `wc -c <'intsecl.m'`; then
+    echo shar: \"'intsecl.m'\" unpacked with wrong size!
+fi
+chmod +x 'intsecl.m'
+# end of 'intsecl.m'
+fi
+if test -f 'iscross.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'iscross.m'\"
+else
+echo shar: Extracting \"'iscross.m'\" \(3208 characters\)
+sed "s/^X//" >'iscross.m' <<'END_OF_FILE'
+Xfunction [is,S] = iscross(x1,y1,x2,y2,tol)
+X% ISCROSS  Finds whether pairs of lines cross each other
+X%	[IS,S] = ISCROSS(X1,Y1,X2,Y2) where arguments X1, Y1,
+X%	X2, Y2 are all 2 by N matrices are coordinates of
+X%	ends of the pairs of line segments.
+X%	Returns vector  IS (1 by N)  consisting of ones if 
+X%	corresponding pairs cross each other, zeros if they 
+X%	don't and .5 if an end of one line segment lies on
+X%	another segment.
+X%	Also returns a matrix  S (4 by N) with each row 
+X%	consisting of cross products (double areas of 
+X%	corresponding triangles) built on the following points:
+X%	(X2(1,:),Y2(1,:)),(X1(1,:),Y1(1,:)),(X2(2,:),Y2(2,:)),
+X%	(X2(1,:),Y2(1,:)),(X1(2,:),Y1(2,:)),(X2(2,:),Y2(2,:))
+X%	(X1(1,:),Y1(1,:)),(X2(1,:),Y2(1,:)),(X1(2,:),Y1(2,:))
+X%	(X1(1,:),Y1(1,:)),(X2(2,:),Y2(2,:)),(X1(2,:),Y1(2,:))
+X%	The signs of these 4 areas can be used to determine
+X%	whether these lines and their continuations cross each
+X%	other.
+X%	[IS,S] = ISCROSS(X1,Y1,X2,Y2,TOL) uses tolerance TOL
+X%	for detecting the crossings (default is 0).
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%       kirill@plume.mit.edu
+X%       08/14/94, 05/18/95, 08/25/95
+X
+X % Defaults and parameters .......................
+Xtol_dflt = 0; % Tolerance for area calculation
+Xis_chk = 1;   % Check input arguments
+X
+X % Handle input ..................................
+Xif nargin==0, help iscross, return, end
+Xif nargin<4           % Check if all 4 entered
+X  error('  Not enough input arguments')
+Xend
+Xif nargin<5, tol = tol_dflt; end
+Xif tol < 0, is_chk = 0; tol = 0; end
+X
+X % Check the format of arguments .................
+Xif is_chk
+X  [x1,y1,x2,y2] = linechk(x1,y1,x2,y2);
+Xend
+X
+Xlen = size(x1,2);
+Xo2 = ones(2,1);
+X
+X % Find if the ranges of pairs of segments intersect
+X[isx,S,A] = interval(x1,x2);
+Xscx = diff(A);
+X[isy,S,A] = interval(y1,y2);
+Xscy = diff(A);
+Xis = isx & isy;
+X
+X % If S values are not needed, extract only those pairs
+X % which have intersecting ranges ..............
+Xif nargout < 2
+X  isx = find(is);  % Indices of pairs to be checked
+X                   % further
+X  x1 = x1(:,isx);
+X  x2 = x2(:,isx);
+X  y1 = y1(:,isx);
+X  y2 = y2(:,isx);
+X  is = is(isx);
+X  if is==[], is = zeros(1,len); return, end
+X  scx = scx(isx);
+X  scy = scy(isx);
+Xend
+X
+X % Rescale by ranges ...........................
+Xx1 = x1.*scx(o2,:);
+Xx2 = x2.*scx(o2,:);
+Xy1 = y1.*scy(o2,:);
+Xy2 = y2.*scy(o2,:);
+X
+X
+X % Calculate areas .............................
+XS = zeros(4,length(scx));
+XS(1,:) = (x2(1,:)-x1(1,:)).*(y2(2,:)-y1(1,:));
+XS(1,:) = S(1,:)-(x2(2,:)-x1(1,:)).*(y2(1,:)-y1(1,:));
+X
+XS(2,:) = (x2(1,:)-x1(2,:)).*(y2(2,:)-y1(2,:));
+XS(2,:) = S(2,:)-(x2(2,:)-x1(2,:)).*(y2(1,:)-y1(2,:));
+X
+XS(3,:) = (x1(1,:)-x2(1,:)).*(y1(2,:)-y2(1,:));
+XS(3,:) = S(3,:)-(x1(2,:)-x2(1,:)).*(y1(1,:)-y2(1,:));
+X
+XS(4,:) = (x1(1,:)-x2(2,:)).*(y1(2,:)-y2(2,:));
+XS(4,:) = S(4,:)-(x1(2,:)-x2(2,:)).*(y1(1,:)-y2(2,:));
+X
+X
+X % Find if they cross each other ...............
+Xis = (S(1,:).*S(2,:)<=0)&(S(3,:).*S(4,:)<=0);
+X
+X
+X % Find very close to intersection
+Xisy = min(abs(S));
+Xii = find(isy<=tol & is);
+Xis(ii) = .5*ones(size(ii));
+X
+X % Output
+Xif nargout < 2
+X  isy = zeros(1,len);
+X  isy(isx) = is;
+X  is = isy;
+X
+Xelse
+X  isy = scx.*scy;
+X  ii = find(~isy);
+X  isy(ii) = ones(size(ii));
+X  S = S./isy(ones(4,1),:);
+X
+Xend
+X
+END_OF_FILE
+if test 3208 -ne `wc -c <'iscross.m'`; then
+    echo shar: \"'iscross.m'\" unpacked with wrong size!
+fi
+chmod +x 'iscross.m'
+# end of 'iscross.m'
+fi
+if test -f 'isdln.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'isdln.m'\"
+else
+echo shar: Extracting \"'isdln.m'\" \(1991 characters\)
+sed "s/^X//" >'isdln.m' <<'END_OF_FILE'
+Xfunction [is,num] = isdln(N,R,tol)
+X% ISDLN  Find if triangulation/tesselation is a Delaunay one.
+X%	[IS,NUM] = ISDLN(N,R) accepts tesselation index matrix
+X%	N (n_spx by d+1) each rows with indices of points constituing
+X%	an individual simplex and matrix R (n_pts by d) with each
+X%	row consisting of coordinates of a d-dimensional point.
+X%	Returns boolean number IS which is 1 if tesselation
+X%	satisfy criterium for Delaunay one (empty circumsphere
+X%	of each simplex) and 0 if not. Also returns vector NUM
+X%	(n_spx by 1) with indices of closest points to the centres
+X%	of circumspheres of each simplex which does not satisfy
+X%	this criterium.  
+X
+X%  Algorithm:  Based on empty circumsphere criterium.
+X%	The program calculates circumsphere centers and radii for
+X%	each simplex and checks if there are any other points
+X%	inside each circumsphere; if there are, triangulation is
+X%	not a Delaynay one.
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	05/10/95
+X
+X % Defaults and parameters
+Xtol_dflt = 1e-9;    % Tolerance
+X
+X % Handle input ..................................
+Xif nargin==0, help isdln, return, end
+Xif nargin<3, tol = tol_dflt; end
+Xif nargin<2
+X  error('  Not enough input arguments')
+Xend
+X
+X % Transpose if necessary ........................
+X[n_pts,d] = size(R);
+Xif n_pts<d, R = R'; d = n_pts; end
+X[cc,nn] = size(N);
+Xif nn~=d+1 & cc==d+1, N = N'; end
+X
+X % Sizes and dimensioning vectors ................
+X[n_pts,d] = size(R);
+Xn_spx = size(N,1);
+Xod1 = ones(d+1,1);
+Xopts = ones(n_pts,1);
+Xcf = 1-tol;
+X
+X % Find circumspheres for each simplex ...........
+X[c,a] = circmsph(R,N);
+Xa = a;
+X
+X % For each simplex check if there are other points
+X % inside its circumsphere .......................
+Xnum = zeros(n_spx,1);
+Xfor jj=1:n_spx
+X  Rd = (R-c(jj*opts,:))';
+X  r2 = sqrt(sum(Rd.^2));
+X  r2(N(jj,:)) = od1*max(r2)+1;
+X  is_inside  = any(r2<a(jj)*cf);
+X  if is_inside
+X    [cc,nn] = min(r2);
+X    num(jj) = nn;
+X  end
+Xend
+X
+X  % Boolean number output: 1 - Delaunay, 0 - not
+Xis = ~any(num);
+X
+END_OF_FILE
+if test 1991 -ne `wc -c <'isdln.m'`; then
+    echo shar: \"'isdln.m'\" unpacked with wrong size!
+fi
+chmod +x 'isdln.m'
+# end of 'isdln.m'
+fi
+if test -f 'isinpoly.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'isinpoly.m'\"
+else
+echo shar: Extracting \"'isinpoly.m'\" \(1252 characters\)
+sed "s/^X//" >'isinpoly.m' <<'END_OF_FILE'
+Xfunction  isin = isinpoly(x,y,xp,yp)
+X% ISIN = ISINPOLY(X,Y,XP,YP)   Finds whether points with
+X%           coordinates X and Y are inside or outside of
+X%           a polygon with vertices XP, YP.
+X%           Returns matrix ISIN of the same size as X and Y
+X%           with 0 for points outside a polygon, 1 for
+X%           inside points and  0.5 for points belonging
+X%           to a polygon XP, YP itself.
+X
+X%  Copyright (c) 1995  by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	4/10/94, 8/26/94.
+X
+X % Handle input ::::::::::::::::::::::::::::::::
+Xif nargin<4
+X  fprintf('\n  Error: not enough input arguments.\n\n')
+X  return
+Xend
+X
+X % Make the contour closed and get the sizes
+Xxp = [xp(:); xp(1)];
+Xyp = [yp(:); yp(1)];
+Xsz = size(x);
+Xx = x(:); y = y(:);
+X
+Xlp = length(xp); l = length(x);
+Xep = ones(1,lp); e = ones(1,l);
+X
+X % Calculate cumulative change in azimuth from points x,y
+X % to all vertices
+XA = diff(atan2(yp(:,e)-y(:,ep)',xp(:,e)-x(:,ep)'))/pi;
+XA = A+2*((A<-1)-(A>1));
+Xisin = any(A==1)-any(A==-1);
+Xisin = (abs(sum(A))-isin)/2;
+X
+X % Check for boundary points
+XA = (yp(:,e)==y(:,ep)')&(xp(:,e)==x(:,ep)');
+Xfnd = find(any(A));
+Xisin(fnd) = .5*ones(size(fnd));
+Xisin = round(isin*2)/2;
+X
+X % Reshape output to the input size
+Xisin = reshape(isin,sz(1),sz(2));
+X
+END_OF_FILE
+if test 1252 -ne `wc -c <'isinpoly.m'`; then
+    echo shar: \"'isinpoly.m'\" unpacked with wrong size!
+fi
+chmod +x 'isinpoly.m'
+# end of 'isinpoly.m'
+fi
+if test -f 'inpolyhd.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'inpolyhd.m'\"
+else
+echo shar: Extracting \"'inpolyhd.m'\" \(4817 characters\)
+sed "s/^X//" >'inpolyhd.m' <<'END_OF_FILE'
+Xfunction is = inpolyhd(R,Rv,N,Nrm,tol)
+X% INPOLYHD  True for points inside a polyhedron.
+X%	IS = INPOLYHD(R,RV,N) determines which
+X%	points of the set R are inside of a multi-
+X%	dimensional polyhedron with vertices coordinates
+X%	RV and facets indices N.
+X%	R is NP by D matrix (NP - number of points,
+X%	D - dimension),
+X%	RV - NV by D matrix of polyhedron vertices 
+X%	coordinates, 
+X%	N - NF by D matrix, each row specifies the 
+X%	points in a facet (indices into rows of matrix RV).
+X%
+X%	Returns (quasi)-boolean vector IS of the size
+X%	NP by 1 which is equal to 1 for points inside
+X%	the simplex and 0 otherwise.
+X%
+X%	IS = INPOLYHD(...,TOL) specifies 
+X%	For points within TOL distance to the boundary
+X%	(any facets of a polyhedron) IS  is equal to .5
+X%	Default for TOL is 10*eps.
+X%	
+X
+X%  Calls primitive INSPX0 and possibly ROTMAT (which
+X%  also calls COMBIN, BINARY).
+X
+X%  Copyright (c) 1995  by Kirill K. Pankratov
+X%       kirill@plume.mit.edu
+X%       09/22/95
+X
+X% Algorithm: Based on the number of ray intersections.
+X% For each facet:
+X% Calculate intersections of rays along 1-st coordinate
+X% with n-dim facet, 
+X% project along 1-st coordinate into n-1 dimension,
+X% find whether this intersection point is inside the
+X% (n-1)-dim simplex, repeat procedure recursively
+X% till 2-d case.
+X
+X % Defaults and parameters ...........................
+Xtol_dflt = 10*eps;   % Default for tolerance
+Xmult = .001;         % Fractional coefficient
+X
+X % Handle input ......................................
+Xif nargin==0, help inpolyhd, return, end
+Xif nargin<3
+X  error('Not enough input arguments')
+Xend
+Xis_nrm = 0;
+Xif nargin>=4, szNrm = size(Nrm);
+Xelse, tol = tol_dflt; end
+Xif nargin==4
+X  if max(szNrm)>1, is_nrm = 1; tol = tol_dflt;
+X  else, tol = Nrm;
+X  end
+Xend
+X
+X
+X % Sizes and dimensions ..............................
+Xsz = zeros(4,2);
+Xsz = [size(R); size(Rv); size(N)];
+Xif any(diff(sz(:,2)))
+X  np = max(max(sz));
+X  op = sparse(sz(:),1,1,np,1);
+X  d = find(op==3);  % Space dimension must be equal
+X  if d==[]
+X    a = ' Matrices R, RV, N must have the same ';
+X    a = [a 'number of columns'];
+X    error(a)
+X  end
+X  d = min(d);
+X  % Transpose if necessary ........
+X  if sz(1,2)~=d, R = R';   sz(1,:) = sz(1,[2 1]); end
+X  if sz(2,2)~=d, Rv = Rv'; sz(2,:) = sz(2,[2 1]); end
+X  if sz(3,2)~=d, N = N';   sz(3,:) = sz(3,[2 1]); end
+Xelse
+X  d = sz(1,2);
+Xend
+Xn_pts = sz(1);
+Xnv = sz(2,1);
+Xn_fac = sz(3,1);
+Xif is_nrm
+X  if all(szNrm==[n_fac d]), Nrm = Nrm';
+X  elseif ~all(szNrm==[d n_fac])
+X    a = ' NRM must have the same size as index matrix N';
+X    error(a)
+X  end
+Xend
+X
+X
+X % Auxillary ..........................
+Xod = ones(d,1);
+Xop = ones(n_pts,1);
+Xis = zeros(n_pts,1);
+Xtol = max(tol(1),0);
+X
+X % Exclude points which are off limits ..............
+Xrmin = min(Rv)-tol;
+Xrmax = max(Rv)+tol;
+XA = R>=rmin(op,:) & R<=rmax(op,:);
+Xind = find(all(A'));
+X
+X
+X % Quick exit if no points within limits
+Xif ind==[], return, end
+X
+X % Extract points within limits ........
+Xnp = length(ind);
+Xis_out = np<n_pts;
+Xif is_out
+X  R = R(ind,:);
+X  is = zeros(np,1);
+X  op = ones(np,1);
+Xend
+X
+X
+X % Shift coordinates so that the origin is outside ..
+Xrmin = min(Rv);
+Xrmax = max(Rv);
+Xif any(rmin<=0 & rmax>=0) & ~is_nrm
+X  rmin = rmax-rmin;
+X  rmax = (1+rand(1,d)).*rmin;
+X  R = R+rmax(op,:);
+X  Rv = Rv+rmax(ones(nv,1),:);
+Xend
+X
+X
+X % If normals are not input, calculate them ........
+Xif ~is_nrm
+X  Nrm = zeros(d,n_fac);
+X  for jj = 1:n_fac
+X    c_fac = N(jj,:);
+X    Rs = Rv(c_fac,:);
+X    Nrm(:,jj) = Rs\od;
+X  end
+Xend
+X
+X
+X % Make sure that the first component is not close to 0
+Xwhile any(abs(Nrm(1,:))<tol)
+X  A = rotmat(d);  % Rotational matrix
+X  Nrm = A'*Nrm;
+X  R = R*A;
+X  Rv = Rv*A;
+Xend
+X
+X
+X % For each facet calculate intersections
+Xis  = zeros(np,1);
+Xfor jj = 1:n_fac
+X  c_fac = N(jj,:);
+X  c_nrm = Nrm(:,jj);
+X
+X  % Find points which can possibly
+X  % intersect the current facet
+X  Rs = Rv(c_fac,:);    % Current facet
+X  rmin = min(Rs)-tol;  % Limits
+X  rmax = max(Rs)+tol;
+X  A = R>=rmin(op,:) & R<=rmax(op,:);
+X  A = A(:,2:d)';
+X
+X  ii = find(all(A));  % Points within all the limits
+X  Rc = R(ii,:);        % Extract subset of these points
+X
+X  if ii~=[]
+X    x1 = Rc(:,1);        % Snip the first component
+X    Rc = Rc(:,2:d);
+X    Rs = Rs(:,2:d);
+X
+X    % Calculate intersections
+X    xi = Rc*c_nrm(2:d);
+X    xi = (1-xi)/c_nrm(1);
+X
+X    % Call INSPX0 with found points ...........
+X    c_is = inspx0(Rc,Rs,tol);
+X
+X    % Check the first component of intersection
+X    a = xi-x1;
+X    ii1 = find(abs(a)<tol);
+X    a = a>0;
+X
+X    a(ii1) = mult*ones(size(ii1));
+X
+X    c_is = c_is.*a;
+X    is(ii) = is(ii)+c_is;
+X
+X  end  % End if
+X
+Xend  % End for
+X
+X
+X % Check if even or odd nmb. of intersections ......
+Xop = floor(is);
+Xii = find(is>op);
+Xop = op-2*floor(op/2);
+Xop(ii) = .5*ones(size(ii));
+X
+X % Combine with excluded points .........
+Xif is_out
+X  is = zeros(n_pts,1);
+X  is(ind) = op;
+Xelse     % If weren't any excluded points
+X  is = op;
+Xend
+X
+END_OF_FILE
+if test 4817 -ne `wc -c <'inpolyhd.m'`; then
+    echo shar: \"'inpolyhd.m'\" unpacked with wrong size!
+fi
+chmod +x 'inpolyhd.m'
+# end of 'inpolyhd.m'
+fi
+if test -f 'isintpl.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'isintpl.m'\"
+else
+echo shar: Extracting \"'isintpl.m'\" \(1807 characters\)
+sed "s/^X//" >'isintpl.m' <<'END_OF_FILE'
+Xfunction [is,S] = isintpl(x1,y1,x2,y2)
+X% ISINTPL Check for intersection of polygons.
+X%	[IS,S] = ISINTPL(X1,Y1,X2,Y2) Accepts coordinates
+X%	X1,Y1 and X2, Y2 of two polygons. Returns scalar
+X%	IS equal to 1 if these polygons intersect each other
+X%	and 0 if they do not.
+X%	Also returns Boolean matrix S of the size length(X1)
+X%	by length(X2) so that {ij} element of which is 1 if 
+X%	line segments i to i+1 of the first polygon and 
+X%	j to j+1 of the second polygon intersect each other,
+X%	0 if they don't and .5 if they "touch" each other.
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov,
+X%       kirill@plume.mit.edu.
+X%       06/20/95, 08/25/95
+X
+X
+X % Handle input ...................................
+Xif nargin==0, help isintpl, return, end
+Xif nargin<4
+X  error(' Not enough input arguments ')
+Xend
+X
+X % Make column vectors and check sizes ............
+Xx1 = x1(:); y1 = y1(:);
+Xx2 = x2(:); y2 = y2(:);
+Xl1 = length(x1);
+Xl2 = length(x2);
+Xif length(y1)~=l1 | length(y2)~=l2
+X  error('(X1,Y1) and (X2,Y2) must pair-wise have the same length.')
+Xend
+X
+X % Quick exit if empty
+Xif l1<1 | l2<1, is = []; S = []; return, end
+X
+X % Check if their ranges are intersecting .........
+Xlim1 = [min(x1) max(x1)]';
+Xlim2 = [min(x2) max(x2)]';
+Xisx = interval(lim1,lim2);  % X-ranges
+Xlim1 = [min(y1) max(y1)]';
+Xlim2 = [min(y2) max(y2)]';
+Xisy = interval(lim1,lim2);  % Y-ranges
+Xis = isx & isy;
+XS = zeros(l2,l1);
+X
+Xif ~is, return, end  % Early exit if disparate limits
+X
+X % Indexing .......................................
+X[i11,i12] = meshgrid(1:l1,1:l2);
+X[i21,i22] = meshgrid([2:l1 1],[2:l2 1]);
+Xi11 = i11(:); i12 = i12(:);
+Xi21 = i21(:); i22 = i22(:);
+X
+X % Calculate matrix of intersections ..............
+XS(:) = iscross([x1(i11) x1(i21)]',[y1(i11) y1(i21)]',...
+X               [x2(i12) x2(i22)]',[y2(i12) y2(i22)]')';
+X
+XS = S';
+Xis  = any(any(S));
+X
+END_OF_FILE
+if test 1807 -ne `wc -c <'isintpl.m'`; then
+    echo shar: \"'isintpl.m'\" unpacked with wrong size!
+fi
+chmod +x 'isintpl.m'
+# end of 'isintpl.m'
+fi
+if test -f 'isrect.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'isrect.m'\"
+else
+echo shar: Extracting \"'isrect.m'\" \(3879 characters\)
+sed "s/^X//" >'isrect.m' <<'END_OF_FILE'
+Xfunction [r,lim] = isrect(x, y)
+X%ISRECT True if polygon encloses a rectangular shape.
+X%       ISRECT(X, Y) returns 1 if X and Y are the x- and y-coordinates
+X%       of the vertices of a polygon that encloses a rectangular
+X%       shape.  Otherwise it returns 0.  X and Y must be vectors that
+X%       have the same length.  The input polygon must be closed; in
+X%       other words, X(1)==X(length(X)) and Y(1)==Y(length(Y)).  
+X
+X%   Outline of the calculations:
+X%  1. Transform coordfinates so that if rectangle, its sides
+X%     will be aligned in the new x,y directions.
+X%  2. Find rectangle of limits ("bounding box") and check
+X%     if all the points belong to it.
+X%  3. If yes, check if neighbouring points lie on the same
+X%     sides of limiting rectangle.
+X%  4. If yes, check if all the perimeter of the limiting
+X%     rectangle is covered by a polygon.
+X
+X%  Kirill K. Pankratov,  kirill@plume.mit.edu
+X%  01/20/95
+X
+Xtol = 1e-12;   % Tolerance
+Xr = 1;         % "Quick return" value
+X
+X % Handle input .............................................
+Xif nargin==0, help isrect, return, end
+X
+X % Check for complex arguments 
+Xif nargin==1,
+X  y = imag(x); x = real(x);
+X  if all(y==0), return; end
+Xend
+X
+X % Make sure both arguments are column vectors
+Xx = x(:); y = y(:);
+Xn = length(x);
+X % Check the length
+Xif n~=length(y)
+X  error('  Vectors x, y must have the same length')
+Xend
+X
+X % If less than 3 points, always (degenerate) rectangle
+Xif n < 3, return, end
+X
+X % Transform coordinates so that the longest side will be
+X % aligned along a new x-direction and the perpendicular
+X % direction will remain so .................................
+X % Find maximum distance interval ..........
+Xa = (x(2:n)-x(1:n-1)).^2+(y(2:n)-y(1:n-1)).^2;
+X[ll,n0] = max(a);
+X
+X % If degenerate (single point), quick return
+Xif ~ll, return, end
+X 
+X % Make longest side a new x basis vector
+Xx = x-x(n0);
+Xy = y-y(n0);
+Xxx = x(n0+1);
+Xyy = y(n0+1);
+Xll = xx.^2+yy.^2;
+Xxx = xx/ll;
+Xyy = yy/ll;
+X
+X % Perform transformation ..........
+XA = [xx -yy; yy xx];  % Transformation matrix
+XB = [x y]*A;          % New coordinates [x y]
+X
+X % Find limits and check if all points are on a line
+X % lim=[min(x) min(y) max(x) max(y)] ......
+Xlim = [min(B) max(B)];
+Xspan = lim([3 4])-lim([1 2]);
+X % If on the line and closed, return 1
+Xif any(span<tol), return, end
+X
+X % Calculate "binary" matrix B (n by 4) where each row
+X % shows whether coordinates of a point equal to limits
+Xo_n = ones(n,1);  % Auxillary indexing vector
+XB = abs(B(:,[1 2 1 2])-lim(o_n,:))<tol;
+X
+XsumB = sum(B');   % 2 - for corner points, 1 for points
+X                  % on the sides, 0 - outside or inside
+X % Common sides for neighbouring points:
+XA = B(1:n-1,:) & B(2:n,:);
+X                       
+X % Check if all points lie on the perimeter of the limiting
+X % limiting rectangle (sumB~=0) and neigbouring points
+X % belong to the same sides. If not, polygon is not a 
+X % rectangle:
+Xr = all(sumB) & all(any(A'));
+Xif ~r, return; end
+X
+X
+X % If the routine continues, all the points lie on the
+X % limiting rectangle. The last operation: check
+X % if all the perimeter of this rectangle is covered.
+X
+XB = B(sumB==2,:); % Extract corner points only
+X % B: 1 1 0 0 for lower-left  corner
+X %    0 1 1 0     lower-right
+X %    0 0 1 1     upper-right
+X %    1 0 0 1     upper-left
+X
+X % Now calculate "magic numbers" for connections
+X % between neighbouring corner points.
+X % For "lock" vector [1 4 2 6] and deductible 5
+X % must give 2 - for lower side, 9 - right, 6 - upper
+X % 5 - left,  1 - return to the same corner point
+Xm_n = (B*[1 4 2 6]'-5).^2;
+Xm_n = abs(diff(m_n))'+1;    % Magic numbers
+X
+X % Make a key with "indentures" at magic number
+X % positions and match with magic number "lock" vector:
+Xkey = ones(1,10);
+Xkey([2 9 6 5]) = zeros(1,4);
+Xkey(m_n) = key(m_n)+ones(size(m_n));
+X
+X % If all the key pattern is matched, all perimeter
+X % of the limiting rectangle is covered .........
+Xr = all(key);
+END_OF_FILE
+if test 3879 -ne `wc -c <'isrect.m'`; then
+    echo shar: \"'isrect.m'\" unpacked with wrong size!
+fi
+chmod +x 'isrect.m'
+# end of 'isrect.m'
+fi
+if test -f 'linechk.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'linechk.m'\"
+else
+echo shar: Extracting \"'linechk.m'\" \(1219 characters\)
+sed "s/^X//" >'linechk.m' <<'END_OF_FILE'
+Xfunction [x1,y1,x2,y2] = linechk(x1,y1,x2,y2)
+X% LINECHK Input checking for line segments.
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%       kirill@plume.mit.edu
+X%       08/22/95,
+X
+X % String for transposing
+Xstr = ['x1=x1'';'; 'y1=y1'';'; 'x2=x2'';'; 'y2=y2'';'];
+X
+X % Sizes
+Xsz = [size(x1); size(y1); size(x2); size(y2)]';
+Xpsz = prod(sz);
+X
+X % Check x1, y1
+Xif psz(1)~=psz(2)
+X  error('  Arguments  x1 and y1 must have the same size')
+Xend
+X
+X % Check x2, y2
+Xif psz(3)~=psz(3)
+X  error('  Arguments  x2 and y2 must have the same size')
+Xend
+X
+X % Check if any arguments are less than 2 by 1
+Xif any(max(sz)<2)
+X  error('  Arguments  x1, y1, x2, y2 must be at least 2 by 1 vectors')
+Xend
+X
+X % Check if no size is equal to 2
+Xif any(all(sz~=2))
+X  error('  Arguments  x1, y1, x2, y2 must be 2 by 1 vectors')
+Xend
+X
+X % Find aruments to be transposed .............................
+Xii = find(sz(1,:)~=2);
+Xfor jj = 1:length(ii)
+X  eval(str(ii(jj),:)); % Transpose if neccessary
+Xend
+Xsz(:,ii) = flipud(sz(:,ii));
+X
+X % If vectors, extend to 2 by n matrices ......................
+Xn = max(sz(2,:));
+Xon = ones(1,n);
+Xif sz(2,1)<n, x1 = x1(:,on); end
+Xif sz(2,2)<n, y1 = y1(:,on); end
+Xif sz(2,3)<n, x2 = x2(:,on); end
+Xif sz(2,4)<n, y2 = y2(:,on); end
+X
+END_OF_FILE
+if test 1219 -ne `wc -c <'linechk.m'`; then
+    echo shar: \"'linechk.m'\" unpacked with wrong size!
+fi
+chmod +x 'linechk.m'
+# end of 'linechk.m'
+fi
+if test -f 'mapsph.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'mapsph.m'\"
+else
+echo shar: Extracting \"'mapsph.m'\" \(1407 characters\)
+sed "s/^X//" >'mapsph.m' <<'END_OF_FILE'
+Xfunction [Ro,z] = mapsph(Ri,rad,r0)
+X%  MAPTSPH  Mapping d-dimensional cartesian set
+X%	on a surface of a d+1 - dimensional sphere.
+X%	RO = MAPTSPH(RI) Maps dataset RI on a surface
+X%	of a sphere of dimension higher by one.
+X%	MAPSPH(RI,RAD,R0) accepts also radius RAD
+X%	of the sphere and center R0 of the dataset.
+X%	if RAD<0, it is interpreted as a multiple
+X%	for approximate radius of a set, that is 
+X%	actual radius of a sphere is -RAD*R_set.
+X
+X%  Used in DELAUNAY tesselation program and plots of
+X%  triangulated surfaces.
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	05/10/95
+X
+Xrad_dflt = 2; % Default for curvature radius
+X              % (relative to the set radius)
+X
+X % Handle input .....................................
+X[n_pts,d] = size(Ri);  % Input size
+Xif nargin<3, r0 = mean(Ri);  end   % Origin
+Xif nargin<2, rad = -rad_dflt; end % Curvature coefficient
+X
+X % Auxillary
+Xopts = ones(n_pts,1);
+Xod = ones(d,1);
+X
+X % Calculate approximate center and the diameter of a set
+XRo = Ri-r0(opts,:);
+Xr = sqrt(sum((Ro.^2)'))';
+Xa = max(r);    % Approximate radius
+X
+X % Choose the radius of curvature n_rad times
+X % larger than the radius of a set
+Xif rad<0,  rad = -rad*a; end
+X
+X % Map a set on a sphere of d+1 dimension .........
+XRo = Ro./r(:,od);
+Xr = r/rad;
+Xz = cos(r);
+Xs = sin(r);
+XRo = Ro.*s(:,od);  % Add "vertical" dimension
+X
+X % Output .....................
+Xif nargout==1, Ro = [Ro z]; end
+X
+END_OF_FILE
+if test 1407 -ne `wc -c <'mapsph.m'`; then
+    echo shar: \"'mapsph.m'\" unpacked with wrong size!
+fi
+chmod +x 'mapsph.m'
+# end of 'mapsph.m'
+fi
+if test -f 'perimetr.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'perimetr.m'\"
+else
+echo shar: Extracting \"'perimetr.m'\" \(768 characters\)
+sed "s/^X//" >'perimetr.m' <<'END_OF_FILE'
+Xfunction  p = perimetr(x,y)
+X% PERIMETER Perimeter (length) of a polygon.
+X%	P = PERIMETR(X,Y) Returns perimeter (length) 
+X%	of a polygon (or a sequence of line segments)
+X%	defined by coordinates X,Y (vectors of equal length).
+X%	For closed polygons must be X(1) = X(length(X)) and
+X%	Y(1) = Y(length(Y)).
+X%	PERIMETR(X+i*Y) is the same as PERIMETR(X,Y).
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	05/25/95
+X
+X
+X % Handle input ..........................
+Xif nargin==0, help perimetr, end
+Xif nargin==1
+X  y = imag(x);
+X  x = real(x);
+Xend
+X
+X % Check sizes ...........................
+Xif any(size(x)~=size(y))
+X  error('  Arguments x and y must have the same length')
+Xend
+X
+X % Calculate length ......................
+Xp = sum(sqrt(diff(x).^2+diff(y).^2));
+X
+END_OF_FILE
+if test 768 -ne `wc -c <'perimetr.m'`; then
+    echo shar: \"'perimetr.m'\" unpacked with wrong size!
+fi
+chmod +x 'perimetr.m'
+# end of 'perimetr.m'
+fi
+if test -f 'planerot.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'planerot.m'\"
+else
+echo shar: Extracting \"'planerot.m'\" \(1002 characters\)
+sed "s/^X//" >'planerot.m' <<'END_OF_FILE'
+Xfunction [xo,yo] = planerot(x,y,ang,x0,y0)
+X% PLANEROT  Planar rotation.
+X%	PLANEROT(X,Y,ANG,X0,Y0) Calulates new
+X%	coordinates XO, YO of points X, Y rotated
+X%	at angle ANG (positive counter-clockwise)
+X%	about a points with coordinates (X0,Y0) 
+X%	(default is (0,0)).
+X%	ANG is measured in radians (use ANG*pi/180
+X%	if ANG is expressed in degrees).
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov,
+X%       kirill@plume.mit.edu.
+X%       06/07/95
+X
+X % Handle input .........................
+Xif nargin==0, help planerot, return, end
+Xif nargin<3
+X  error('  Not enough input arguments')
+Xend
+Xif nargin<4, x0 = 0; y0 = 0; end
+X
+Xsz = size(x);
+Xif all(size(y)==fliplr(sz)), y = y'; end
+Xif ~all(size(y)==sz)
+X  error('X, Y must have the same size')
+Xend
+X
+X % Relative to origin ...................
+Xx = x-x0;
+Xy = y-y0;
+X
+X % Rotation SIN and COS ................
+Xc = cos(ang);
+Xs = sin(ang);
+X
+X % Rotate ..............................
+Xxo = x*c-y*s;
+Xyo = x*s+y*c;
+X
+X % Add origin ..........................
+Xxo = xo+x0;
+Xyo = yo+y0;
+END_OF_FILE
+if test 1002 -ne `wc -c <'planerot.m'`; then
+    echo shar: \"'planerot.m'\" unpacked with wrong size!
+fi
+chmod +x 'planerot.m'
+# end of 'planerot.m'
+fi
+if test -f 'polybool.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'polybool.m'\"
+else
+echo shar: Extracting \"'polybool.m'\" \(6449 characters\)
+sed "s/^X//" >'polybool.m' <<'END_OF_FILE'
+Xfunction [xo,yo,ind] = polybool(x1,y1,x2,y2,flag)
+X% POLYBOOL Boolean operations on polygons.
+X%	[XO,YO] = POLYBOOL(X1,Y1,X2,Y2,FLAG)
+X%	calulates results of Boolean operations on
+X%	a pair of polygons.
+X%	FLAG Specifies the type of the operation:
+X%	1 - Intersection (P1 & P2)
+X%	2 - Union (P1 | P2)
+X%	3 - Difference (P1 & ~P2)
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov,
+X%       kirill@plume.mit.edu.
+X%       06/25/95, 09/07/95 
+X
+X%	This program calls the following functions:
+X%	AREA, ISINTPL, ISCROSS, INTSECL.
+X
+X% Algorithm:
+X%  1. Check boundary contour directions (area).
+X%     For intersection and union make all
+X%     counter-clockwise. For difference make the second
+X%    contour clock-wise.
+X%  2. Calculate matrix of intersections (function ISINTPL).
+X%     Quick exit if no intersections.
+X%  3. For intersecting segments calculate intersection
+X%     coordinates (function INTSECL).
+X%  4. Sort intersections along both contours.
+X%  5. Calculate sign of cross-product between intersectiong
+X%     segments. This will give which contour goes "in" and
+X%     "out" at intersections.
+X%	
+X%  6. Start with first intersection:
+X%     Determine direction to go ("in" for intersection,
+X%     "out" for union).
+X%     Move until next intersection, switch polygons at each
+X%     intersection until coming to the initial point.
+X%     If not all intersections are encountered, the 
+X%     resulting polygon is disjoint. Separate output 
+X%     coordinates by NaN and repeat procedure until all 
+X%     intersections are counted.
+X
+X % Default for flag
+Xflag_dflt = 1; % 1- intersec., 2-union, 3 - diff.
+X
+X % Handle input
+Xif nargin==0, help polybool, return, end
+Xif nargin < 4
+X  error(' Not enough input arguments')
+Xend
+Xif nargin<5, flag = flag_dflt; end
+X
+Xx1 = x1(:); y1 = y1(:);
+Xx2 = x2(:); y2 = y2(:);
+Xl1 = length(x1);
+Xl2 = length(x2);
+X
+X % Check areas and reverse if negative
+Xnn1 = area(x1,y1);
+Xif nn1<0, x1 = flipud(x1); y1 = flipud(y1); end
+Xnn2 = area(x2,y2);
+Xif (nn2<0 & flag<3) | (nn2>0 & flag==3)
+X  x2 = flipud(x2); y2 = flipud(y2); 
+Xend
+X
+X % If both polygons are identical ........
+Xif l1==l2
+X  if all(x1==x2) & all(y1==y2)
+X    if flag<3, xo = x1; yo = y1; ind = 1:l1; 
+X    else, xo = []; yo = []; ind = []; end
+X    return
+X  end
+Xend
+X
+X % Calculate matrix of intersections .....
+X[is,C] = isintpl(x1,y1,x2,y2);
+Xis = any(any(C));
+X
+X % Quick exit if no intersections ........
+Xif ~is
+X  if flag==1       % Intersection
+X    xo=[]; yo = [];
+X  elseif flag==2   % Union
+X    xo = [x1; nan; x2];
+X    yo = [y1; nan; y2];
+X  elseif flag==3   % Difference
+X    xo = x1; yo = y1;
+X  end
+X  return
+Xend
+X
+X % Mark intersections with unique numbers
+Xi1 = find(C);
+Xni = length(i1);
+XC(i1) = 1:ni;
+X
+X % Close polygon contours
+Xx1 = [x1; x1(1)]; y1 = [y1; y1(1)];
+Xx2 = [x2; x2(1)]; y2 = [y2; y2(1)];
+Xl1 = length(x1);  l2 = length(x2);
+X
+X % Calculate intersections themselves
+X[i1,i2,id] = find(C);
+Xxs1 = [x1(i1) x1(i1+1)]'; ys1 = [y1(i1) y1(i1+1)]';
+Xxs2 = [x2(i2) x2(i2+1)]'; ys2 = [y2(i2) y2(i2+1)]';
+X
+X % Call INTSECL ............................
+X[xint,yint] = intsecl(xs1,ys1,xs2,ys2);
+X
+X % For sements belonging to the same line
+X % find interval of intersection ...........
+Xii = find(xint==inf);
+Xif ii~=[]
+X  [is,inx] = interval(xs1(:,ii),xs2(:,ii));
+X  [is,iny] = interval(ys1(:,ii),ys2(:,ii));
+X  xint(ii) = mean(inx);
+X  yint(ii) = mean(iny);
+Xend
+X
+X % Coordinate differences of intersecting segments
+Xxs1 = diff(xs1); ys1 = diff(ys1);
+Xxs2 = diff(xs2); ys2 = diff(ys2);
+X
+X % Calculate cross-products
+Xcp = xs1.*ys2-xs2.*ys1;
+Xcp = cp>0;
+Xif flag==2, cp=~cp; end % Reverse if union
+Xcp(ii) = 2*ones(size(ii));
+X
+X % Sort intersections along the contours
+Xind = (xint-x1(i1)').^2+(yint-y1(i1)').^2;
+Xind = ind./(xs1.^2+ys1.^2);
+Xcnd = min(ind(ind>0));
+Xind = ind+i1'+i2'/(ni+1)*cnd*0;
+X[xo,ii] = sort(ind);
+Xxs1 = id(ii);
+X[xo,ind] = sort(xs1);
+Xind = rem(ind,ni)+1;
+Xxs1 = xs1(ind);
+X
+Xind = (xint-x2(i2)').^2+(yint-y2(i2)').^2;
+Xind = ind./(xs2.^2+ys2.^2);
+Xcnd = min(ind(ind>0));
+X[xo,ii] = sort(i2'+ind+i1'/(ni+1)*cnd*0);
+Xxs2 = id(ii);
+X[xo,ind] = sort(xs2);
+Xind = rem(ind,ni)+1;
+Xxs2 = xs2(ind);
+X
+X % Combine coordinates in one vector
+Xx1 = [x1; x2]; y1 = [y1; y2];
+X
+X % Find max. possible length of a chain
+Xxo = find(any(C'));
+Xxo = diff([xo xo(1)+l1]);
+Xmlen(1) = max(xo);
+Xxo = find(any(C));
+Xxo = diff([xo xo(1)+l2]);
+Xmlen(2) = max(xo);
+X
+X % Check if multiple intersections in one segment
+Xxo = diff([i1 i2]);
+Xis_1 = ~all(all(xo));
+X
+X % Begin counting intersections *********************
+X
+X % Initialization ..................
+Xint = zeros(size(xint));
+Xnn = 1;   % First intersection
+Xnn1 = i1(nn); nn2 = i2(nn);
+Xb = cp(nn);
+Xis2 = b==2;
+Xxo = []; yo = []; ind = [];
+Xclosed = 0;
+X
+X % Proceed until all intersections are counted 
+Xwhile ~closed  % begin counting `````````````````````0
+X
+X  % If contour closes, find new starting point
+X  if int(nn) & ~all(int)
+X    ii = find(int);
+X    C(id(ii)) = zeros(size(ii));
+X    nn = min(find(~int));  % Next intersection
+X    nn1 = i1(nn);
+X    nn2 = i2(nn);
+X    xo = [xo; nan];        % Separate by NaN 
+X    yo = [yo; nan];
+X    ind = [ind; nan];
+X    % Choose direction ......
+X    b = cp(nn);
+X  end
+X
+X  % Add current intersection ......
+X  xo = [xo; xint(nn)];
+X  yo = [yo; yint(nn)];
+X  ind = [ind; 0];
+X  int(nn) = 1;
+X  closed = all(int);
+X
+X  % Find next segment
+X  % Indices for next intersection
+X  if ~b, nn = xs1(nn);
+X  else,  nn = xs2(nn);
+X  end
+X  if ~b, pt0 = nn1; else,  pt0 = nn2; end
+X
+X  nn1 = i1(nn);
+X  nn2 = i2(nn);
+X
+X  if b, pt = nn2; else, pt = nn1; end
+X
+X  if b, pt0 = pt0+l1; pt = pt+l1; end
+X  ii = (pt0+1:pt);
+X
+X
+X  % Go through the beginning ..............
+X  cnd = pt<pt0 | (pt==pt0 & is_1 & flag>1);
+X  if cnd
+X    if ~b,  ii = [pt0+1:l1 1:pt];
+X    else,   ii = [pt0+1:l1+l2 l1+1:pt];
+X    end
+X  end
+X  len = length(ii);
+X  cnd = b & len>mlen(2);
+X  cnd = cnd | (~b & len>mlen(1));
+X  if is2 | cnd, ii=[]; end
+X
+X
+X  % Add new segment
+X  xo = [xo; x1(ii)];
+X  yo = [yo; y1(ii)];
+X  ind = [ind; ii'];
+X
+X  % Switch direction
+X  if cp(nn)==2, b = ~b; is2 = 1;
+X  else, b = cp(nn); is2 = 0;
+X  end
+X
+Xend    % End while (all intersections) '''''''''''''''0
+X
+X % Remove coincident successive points
+Xii = find(~diff(xo) & ~diff(yo));
+Xxo(ii) = []; yo(ii) = []; ind(ii) = [];
+X
+X % Remove points which are 
+Xii = find(isnan(xo));
+Xif ii~=[]
+X  i2 = ones(size(xo));
+X  ii = [ii; length(xo)+1];
+X
+X  i1 = find(diff(ii)==3);
+X  i1 = ii(i1);
+X  i1 = [i1; i1+1; i1+2];
+X  i2(i1) = zeros(size(i1));
+X
+X  i1 = find(diff(ii)==2);
+X  i1 = ii(i1);
+X  i1 = [i1; i1+1];
+X  i2(i1) = zeros(size(i1));
+X
+X  xo = xo(i2); yo = yo(i2); ind = ind(i2);
+Xend
+X  
+X
+END_OF_FILE
+if test 6449 -ne `wc -c <'polybool.m'`; then
+    echo shar: \"'polybool.m'\" unpacked with wrong size!
+fi
+chmod +x 'polybool.m'
+# end of 'polybool.m'
+fi
+if test -f 'polydiff.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'polydiff.m'\"
+else
+echo shar: Extracting \"'polydiff.m'\" \(888 characters\)
+sed "s/^X//" >'polydiff.m' <<'END_OF_FILE'
+Xfunction [xo,yo,ind] = polydiff(x1,y1,x2,y2)
+X% POLYDIFF  Difference of 2 polygons.
+X%       [XO,YO] = POLYDIFF(X1,Y1,X2,Y2) Calculates polygon(s) P
+X%	of difference of polygons P1 and P1 with coordinates 
+X%	X1, Y1 and X2, Y2.
+X%	The resulting polygon(s) is a set of all points which belong
+X%	to P1 but not to to P2: P = P1 & ~P2.
+X%	The input polygons must be non-self-intersecting and
+X%	simply connected.
+X%
+X%       If polygons P1, P2 are not intersecting, returns 
+X%	coordinates of the first polygon X1, X2.
+X%	If the result P is not simply connected or consists of several
+X%	polygons, resulting boundary consists of concatenated 
+X%	coordinates of these polygons, separated by NaN.
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov,
+X%       kirill@plume.mit.edu.
+X%       06/25/95  
+X 
+Xif nargin==0, help polydiff, return, end
+X 
+X % Call POLYBOOL with flag=3
+X[xo,yo,ind] = polybool(x1,y1,x2,y2,3);
+X
+END_OF_FILE
+if test 888 -ne `wc -c <'polydiff.m'`; then
+    echo shar: \"'polydiff.m'\" unpacked with wrong size!
+fi
+chmod +x 'polydiff.m'
+# end of 'polydiff.m'
+fi
+if test -f 'polyints.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'polyints.m'\"
+else
+echo shar: Extracting \"'polyints.m'\" \(836 characters\)
+sed "s/^X//" >'polyints.m' <<'END_OF_FILE'
+Xfunction [xo,yo,ind] = polyints(x1,y1,x2,y2)
+X% POLYINTS  Intersection of 2 polygons.
+X%	[XO,YO] = POLYINTS(X1,Y1,X2,Y2) Calculates polygon(s)
+X%	if intersection of polygons with coordinates X1, Y1 
+X%	and X2, Y2.
+X%       The resulting polygon(s) is a set of all points which 
+X%	belong to both P1 and P2: P = P1 & P2.
+X%	These polygons must be non-self-intersecting and
+X%	simply connected.
+X%
+X%	If these polygons are not intersecting, returns empty.
+X%	If intersection consist of several disjoint polygons
+X%	(for non-convex P1 or P2) output vectors XO, YO consist
+X%	of concatenated cooddinates of these polygons, 
+X%	separated by NaN.
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov,
+X%       kirill@plume.mit.edu.
+X%       06/25/95  
+X 
+Xif nargin==0, help polyints, return, end
+X
+X % Call POLYBOOL with flag=1
+X[xo,yo,ind] = polybool(x1,y1,x2,y2,1);
+X
+END_OF_FILE
+if test 836 -ne `wc -c <'polyints.m'`; then
+    echo shar: \"'polyints.m'\" unpacked with wrong size!
+fi
+chmod +x 'polyints.m'
+# end of 'polyints.m'
+fi
+if test -f 'polyinfo' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'polyinfo'\"
+else
+echo shar: Extracting \"'polyinfo'\" \(5836 characters\)
+sed "s/^X//" >'polyinfo' <<'END_OF_FILE'
+X% POLYINFO "Info" for various polygon routines in SaGA.
+X%       It can be called from MATLAB by typing:
+X%       >> type polyinfo
+X 
+X% Kirill K. Pankratov, kirill@plume.mit.edu
+X
+X  This text contains the list and brief description of
+Xplanar geometry operations in SaGA. This includes operations
+Xwith points, lines, polygons.
+X
+X
+X  Note on the syntax and format:
+X  - - - - - - - - - - - - - - -
+XPlanar points are specified by pairs of coordinates X,Y.
+XSome programs, such as AREA, CENTROID, allow complex
+Xarguments like X+i*Y, but most programs operate with
+Xreal pairs of coordinates.
+X
+XLines or line segments are specified by end-points
+Xcoordinates [X0 X1],[Y0 Y1].
+X
+XPolygons are typically defined by their vertices
+Xcoordinates XV, YV. By polygon we understand a set of
+Xall points inside a contour defined by these coordinate
+Xvectors XV,YV. The contour does not have to be closed.
+XMost programs dealing with polygons close it automatically,
+Xassuming the last segment of a boundary contour connecting
+XN-th nd 1-st point: {(XV(N),YV(N)), (XV(1),YV(1))}, where
+XN is the number of vertices.
+XSome operations are sensitive to the direction of such
+Xboundary contour. "Normal" direction is counter-clockwise;
+Xthe area inside such a contour is assumed positive, for
+Xthe clockwise contours the area is negative.
+X
+XSome programs support the "NaN-separated" format, when
+Xseveral polygons are concatenated into one:
+X[X1; NaN; X2; NaN; X3; ...], [Y1; NaN; Y2; NaN; Y3; ...].
+XThis form implies that there are several separate polygons.
+Xin one coordinate vector.
+XThis is a convenient form for situations where the number of
+Xseparate polygons in input/output is not known beforehand.
+XSuch a form is implicitly assumed in the MATLAB commands
+Xsuch as CONTOUR and PLOT.
+X
+X
+X
+X Coordinate transformations and operations on sets of points:
+X ------------------------------------------------------------
+X
+XPLANEROT  - calculates coordinates of a set of points X,Y
+X  rotated about some point at a certain angle.
+X
+XREFLECT  - calculates coordinates of a set of points X,Y
+X  reflected about a line.
+X
+XCONVEX2  - calculates convex hull of a planar set of points.
+X  Returns indices of points from a set which belong to a 
+X  convex hull, ordered into a counter-clockwise contour.
+X  (requires primitive CONVEX20).
+X
+X
+X
+X Line segments:
+X -------------
+X
+XINTSECL  - calculates intersections of line segments specified
+X  by end-point coordinates [X01 X11],[Y01 Y11] and
+X  [X02 X12],[Y02 Y12].
+X
+XISCROSS  - determines whether 2 line segments intersect each
+X  other, without calculation of intersection coordinates 
+X  themselves.
+X
+X
+X Unary operations with polygons:
+X -------------------------------
+X
+XAREA  - calculates area of a polygon with vertices X, Y;
+X  (integral -Int{x dy} along the boundary contour).  Area is 
+X  signed: positive for counter-clockwise contours, negative 
+X  for clockwise ones.
+X
+XCENTROID  - calculates centroid coordinates X0, YO (center of
+X  mass of a polygon bounded by a contour with vertices X, Y).
+X  A polygon must be simply connected and non-self-intersecting.
+X
+XPERIMETR  - perimeter (total length of a sequence of line
+X  segments). In contrast to other polygon-processing routine 
+X  this one does not "close" polygon internally, so the input
+X  can be just a sequence of segments, not a closed polygon.
+X
+X
+X
+X  Binary operations on polygons
+X  -----------------------------
+X
+XISINTPL  - finds whether two polygons intersect each other.
+X   Returns boolean scalar equal to 1 if they have intersection
+X   and 0 otherwise. Also returns boolean "intersection matrix"
+X   whose (i,j) element is 1 if i-th segment of the first
+X   polygon intersects j-th segment of the second polygon and
+X   0 otherwise.
+X
+XThe following programs perform various Boolean operations on
+Xpolygons, such as intersection, union. They all have similar
+Xsyntax like:
+X[XO,YO] = POLYINTS(X1,Y1,X2,Y2) where X1, Y1 are coordinates
+Xof vertices of the polygon P1,  X2, Y2 - polygon P2.
+XReturns coordinates XO, YO of vertices of one or more
+Xpolygons which are the product of the corresponding Boolean
+Xoperation. If result consists of more than one polygon, the
+Xvertices coordinates for different polygons are separated
+Xby NaN: XO = [XO1; NaN; XO2; ...], YO = [YO1; NaN; YO2; ...].
+X
+XSee the cooresponding example in the "Gallery".
+X
+XPOLYINTS - calculates intersection of polygons P1 and P2. 
+X  Returns polygon(s) PO containing points which belong to 
+X  both P1 and P2:  PO = P1 & P2.
+X
+XPOLYUNI - calculates union of polygons P1 and P2. 
+X  Returns polygon(s) PO containing points which belong to 
+X  either P1 or P2:  PO = P1 | P2.
+X
+XPOLYDIFF - calculates difference of polygons P1 and P2. 
+X  Returns polygon(s) PO containing points which belong to 
+X  P1 but not to P2:  PO = P1 & ~P2.
+X
+XPOLYXOR - calculates exclusive OR of polygons P1 and P2. 
+X  Returns polygon(s) PO containing points which belong either
+X  to P1 or to P2 but not to both of them:
+X  PO = (P1 | P2) & ~(P1 & P2).
+X
+XPOLYBOOL  - Primitive for Boolean operation with polygons.
+X  All the above Boolean functions call POLYBOOL and are
+X  front-ends to it.
+X
+X
+X
+X  Various programs for points, lines, polygons:
+X  --------------------------------------------
+X
+XISINPOLY  - determines whether a point (or a set of points)
+X  is inside or outside of a polygon with vertices X1,Y1.
+X  Returns 1 for inside points, 0 - for outside, .5 - for
+X  boundary points. Also returns 2 for a case of self-
+X  intersecting polygon for points inside "double area".
+X
+XINTSECPL  - calculates intersections of a line with a
+X  polygon. Returns coordinates XI, YI of intersections.
+X
+XPOLYPLOT  - plotting or filling polygons. Similar to PLOT
+X  or FILL command but automatically closes boundary
+X  contours and supports "NaN-separated" format, allowing
+X  to plot or fill groups of separate polygons in one call
+X  and also to fill non-simply connected polygons (with
+X  "holes") properly.
+X
+END_OF_FILE
+if test 5836 -ne `wc -c <'polyinfo'`; then
+    echo shar: \"'polyinfo'\" unpacked with wrong size!
+fi
+chmod +x 'polyinfo'
+# end of 'polyinfo'
+fi
+if test -f 'polyuni.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'polyuni.m'\"
+else
+echo shar: Extracting \"'polyuni.m'\" \(1090 characters\)
+sed "s/^X//" >'polyuni.m' <<'END_OF_FILE'
+Xfunction [xo,yo,ind] = polyuni(x1,y1,x2,y2)
+X% POLYUNI  Union of 2 polygons.
+X%       [XO,YO] = POLYINT(X1,Y1,X2,Y2) Calculates polygon(s) P
+X%       which is (are) union of polygons P1 and P2 with coordinates 
+X%	X1, Y1 and X2, Y2.
+X%	The resulting polygon(s) is a set of all points which belong
+X%	either to P1 or to P2: P = P1 | P2.
+X%	The input polygons must be non-self-intersecting and
+X%	simply connected.
+X%
+X%       If polygons P1, P2 are not intersecting, returns 
+X%	coordinates of the both polygons separated by NaN.
+X%	If both P1 and P2 are convex, their boundaries can have no 
+X%	more than 2 intersections. The result is also a convex 
+X%	polygon.
+X%       If the result P is not simply connected (such as a polygon
+X%	with a "hole") the resulting contour consist of counter-
+X%	clockwise "outer boundary" and one or more clock-wise 
+X%	"inner boundaries" around "holes".
+X 
+X%  Copyright (c) 1995 by Kirill K. Pankratov,
+X%       kirill@plume.mit.edu.
+X%       06/25/95  
+X 
+Xif nargin==0, help polyuni, return, end
+X 
+X % Call POLYBOOL with flag=2 ..........
+X[xo,yo,ind] = polybool(x1,y1,x2,y2,2);
+X
+END_OF_FILE
+if test 1090 -ne `wc -c <'polyuni.m'`; then
+    echo shar: \"'polyuni.m'\" unpacked with wrong size!
+fi
+chmod +x 'polyuni.m'
+# end of 'polyuni.m'
+fi
+if test -f 'polyxor.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'polyxor.m'\"
+else
+echo shar: Extracting \"'polyxor.m'\" \(1037 characters\)
+sed "s/^X//" >'polyxor.m' <<'END_OF_FILE'
+Xfunction [xo,yo,ind] = polyxor(x1,y1,x2,y2)
+X% POLYXOR  Exclusive OR of 2 polygons.
+X%       [XO,YO] = POLYXOR(X1,Y1,X2,Y2) Calculates polygon(s) P
+X%	of difference of polygons P1 and P1 with coordinates 
+X%	X1, Y1 and X2, Y2.
+X%	The resulting polygon(s) is a set of all points which belong
+X%	either to P1 or to P2 but not to both: 
+X%	P = (P1 & ~P2) | (P2 & ~P1).
+X%	The input polygons must be non-self-intersecting and
+X%	simply connected.
+X%
+X%       If polygons P1, P2 are not intersecting, returns 
+X%	coordinates of the both polygons separated by NaN.
+X%	If the result P is not simply connected or consists of several
+X%	polygons, resulting boundary consists of concatenated 
+X%	coordinates of these polygons, separated by NaN.
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov,
+X%       kirill@plume.mit.edu.
+X%       06/25/95  
+X 
+Xif nargin==0, help polyxor, return, end
+X 
+X % Call POLYBOOL twice with flag=3
+X[xx,yy,ind] = polybool(x1,y1,x2,y2,3);
+Xxo = [xx; nan]; yo = [yy; nan];
+X
+X[xx,yy,ind] = polybool(x2,y2,x1,y1,3);
+Xxo = [xo; xx]; yo = [yo; yy];
+X
+END_OF_FILE
+if test 1037 -ne `wc -c <'polyxor.m'`; then
+    echo shar: \"'polyxor.m'\" unpacked with wrong size!
+fi
+chmod +x 'polyxor.m'
+# end of 'polyxor.m'
+fi
+if test -f 'project.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'project.m'\"
+else
+echo shar: Extracting \"'project.m'\" \(1684 characters\)
+sed "s/^X//" >'project.m' <<'END_OF_FILE'
+Xfunction [Ro,B] = project(Ri,n)
+X% PROJECT Projection of a set of points on a plane or hyperplane.
+X%	[RP,B] = PROJECT(R,N)  calculates projection of a set of
+X%	points in a matrix R on a plane with normal vector N.
+X%	Each row of R contains coordinates of a point of a set,
+X%	such as R = [x1 y1 z1; x2 y2 z2; ...].
+X%	Output matrix RP has the same dimension as R. Its first
+X%	column contains projections of all points of R into a
+X%	normal vector N and other columns are coordinates in an
+X%	orthogonal basis in the (hyper)plane perpendicular to 
+X%	the normal N.
+X%	Also returns orthonormal basis B, whose first column is
+X%	a (normalized) N and the rest are  basis in a 
+X%	perpendicular (hyper)plane.
+X%	Ouput matrices RP and B have the following properties:
+X%	RP*RP' = R*R',  B'*B = I.
+X
+X%  Copyright (c) 1995  by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	02/09/95
+X
+Xif nargin < 2
+X  error('  Not enough input arguments')
+Xend
+X
+Xn = n(:);        % Make normal a column vector
+X
+Xdim = length(n); % Dimension
+X
+X % Check sizes
+XszR = size(Ri);
+Xaa = szR==dim;
+Xif ~any(aa)
+X  error('  Number of columns in matrix R must match length of N')
+Xelseif aa(1) & ~aa(2)
+X  Ri = Ri';
+Xend
+X
+Xn = n/norm(n);   % Normalize
+X
+XB = eye(dim);    % Initialize orthogonal basis
+X
+X % Find a basis vector with maximum projection on the 
+X % normal n (to be excluded)
+X[aa,nn] = find(max(abs(n)));
+X
+Xstay = ones(size(n));
+Xstay(nn) = 0;    % Mask: stay - 1, exclude - 0
+X
+X % Extract projections of all basis vectors on n
+XB = B-n*n';
+X
+XB = B(:,stay);  % Exclude basis vector most parallel to n
+X
+XB = orth(B);    % Orthoganalize the rest
+X
+XB = [n B];      % Add n to the new orthogonal basis
+X
+XRo = Ri*B';     % Coordinate transformation
+X
+END_OF_FILE
+if test 1684 -ne `wc -c <'project.m'`; then
+    echo shar: \"'project.m'\" unpacked with wrong size!
+fi
+chmod +x 'project.m'
+# end of 'project.m'
+fi
+if test -f 'randisph.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'randisph.m'\"
+else
+echo shar: Extracting \"'randisph.m'\" \(928 characters\)
+sed "s/^X//" >'randisph.m' <<'END_OF_FILE'
+Xfunction R = randisph(n,d)
+X% RANDISPH  Random points uniformly distributed inside a sphere.
+X%       R = RANDSPH(N) Generates N points randomly distributed
+X%       inside a unit 2-d circle with a uniform probability
+X%       distribution.
+X%       R = RANDSPH(N,D) Generates N points inside a D-dimensional
+X%	unit sphere.
+X 
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%       kirill@plume.mit.edu
+X%       05/10/95
+X
+X % Handle input ....................................
+Xif nargin==0, help randsph, return, end
+Xif nargin<2, d = 2; end  %  Default is 2-d circle
+X
+Xmult = sqrt(d);
+XR = rand(d,n*mult);  % Generate n random uniform points
+XR = R*2-1;           % Make it from -1 to 1
+X
+Xrl = sum(R.^2);      % Distance to each of n points
+X
+XR = R(:,find(rl<1)); % Find points inside a unit sphere
+Xnp = size(R,2);
+X
+Xif np < n            % If not enough points, go back
+X  Rn = randisph(n-np,d);
+X  R = [R Rn'];
+Xelse
+X  R = R(:,1:n);
+Xend
+X
+XR = R';
+X
+END_OF_FILE
+if test 928 -ne `wc -c <'randisph.m'`; then
+    echo shar: \"'randisph.m'\" unpacked with wrong size!
+fi
+chmod +x 'randisph.m'
+# end of 'randisph.m'
+fi
+if test -f 'randsph.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'randsph.m'\"
+else
+echo shar: Extracting \"'randsph.m'\" \(745 characters\)
+sed "s/^X//" >'randsph.m' <<'END_OF_FILE'
+Xfunction R = randsph(n,d)
+X% RANDSPH  Random points uniformly distributed on a sphere.
+X%	R = RANDSPH(N) Generates N points randomly distributed
+X%	on a unit 3-d sphere with a uniform probability
+X%	distribution.
+X%	R = RANDSPH(N,D) Generates N points on D-dimensional sphere.
+X
+X%  Copyright (c) 1995  by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	05/08/95
+X
+X % Handle input ....................................
+Xif nargin==0, help randsph, return, end
+Xif nargin<2, d = 3; end  %  Default is 3-d sphere
+X
+XR = randn(d,n);          % Generate n random normal points
+X
+Xrl = sqrt(sum(R.^2));    % Distance to each of n points
+X
+XR = R./rl(ones(d,1),:);  % Normalize coordinates by distance
+X                         % to make it lie on a unit sphere
+X
+XR = R';
+X
+END_OF_FILE
+if test 745 -ne `wc -c <'randsph.m'`; then
+    echo shar: \"'randsph.m'\" unpacked with wrong size!
+fi
+chmod +x 'randsph.m'
+# end of 'randsph.m'
+fi
+if test -f 'reflect.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'reflect.m'\"
+else
+echo shar: Extracting \"'reflect.m'\" \(1332 characters\)
+sed "s/^X//" >'reflect.m' <<'END_OF_FILE'
+Xfunction  [xo,yo] = reflect(x,y,ax)
+X% REFLECT  Planar reflection about an axis.
+X%	[XO,YO]=REFLECT(X,Y,AX) returns coordinates X0,Y0
+X%	reflected about an axis AX.
+X%
+X%	AX line can be input in one of the following modes:
+X%	[X0 Y0 X1 Y1]  defines a line with end coordinates
+X%		(X0,Y0), (X1,Y1).
+X%	[X0 Y0 ANG]   specifies starting point and
+X%		direction of the line 
+X%		(same as [X0 Y0 X0+cos(ANG) Y0+sin(ANG)])
+X%	[X1 Y1]  assumes beginning at (0,0)
+X%		(same as [0 0 X1 Y1])
+X%	ANG     (scalar) specifies direction
+X%		(same as [0 0 cos(ANG) sin(ANG)]).
+X%
+X%	ANG must be expressed in radians (use ANG*pi/180
+X%       if ANG is expressed in degrees).
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov,
+X%       kirill@plume.mit.edu.
+X%       06/07/95
+X
+Xif nargin==0, help reflect, return, end
+Xif nargin<3
+X  error(' Not enough input arguments')
+Xend
+X
+Xsz = size(x);
+Xif all(size(y)==fliplr(sz)), y = y'; end
+Xif ~all(size(y)==sz)
+X  error('X, Y must have the same size')
+Xend
+X
+Xax = ax'; ax = ax(:)';
+Xla = length(ax);
+Xif la==3
+X  ax = [ax(1:2) ax(1)+cos(ax(3)) ax(2)+sin(ax(3))];
+Xelseif la==2
+X  ax = [0 0 ax];
+Xelseif la==1
+X  ax = [0 0 cos(ax) sin(ax)];
+Xend
+X
+Xnrm = ax([3 4])-ax([1 2]);
+Xlen = sqrt(nrm*nrm');
+Xnrm = nrm/len;
+X
+Xx = x-ax(1);
+Xy = y-ax(2);
+Xp = x*nrm(1)+y*nrm(2);
+Xxo = x-nrm(1)*p;
+Xyo = y-nrm(2)*p;
+X
+Xxo = -xo+nrm(1)*p+ax(1);
+Xyo = -yo+nrm(2)*p+ax(2);
+END_OF_FILE
+if test 1332 -ne `wc -c <'reflect.m'`; then
+    echo shar: \"'reflect.m'\" unpacked with wrong size!
+fi
+chmod +x 'reflect.m'
+# end of 'reflect.m'
+fi
+if test -f 'rotmat.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'rotmat.m'\"
+else
+echo shar: Extracting \"'rotmat.m'\" \(686 characters\)
+sed "s/^X//" >'rotmat.m' <<'END_OF_FILE'
+Xfunction  R = rotmat(d,th)
+X% Rotational (unitary) matrix.
+X%	R = ROTMAT(D) produces a random rotation
+X%	matrix of dimension D.
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%       kirill@plume.mit.edu
+X%       09/22/95
+X
+X
+X % Handle input .............................
+Xif nargin==0, d = 3; end
+Xif nargin<2, th = []; end
+X
+X % Component pairs ..........................
+XC = combin(d,2);
+Xn = size(C,1);
+X[i1,i2] = find(C');
+Xi1 = fliplr(reshape(i1,2,n));
+X
+X % Angles ....................
+Xthr = (2*rand(n,1)-1)*pi;
+Xthr(1:length(th)) = th;
+X
+Xc = cos(thr);
+Xs = sin(thr);
+X
+XR = eye(d);
+Xfor jj = 1:n
+X  ii = i1(:,jj);
+X  cc = c(jj); ss = s(jj);
+X  A = eye(d);
+X  A(ii,ii) = [cc ss; -ss cc];
+X  R = R*A;
+Xend
+X
+END_OF_FILE
+if test 686 -ne `wc -c <'rotmat.m'`; then
+    echo shar: \"'rotmat.m'\" unpacked with wrong size!
+fi
+chmod +x 'rotmat.m'
+# end of 'rotmat.m'
+fi
+if test -f 'rotmat3.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'rotmat3.m'\"
+else
+echo shar: Extracting \"'rotmat3.m'\" \(2875 characters\)
+sed "s/^X//" >'rotmat3.m' <<'END_OF_FILE'
+Xfunction  R = rotmat3(ang,ax)
+X% ROTMAT3  3-dimensional rotation matrix.
+X%	R = ROTMAT3(ANG,AX) returns matrix R which
+X%	is the product of successive rotations 
+X%	through angles ANG = [A1,A2,A3,...] about
+X%	axes AX = [AX1,AX2,AX3,...].
+X%	ANG must be a vector and AX must be either
+X%	a vector of the same length as ANG or matrix
+X%	3 by length(ANG) where each column specifies
+X%	vector of rotation axis.
+X%	Axes also can be specified as a string such as
+X%	'xyz', so that
+X%	R = ROTMAT3(ANG,'xyz')  is equivalent to
+X%	ROTMAT3(ANG,[1 2 3]) or  ROTMAT3(ANG,eye(3)).
+X%
+X%	R = ROTMAT3(ANG,'euler')     or
+X%	R = ROTMAT3(ANG,'cardinal') 
+X%	where ANG = [THETA PSI PHI] returns matrices
+X%	of rotations through Euler or Cardinal angles
+X%	respectively.
+X%
+X%	R = ROTMAT3('rand') uses rotations at random
+X%	angles in the range [-pi pi] around x,y,z
+X%	axes successively (so that it is equivalent
+X%	to R=rotmat3(pi*(2*rand(1,3)-1),[1 2 3]) )
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%       kirill@plume.mit.edu
+X%       01/23/95, 05/22/95
+X
+X % Handle input ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Xif nargin==0, help rotmat3, return, end
+Xaax = [];
+Xif nargin==1     % 'rand' or default axes
+X  if isstr(ang) & strcmp(ang,'rand')
+X    ang = pi*(rand(3,1)*2-1);
+X    aax = eye(3);
+X  end
+Xend
+X
+Xla = length(ang);
+Xc = cos(ang);
+Xs = sin(ang);
+X
+Xif nargin==2
+X
+X  if isstr(ax)   % "Named" angle systems ..........
+X    % Euler axes - y, old z, new z
+X    if ax(1)=='e'
+X      if la~=3
+X      error('Euler angles must be a 1 by 3 vector')
+X      else
+X        aax = [0 -s(1) 0; 1 0 0; 0 c(1) 1]; 
+X      end
+X    % Cardinal angles - y, new x, new z
+X    elseif ax(1)=='c'
+X      if la~=3
+X      error('Cardinal angles must be a 1 by 3 vector')
+X      else
+X        aax = [0 1 0; 1 0 0; 0 0 1];
+X      end
+X    elseif all(ax>='x') & all(ax<='z')  % 'xyz'
+X      aax = abs(ax-'w');
+X    else
+X      error(' Unidentified angle type')
+X    end
+X
+X  else        % "Numerical" axes ..................
+X    aax = ax;
+X  end
+X
+Xend  % End nargin==2
+X
+X % If axes not specified, cycle through (1,2,3)
+Xif aax==[], aax = rem(0:la-1,3)+1; end
+X
+Xif size(aax,2)~=la
+X  error([' Length of angle vector must be equal to '...
+X         'number of columns of axes matrix'])
+Xend
+X
+X % If axes is a vector, make 3 by length(ang) matrix
+Xif any(size(aax)==1) ...............
+X  v = aax(:);
+X  nn = v+(0:la-1)'*3;
+X  aax = zeros(3,la);
+X  aax(nn) = v;
+Xend
+X
+X
+X % Normalize axes vectors ..........
+Xnrm = sqrt(sum(aax.^2));
+Xaax = aax./nrm(ones(3,1),:);
+X
+Xc1 = 1-c;   % Auxillary 1-cos(a)
+X
+X % Make a product of rotations around each axes ....
+Xfor jj = 1:la
+X
+X  ax_c = aax(:,jj);    % Current axis vector
+X  v = ax_c*s(jj);      % sin(a) * [nx,ny,nz]
+X  R_c = [c(jj)   v(3)  -v(2);
+X         -v(3)  c(jj)  v(1);
+X          v(2)  -v(1)  c(jj)];
+X  R_c = R_c+(c1(jj)*ax_c)*ax_c'; % Current rotation
+X
+X  % Initialize R or multiply by R_c
+X  if jj==1, R = R_c;
+X  else,  R = R_c*R;
+X  end
+X
+Xend
+X
+END_OF_FILE
+if test 2875 -ne `wc -c <'rotmat3.m'`; then
+    echo shar: \"'rotmat3.m'\" unpacked with wrong size!
+fi
+chmod +x 'rotmat3.m'
+# end of 'rotmat3.m'
+fi
+if test -f 'rotsolve.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'rotsolve.m'\"
+else
+echo shar: Extracting \"'rotsolve.m'\" \(1783 characters\)
+sed "s/^X//" >'rotsolve.m' <<'END_OF_FILE'
+Xfunction [A,b] = rotsolve(R1,R2)
+X% ROTSOLVE  Solving solid body rotation problem.
+X%	[A,b] = ROTSOLVE(R1,R2) solves the matrix
+X%	equation 
+X%	A*R1 + b(:,[1 1 1]) = R2,
+X%	where A - 3 by 3 rotation matrix: inv(A)=A',
+X%	b - 3 by 1 vector (translation), R1 and R2 
+X%	are 3 by 3 matrices of initial and final 
+X%	coordinates of 3 points (a,b,c) of a solid body:
+X%	     |xa1 xb1 xc1|         |xa2 xb2 xc2|
+X%	R1 = |ya1 yb1 yc1| ,  R2 = |ya2 yb2 yc2| 
+X%	     |za1 zb1 zc1|         |za2 zb2 zc2|
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%       kirill@plume.mit.edu
+X%       01/23/95, 05/22/95
+X
+X%   Outline of calculations .....................
+X%   Make a problem separable for A and b:
+X%   Calculate matrices D1 and D2 of differences 
+X%   rb-ra, rc-ra and cross product (rb-ra)x(rc-ra)
+X%   In difference form:
+X%    A*D1 = D2        ==>    A = D2/D1        [1]
+X%    A^(-1)*D2 = D1
+X%   For rotational matrix  A^(-1)=A':
+X%    (A'*D2)' = D1' or, in another form:
+X%    D2'*A = D1'      ==>    A = D2'\D1'      [2]
+X%   Combining two estimates [1] and [2] in a l.s. sense:
+X%    A = [I; I]\[D2/D1; D2'\D1']
+X%   Now estimate translation vector  b:
+X%    b = mean((R2-A*R1)')
+X
+X % Handle input ................................
+Xif nargin == 0, help rotsolve, return, end
+Xif nargin == 1
+X error( 'Not enough input arguments')
+Xend
+Xis_3by3 = all(size(R1)==[3 3]) & all(size(R2)==[3 3]);
+Xif ~is_3by3
+X  error('Input arguments R1 and R2 must be 3 by 3 matrices')
+Xend
+X
+X % Matrices of differences .....................
+X % Initial
+XD1 = R1(:,[2 3 1])-R1;
+XD1(:,3) = cross(D1(:,1),D1(:,2));
+X % Final
+XD2 = R2(:,[2 3 1])-R2;
+XD2(:,3) = cross(D2(:,1),D2(:,2));
+X
+X % Combine 2 estimates in a least squares sense
+XI = eye(3);
+XA = [I; I]\[D2/D1; D2'\D1'];
+X
+X % Now estimate the translation vector
+Xb = R2-A*R1;
+Xb = mean(b')';
+X
+END_OF_FILE
+if test 1783 -ne `wc -c <'rotsolve.m'`; then
+    echo shar: \"'rotsolve.m'\" unpacked with wrong size!
+fi
+chmod +x 'rotsolve.m'
+# end of 'rotsolve.m'
+fi
+if test -f 'sphangle.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'sphangle.m'\"
+else
+echo shar: Extracting \"'sphangle.m'\" \(2060 characters\)
+sed "s/^X//" >'sphangle.m' <<'END_OF_FILE'
+Xfunction [ang,d] = sphangle(phi1,theta1,phi2,theta2)
+X% SPHANGLE  Spherical angle and distance between 2 points on
+X%	a unit sphere.
+X%	[ANG,D] = SPHANGLE(PHI1,THETA1,PHI2,THETA2)
+X%	computes spherical angle (great circle) and
+X%	3-dimensional distance between points ona sphere
+X%	given by spherical coordinates PHI (longitude) and
+X%	THETA (latitude), both in degrees.
+X%	All input variables PHI1,THETA1,PHI2,THETA2 must be 
+X%	scalars or matrices of the same size.
+X%	Returns spherical angle ANG in radians, so that the
+X%	distance along the sphere is  Dsph = R*ANG,
+X%	where R - radius.
+X%	D is a 3-dimensional distance between 2 points
+X%	(for unit radius). It is related to ANG as follows:
+X%	D = 2*sin(ANG/2).
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%       kirill@plume.mit.edu
+X%       08/17/94, 05/18/95
+X
+X % Handle input ....................................................
+Xif nargin==0, help sphangle, 
+Xif nargin<4                % Check if all 4 entered
+X  error('  Not enough input arguments')
+Xend
+Xsz = [size(phi1); size(theta1); size(phi2); size(theta2)];
+Xif any(diff(prod(sz')))
+X  error(['  Arguments phi1, theta1, phi2, theta2  must have '...
+X  'the same size'])
+Xend
+X
+X % Make input column vectors and angles in radians.
+Xd2r = pi/180;         % Degrees to radians
+Xphi1 = phi1(:)*d2r; theta1 = theta1(:)*d2r;
+Xphi2 = phi2(:)*d2r; theta2 = theta2(:)*d2r;
+X
+X % Calculate cartesian coordinates r = (x,y,z)
+Xr1 = [cos(phi1).*cos(theta1) sin(phi1).*cos(theta1) sin(theta1)]';
+Xr2 = [cos(phi2).*cos(theta2) sin(phi2).*cos(theta2) sin(theta2)]';
+X
+X % Calculate the 1/2 area of triangle built on the 2 points and the
+X % sphere center using cross-product
+Xs = cross(r1,r2);
+Xs = sqrt(sum(s.*s));
+Xsg = sign(dot(r1,r2));   % If angle is <pi/2 or >pi/2
+X
+X % Make angle  arcsin(s) for s<pi/2  or pi-arcsin(s) for s>pi/2
+Xang = pi*(sg<0)+pi/2*(sg==0)+sg.*asin(s); % ANG is arcsin of area
+X
+X % Output .....................................................
+Xang = reshape(ang,sz(1,1),sz(1,2));  % Reshape to original size
+Xd = 2*sin(ang/2);                    % 3-dimensional distance
+X
+END_OF_FILE
+if test 2060 -ne `wc -c <'sphangle.m'`; then
+    echo shar: \"'sphangle.m'\" unpacked with wrong size!
+fi
+chmod +x 'sphangle.m'
+# end of 'sphangle.m'
+fi
+if test -f 'spx2fac.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'spx2fac.m'\"
+else
+echo shar: Extracting \"'spx2fac.m'\" \(710 characters\)
+sed "s/^X//" >'spx2fac.m' <<'END_OF_FILE'
+Xfunction Nf = spx2fac(Ns,flag)
+X% SPX2FAC  List of simplices to list of faces.
+X%	NF = SPX2FAC(NS) accepts matrix NS (n_spx
+X%	by d+1 where d - dimension) with each row 
+X%	indices of a simplex. 
+X%	Returns matrix NF with each row indices of 
+X%	(unique) facets. 
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	05/15/95
+X
+Xif nargin<2, flag = 1; end
+X
+X % Sizes and dimensions ........
+X[n_spx,d] = size(Ns);
+Xd = d-1;
+X
+X % Auxillary indexing vectors and matrices
+XA = eye(d+1);
+X[I1,I2] = meshgrid(1:d+1,1:n_spx);
+XI1 = I1';
+XI2 = I2';
+XA = A(:,I1(:));
+X
+X % Reshape simplices matrix
+XNf = Ns';
+XNf = Nf(:,I2(:));
+XNf = reshape(Nf(find(~A)),d,n_spx*(d+1))';
+X
+X % Make it unique
+Xif flag, Nf = unique(Nf); end
+X
+END_OF_FILE
+if test 710 -ne `wc -c <'spx2fac.m'`; then
+    echo shar: \"'spx2fac.m'\" unpacked with wrong size!
+fi
+chmod +x 'spx2fac.m'
+# end of 'spx2fac.m'
+fi
+if test -f 'spx2nbr.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'spx2nbr.m'\"
+else
+echo shar: Extracting \"'spx2nbr.m'\" \(1127 characters\)
+sed "s/^X//" >'spx2nbr.m' <<'END_OF_FILE'
+Xfunction [Ns,Ni1,Ni2] = spx2nbr(N)
+X% SPX2NBR List of simplices to a matrix of connections.
+X%	NC = SPX2NBR(NS) Accepts a matrix N with a list
+X%	of triangles (or higher-dimensional simplices)
+X%	such as an output of triangulation/tesselation
+X%	program. It finds neighbouring points (sharing
+X%	the same simplex) for each point of a set and
+X%	produces a (sparse) matrix NC whose i-th column
+X%	has zeros for points which do not share any
+X%	simplex with i-th point and a positive integer
+X%	if they do.
+X%	[NC,NI1,NI2] = SPX2NBR(NS) also returns
+X%	auxillary indexing matrices NI1,NI2 which are
+X%	used in other programs (e.g. gradient estimation
+X%	such as GRADTLS.M).
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	05/10/95
+X
+X % Handle input ............
+Xif nargin==0, help spx2nbr, return, end
+X
+X % Dimensions ..............
+XszN = size(N);
+Xif diff(szN)<0, N = N'; end
+Xd = size(N,1);
+X
+X % Indexing ................
+Xvd = 1:d;
+Xod = ones(d,1);
+Xi1 = vd(od,:);
+Xi2 = i1';
+Xi1 = i1(:);
+Xi2 = i2(:);
+X
+X % Indexing matrices .......
+XNi1 = N(i1,:);
+XNi2 = N(i2,:);
+X
+X % Matrix of connection itself .........
+XNs = sparse(Ni1,Ni2,1);
+END_OF_FILE
+if test 1127 -ne `wc -c <'spx2nbr.m'`; then
+    echo shar: \"'spx2nbr.m'\" unpacked with wrong size!
+fi
+chmod +x 'spx2nbr.m'
+# end of 'spx2nbr.m'
+fi
+if test -f 'unique.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'unique.m'\"
+else
+echo shar: Extracting \"'unique.m'\" \(875 characters\)
+sed "s/^X//" >'unique.m' <<'END_OF_FILE'
+Xfunction [D,nr,c] = unique(R)
+X% UNIQUE  Extraction of unique rows out of matrix
+X%	[D,NR,C] = UNIQUE(R)  Returns matrix D containing
+X%	unique rows of input matrix R,
+X%	vector NR (size(R,1) by 1) showing index into rows
+X%	of D for each row of R,
+X%	vector C (size(D,1) by 1) containing number of
+X%	occurences (count) in R of each row of D.
+X
+X%  Based on the program MUNIQUE.M by Richard Aufrichtig
+X%  (winner of M-file contest V3.0)
+X
+X%  Copyright (c) 1995  by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	8/10/94, 05/12/95
+X
+Xif nargin==0, help unique, return, end
+X
+Xy = R*rand(size(R,2),1);
+X[y,i] = sort(y);
+Xy = find([1; diff(y)]);
+X
+Xnr = zeros(size(R,1),1);
+Xnr(y) = [i(1); diff(i(y))];
+Xnr(i) = cumsum(nr);
+Xy = sort(nr);
+Xc = find(diff([y; length(nr)+1]));
+Xc = [c(1); diff(c)];
+X
+Xy = zeros(size(nr));
+Xy(nr) = ones(size(nr));
+Xi = find(y);
+Xy(i) = 1:length(i);
+Xnr = y(nr);
+XD(nr,:) = R;
+X
+END_OF_FILE
+if test 875 -ne `wc -c <'unique.m'`; then
+    echo shar: \"'unique.m'\" unpacked with wrong size!
+fi
+chmod +x 'unique.m'
+# end of 'unique.m'
+fi
+if test -f 'volspx.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'volspx.m'\"
+else
+echo shar: Extracting \"'volspx.m'\" \(497 characters\)
+sed "s/^X//" >'volspx.m' <<'END_OF_FILE'
+Xfunction v = volspx(R)
+X%	VOLSPX  Volume of a simplex.
+X%	V = VOLSPX(R) Calculates a volume inside a
+X%	n-dimensional simplex (n+1 set of points).
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%       kirill@plume.mit.edu
+X%       04/21/95, 05/22/95
+X
+Xsz = size(R);
+Xd = min(size(R));
+X % Transpose so that vertical size is larger
+Xif sz(1)<sz(2), R = R'; end
+X
+X % Make last point origin of coordinate system
+XR = R(1:d,:)-R((d+1)*ones(d,1),:);
+X
+X % Now calculate a volume (D/n!)
+Xv = abs(det(R))/prod(1:d);
+X
+END_OF_FILE
+if test 497 -ne `wc -c <'volspx.m'`; then
+    echo shar: \"'volspx.m'\" unpacked with wrong size!
+fi
+chmod +x 'volspx.m'
+# end of 'volspx.m'
+fi
+if test -f 'voronoi2.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'voronoi2.m'\"
+else
+echo shar: Extracting \"'voronoi2.m'\" \(2729 characters\)
+sed "s/^X//" >'voronoi2.m' <<'END_OF_FILE'
+Xfunction [xc,yc,S,Nt,ln] = voronoi2(x,y,opt)
+X% VORONOI2 Planar Voronoi diagram.
+X%	[XV,YV,V,T] = VORONOI2(X,Y)  Calculates
+X%	Voronoi diagram of points with coordinates X, Y.
+X%	Returns coordinates XV, YV of Voronoi vertices
+X%	(circumcenters of Delaunay triangles), index
+X%	matrix V into vectors XV, YV of Voronoi
+X%	polygons for each points and intex matrix T of
+X%	Delaunay triangulation of an input set.
+X%	VORONOI2(X,Y) without output arguments or
+X%	[...,L] = VORONOI2(X,Y,1) also plots Voronoi
+X%	diagram.
+X
+X% Copyright (c)  Kirill K. Pankratov
+X%       kirill@plume.mit.edu
+X%       06/12/95
+X
+X % Handle input .............................
+Xif nargin==0, help voronoi2, return, end
+Xif nargin<3, opt=0; end   % No plotting
+X
+Xx = x(:);
+Xy = y(:);
+Xnp = length(x);
+X
+X % Approximate set diameter
+Xlim = [min(x) max(x) min(y) max(y)];
+Xd = sqrt((lim(2)-lim(1)).^2+(lim(4)-lim(3)).^2);
+X
+X % Delaunay triangulation ...................
+XNt = triangul(x,y);
+Xntr = size(Nt,2);
+X
+X % Convex hull
+Xich = convex2(x,y);
+Xll = length(ich);
+Xii = [2:ll 1];
+Xi1 = (x(ich(ii))-x(ich))';
+Xi2 = (y(ich(ii))-y(ich))';
+Xa = sqrt(i1.^2+i2.^2);
+Xdv = [i2./a; -i1./a]*2*d;
+X % Open direction azimuth
+Xa0 = atan2(dv(2,:),dv(1,:));
+Xdv = dv'+[3*x(ich(ii))+x(ich) 3*y(ich(ii))+y(ich)]/4;
+X
+X%plot(x,y,'o'),hold
+X%plot(x(ich),y(ich)),plot(dv(:,1),dv(:,2),'*'),pause
+X
+X % Append to lists of points and triangles
+Xx = [x; dv(:,1)];
+Xy = [y; dv(:,2)];
+XNt = [Nt [ich'; ich(ii)'; np+(1:ll)]];
+Xntr = size(Nt,2);
+Xnp0 = np;
+Xnp = np+ll;
+X
+X % Calculate circumferences
+X[i1,a] = circmsph([x y],Nt);
+Xxc = i1(:,1);
+Xyc = i1(:,2);
+X
+X % Calculate matrix of connections
+Xi1 = 1:ntr;
+Xi1 = i1(ones(3,1),:);
+XS = sparse(i1,Nt,1,ntr,np);
+X
+X % Entries into a sparse matrix ...........
+X % i1 - ind. of triangles, i2 - indices of points
+X[i1,i2] = find(S);
+Xlen = length(i2);
+X
+X % Indexing for a full matrix
+Xii = find(diff([0; i2])); % Pointers to new points
+Xdv = diff([ii; len+1]);
+Xlv = max(dv);
+Xind = ones(size(i2));
+Xll = length(ii);
+Xind(ii(2:ll)) = lv-dv(1:ll-1)+1;
+Xind = cumsum(ind);
+XS = zeros(lv,np); % Create a matrix for putting angles
+X
+X % Angles ...........................
+Xa = atan2(yc(i1)-y(i2),xc(i1)-x(i2));
+X
+X % Sort angles for each points ............
+XS(ind) = a;
+Xii = find(~S);
+XS(ii) = 20*ones(size(ii));
+Xii = S(:,ich)<a0(ones(lv,1),:);
+XS(:,ich) = S(:,ich)+2*pi*ii;
+X[S,i2] = sort(S);
+X
+Xii = 0:lv:lv*np-1;
+Xii = ii(ones(lv,1),:);
+Xi2 =  i2+ii;
+X
+X % Now put indices of triangles ...........
+XS = zeros(lv,np);
+XS(ind) = i1;   % Insert indices
+XS = S(i2);     % Rearrange according to angles
+X
+X % Plotting the diagram .........
+Xif opt | nargout<1
+X  plot(x(1:np0),y(1:np0),'o')
+X  for jj=1:np;
+X    nn = S(:,jj);
+X    nn = nn(find(nn));
+X    ln(jj) = line('xdata',xc(nn),'ydata',yc(nn));
+X  end
+X  axis square, axis equal
+Xend
+X
+END_OF_FILE
+if test 2729 -ne `wc -c <'voronoi2.m'`; then
+    echo shar: \"'voronoi2.m'\" unpacked with wrong size!
+fi
+chmod +x 'voronoi2.m'
+# end of 'voronoi2.m'
+fi
+if test -f 'z2rot.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'z2rot.m'\"
+else
+echo shar: Extracting \"'z2rot.m'\" \(835 characters\)
+sed "s/^X//" >'z2rot.m' <<'END_OF_FILE'
+Xfunction [R,v] = z2rot(z)
+X% Z2ROT Direction of Z axiz to rotation matrix
+X%	R = Z2ROT(Z) where Z is 1 by 3 vector of
+X%	z axis direction, generates 3 by 3 rotation
+X%	matrix R which will result in the specified
+X%	direction of z axis.
+X%	[R,A] = Z2ROT(Z) Returns also (Euler) 
+X%	rotation angles vector A=[THETA PSI], so that
+X%	the matrix R = ROTMAT(A,'euler').
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%       kirill@plume.mit.edu
+X%	05/18/95
+X
+Xif nargin==0, help z2rot, return, end
+Xsz = size(z);
+Xif any(sz~=[1 3]) & any(sz~=[3 1])
+X   error('z must be a 1 by 3 vector')
+Xend
+X
+Xz = z(:);
+Xz = z./sqrt(z'*z);     % Normalize
+Xth = acos(z(3));
+X
+Xz2 = z(1:2);
+Xlen = sqrt(z2'*z2);
+Xz2 = z2./(len+(~len)); % Normalize horizontal part
+Xpsi = asin(z2(2));
+X
+X % Generate rotational matrix and Euler angles vector
+Xv = [th psi 0];
+XR = rotmat3(v,'euler');
+X
+END_OF_FILE
+if test 835 -ne `wc -c <'z2rot.m'`; then
+    echo shar: \"'z2rot.m'\" unpacked with wrong size!
+fi
+chmod +x 'z2rot.m'
+# end of 'z2rot.m'
+fi
+echo shar: End of shell archive.
+exit 0

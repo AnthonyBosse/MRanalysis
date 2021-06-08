@@ -1,0 +1,1373 @@
+#! /bin/sh
+# This is a shell archive.  Remove anything before this line, then unpack
+# it by saving it into a file and typing "sh file".  To overwrite existing
+# files, type "sh file -c".  You can also feed this as standard input via
+# unshar, or by typing "sh <file", e.g..  If this archive is complete, you
+# will see the following message at the end:
+#		"End of shell archive."
+# Contents:  Bibliogr Contents Doclist Flowchart License Readme SagaFAQ
+#   Whatsnew
+# Wrapped by kirill@gyre on Thu Oct 26 21:08:47 1995
+PATH=/bin:/usr/bin:/usr/ucb ; export PATH
+if test -f 'Bibliogr' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'Bibliogr'\"
+else
+echo shar: Extracting \"'Bibliogr'\" \(2184 characters\)
+sed "s/^X//" >'Bibliogr' <<'END_OF_FILE'
+X***   This is some bibliography associated with   ***
+X***      SaGA programs and algorithms             ***
+X
+X
+X  Interpolation, mapping
+X  ----------------------
+X
+X  Watson D.F.
+XContouring: a practical guide to analysis and display of spacial data.
+XPergamon Press, 1992, ISBN 0 08 040286 0
+X  /A very good book. If you want to learn about contouring
+X  and interpolation from irregular datasets you definitely
+X  need to start with it. In many cases it is all you'll need.
+X  For further information there are plenty of references to 
+X  other books and papers./
+X
+X
+X  Daly R.
+XAtmospheric data analysis.
+XNew York: Cambridge University Press, 1991.
+X
+X  Ripley B.
+XSpatial statistics. New York: Wiley 1991.
+X
+X  Sibson, R., 1981,
+XA brief description of natural neighbour interpolation, 
+Xin Barnett, V., ed., Interpreting multivariate data: John Wiley,
+Xp. 21.
+X /The first introduction of the "natural neighbour interpolation"
+X method/.
+X
+X  Bretherthon F. P., R. E.  Davis,  Fandry
+X(Objective mapping)
+X
+X  Franke R., 1982.
+XSmooth interpolation of scattered data by local thin plate splines.
+XComputers Math with Applic., V.8, #4, 273-281.
+X
+X  Franke R., 1982.
+XScattered data interpolation: tests of some methods.
+XMath. Computation, V.38, p. 181-200.
+X
+X  Briggs I.C., 1984.
+XMachine contouring using minimal curvature.
+XGeophysisc, V.39, #1, 39-48.
+X
+X  Davis J.C. 1981.
+XStatistical techniques in petroleum explorations.
+XCommun. Stat-Theor. Meth., V.A10, #15, 1479-1503.
+X
+X  Davis J.C., 1981.
+XContour mapping SURFACE-II.
+XScience, V. 237, 669-672. 
+X 
+X  Marcotte Denis, 1991,
+XCokriging with MATLAB.
+XComputers and Geosciences, v.17, p. 1265-1280.
+X 
+X
+X
+X  Computational geometry.
+X  -----------------------
+X
+X Preparata F.P. & M.I. Shamos
+XComputational geometry: an introduction.
+XSpringer-Verlag, N.-Y., 1985.
+X
+X
+X
+X  Delaunay triangulation, Voronoi tesselation
+X  - - - - - - - - - - - - - - - - - - - - - -
+X  and related techniques:
+X  - - - - - - - - - - - -
+X
+XApplication of Voronoi diagrams ...
+X
+X Fortune S.
+XA sweepline algorithm for Voronoi diagrams.
+XAlgorithmica, 2(2), 1987, 153-174.
+X
+X Watson D. F.
+XComputing n-dimensional Delaunay tesselation with
+Xapplication to Voronoi polytopes.
+XComputer Jour., V.24, #2, 167-172.
+X
+END_OF_FILE
+if test 2184 -ne `wc -c <'Bibliogr'`; then
+    echo shar: \"'Bibliogr'\" unpacked with wrong size!
+fi
+chmod +x 'Bibliogr'
+# end of 'Bibliogr'
+fi
+if test -f 'Contents' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'Contents'\"
+else
+echo shar: Extracting \"'Contents'\" \(7025 characters\)
+sed "s/^X//" >'Contents' <<'END_OF_FILE'
+X<plaintext>
+X _______________ SaGA  Contents ________________________
+X
+XThis is a brief description of contents and functionality
+Xof the SaGA  - Spatial and Geometric Analysis toolbox.
+X
+XKirill K. Pankratov, Ph.D.
+XCenter of Meteorology and Physical Oceanography
+XAtmospheric & Planetary Sciences (EAPS)
+XMassachusetts Institute of Technology
+X
+X
+X  SaGA is a collection of MATLAB functions designed for
+Xvarious aspects of geometrical and spacial modeling.
+X
+X  Here is a partial list of programs contained in SaGA:
+X
+X     1. Planar geometry **********************************
+X
+X  1.1 Points, lines, polygons
+X
+Xisinpoly.m  - determining whether point is inside or outside
+X              of a closed contour (polygon).
+Xintsecl.m   - calculates intersection coordinates of line
+X              segments.
+Xintsecpl.m  - calculates intersection of a polygon by a line.
+Xiscross.m   - determines whether pairs of line segments 
+X              cross each other.
+Xisintpl.m   - determines whether 2 polygons are 
+X              intersecting.
+Xarea.m      - calculates area of a planar polygon.
+Xperimetr.m  - calculates perimeter of a polygon (total
+X              length of a sequence of line segments).
+Xcentroid.m  - calculates centroid (center of mass) of a
+X              polygon.
+Xplanerot.m  - planar rotations.
+Xreflect.m   - reflection about an axis (line).
+Xconvex2.m   - convex hull of a planar set of points.
+Xisrect.m    - True if polygon encloses a rectangular shape.
+X              (co-winner of the MATLAB  M-file Contest4)
+X
+X  1.2 Boolean operations on polygons:
+X
+Xpolyints.m  - calculates intersection of two polygons.
+Xpolyuni.m   - calculates union of two polygons.
+Xpolydiff.m  - calculates difference of two polygons.
+Xpolyxor.m   - calculates XOR (exclusive OR) of two polygons.
+Xpolybool.m  - primitive for all the above boolean functions.
+X
+X
+X     2. Three-dimensional and spherical geometry **********
+X
+X  2.1 Spherical geometry:
+X
+Xsphangle.m - distance (or planar angle) between pairs of
+X             points on a sphere.
+Xbodyang.m  - body (solid) angle of a triplet of points as 
+X             seen from the origin of the coordinate system.
+Xeqdsph.m   - calculates "equilibrium" distribution of N 
+X             points on a sphere.
+X
+X  2.2 Three-dimensional motions and rotations.
+X
+Xrotmat3.m  - 3-dimensional rotational matrix with specified
+X             axes and angles of rotation.
+Xrotsolve.m - solves solid-body motion-rotation problem:
+X             determines rotation matrix and translation 
+X             vector given the positions of 3 points of a
+X             solid body at 2 time moments.
+Xz2rot.m    - transforms direction of z-axis into 3 by 3
+X             rotation matrix by 2 Euler angles (theta, psi).
+X
+X
+X     3. Multi-dimensional computational geometry **********
+X
+Xfitplane.m  - fitting a plane (or hyperplane) through a
+X              set of points.
+Xproject.m   - projection of a set of points on a plane or
+X              hyperplane.
+Xrotmat.m    - multi-dimensional rotational matrix.
+Xconvexh.m   - convex hull of a multi-dimensional set of
+X              points.
+Xaddpt2ch.m  - adding an outer point to a convex hull.
+Xdelaunay.m  - Delaunay triangulation/tesselation of a 
+X              multi-dimensional set of points.
+Xvoronoi2.m  - Voronoi diagram for a planar set of points.
+Xisdln.m     - Finds whether given triangulation/tesselation
+X              is Delaunay one.
+Xspx2fac.m   - transforms a list of simplices of a 
+X              tesselated dataset into a list of faces 
+X              (boundaries of simplices).
+Xinpolyhd.m  - calulates whether a point is inside a
+X              multi-dimensional polyhedron 
+X              (analogue of ISINPOLY).
+Xvolspx.m    - calculates volume inside a multi-dimensional simplex
+X              (triangle, tetrahedron ...).
+Xcircmsph.m  - calculate center and radius of a circumsphere 
+X              around a multi-dimensional simplex 
+X              (triangle, tetrahedron ...).
+Xrandsph.m   - random points on a multi-dimensional unit 
+X              sphere.
+Xrandisph.m  - random points inside a multi-dimensional
+X              unit sphere.
+X
+X
+X    4. Interpolation, triangulation, mapping ************
+X
+X  4.1 Triangulation and related interpolation.
+X
+Xtriangul.m  - Delaunay triangulation of a planar set of
+X              points.
+Xinmesh.m    - finding which facets of a mesh a point 
+X              belongs to.
+Xinterptr.m  - interpolation with triangulation method 
+X              (linear 2-d interpolation inside triangles).
+Xextraptr.m  - extrapolation beyond the convex hull of a
+X              2-dimensional triangulated region.
+Xgrad2est.m  - gradient estimation from neighbouring points 
+X              of irregular planar set (used in INTERPTR)
+X
+X
+X  4.2 Objective mapping, kriging and other
+X      interpolation  techniques
+X
+Xobjmap.m    - objective mapping interpolation with 
+X              corresponding error map.
+Xkriging.m   - interpolation using Kriging method.
+Xmincurvi.m  - interpolation using minimal curvature 
+X              method.
+Xinvdisti.m  - inverse distance interpolation/extrapolation
+X              of multi-dimensional irregular sets of points.
+Xquadtree.m  - adaptive "quadtree" division of 2-d
+X              domain into subdomains (used in all
+X              matrix-inversion interpolation methods:
+X              OBJMAP, KRIGING, MINCURV).
+Xdetrend2.m  - removing mean and mean slope from 2-d
+X              data set (used in OBJMAP, KRIGING, 
+X              MINCURV).
+X
+X
+X  4.3 Regular grid interpolation and image processing
+X
+Xinterpm.m   - interpolation between rows and columns of a
+X              matrix ("smoothing" a matrix).
+Xfillmiss.m  - filling missing elements in a matrix 
+X              (interpolation from neighbouring elements).
+Xlocfilt.m   - local window 2-d filtering of an (image) 
+X              matrix. Has more options and more memory-
+X              efficient than the similar function COLFILT
+X              in the Image Processing Toolbox.
+X
+X
+X    5. Graphics *******************************************
+X
+X  5.1 Planar graphics
+X
+Xcircle.m    - plotting circles with specified position,
+X              radius, width, styles, etc.
+Xellipse.m   - plotting ellipses with specified positions,
+X              semiaxes, orientation, etc.
+Xpolyplot.m  - plotting or filling polygons (possibly non-simply
+X              connected or several polygons concatenated in one
+X              vector).
+Xcontourf.m  - filled contour plots.
+X
+X  5.2 Three-dimensional graphics
+X
+Xellipsd.m   - ellipsoid surface plot (with specified 
+X              semiaxes and orientation).
+Xtubes.m     - "tube" or "hose" surface around a 
+X              3-dimensional line.
+Xtorus.m     - toroidal surface plot with specified inner
+X              and outer radii, width, etc.
+Xknots.m     - "knots" of specified order: periodic tube-like
+X              surfaces with various symmetries.
+Xmebius.m    - "Mebius strips" of various orders.
+Xsurftri.m   - 2-d or 3-d triangulated surfaces plots with
+X              specified coloring etc.
+Xfilltetr.m   - plotting tetrahedron with specified vertices
+X              coordinates and coloring.
+X
+END_OF_FILE
+if test 7025 -ne `wc -c <'Contents'`; then
+    echo shar: \"'Contents'\" unpacked with wrong size!
+fi
+chmod +x 'Contents'
+# end of 'Contents'
+fi
+if test -f 'Doclist' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'Doclist'\"
+else
+echo shar: Extracting \"'Doclist'\" \(1508 characters\)
+sed "s/^X//" >'Doclist' <<'END_OF_FILE'
+X
+XDocumentation resourses for SaGA toolbox:
+X
+X1. SaGA Homepage at:
+X   ----------------
+X   directory:
+X http://puddle.mit.edu/~kirill/PUB/MATLAB/SAGA
+X   homepage:
+X http://puddle.mit.edu/~kirill/PUB/MATLAB/SAGAHTML/saga.html
+X   archives:
+X http://puddle.mit.edu/~kirill/PUB/MATLAB/SAGA_Z
+X (or, alternatively, "lake" instead of "puddle")
+X
+X  Homepage includes a www-format "gallery" - a series of 
+Xpictures illustrating various functions and algorithms with
+Xbrief descriptions.
+X
+X
+X2. General information text files in the toolbox itself:
+X   ----------------------------------------------------
+X  Bibliogr   - some related references (books and papers)
+X  Contents   - partial list of programs
+X  Doclist    - this file
+X  Flowchart  - which program calls which
+X  License    - license, registration and payment info
+X  Readme     - the most general information
+X  SagaFAQ    - some general questions related to SaGA,
+X               underlying methods and algorithms
+X  Whatsnew   - updates and releases status
+X
+X
+X3. Demonstrations:
+X   --------------
+X  dlndemo.m  - Delaunay triangulation
+X  treedemo.m - Quadtree adaptive division for interpolation
+X               of large datasets.
+X    The following functions produce various pictures at
+X    the homepage and can also be used as demo:
+X  sagawcm.m  - "welcome" picture at the homepage
+X  sagapic.m  - pictures from the "gallery"
+X
+X
+X4. Info on specific functions (extended "help sections")
+X   -----------------------------------------------------
+X  int3info
+X  mapinfo
+X  polyinfo
+END_OF_FILE
+if test 1508 -ne `wc -c <'Doclist'`; then
+    echo shar: \"'Doclist'\" unpacked with wrong size!
+fi
+chmod +x 'Doclist'
+# end of 'Doclist'
+fi
+if test -f 'Flowchart' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'Flowchart'\"
+else
+echo shar: Extracting \"'Flowchart'\" \(2835 characters\)
+sed "s/^X//" >'Flowchart' <<'END_OF_FILE'
+X<plaintext>
+X*** This is a "flowchart" of the SaGA Toolbox *********
+X*** showing dependences between different routines. ***
+X
+X(Legend:
+X  A -----> B    A calls B,
+X  A <----- B    A is called from B
+X  A -----> B >> A calls B and B calls other
+X                functions).
+X
+X
+X   1. Planar geometry .............................
+X
+Xisinpoly.m <-----  contourf.m
+X
+Xintsecl.m  ------> linechk.m
+X           <-----  polybool.m
+X           <-----  intsecpl.m
+Xintsecpl.m ------> intsecl.m
+X           ------> iscross.m
+Xiscross.m  ------> linechk.m
+X           ------> interval.m
+X           <-----  triangul.m
+X           <-----  polybool.m
+Xisintpl.m  ------> iscross.m
+Xarea.m     <<<---- polybool.m ...
+Xperimetr.m
+Xconvex2.m  ----->  convex20.m
+Xisrect.m
+X
+Xpolyints.m ----->  polybool.m >>
+Xpolyuni.m  ----->  polybool.m >>
+Xpolydiff.m ----->  polybool.m >>
+Xpolyxor.m  ----->  polybool.m >>
+X
+Xpolybool.m ----->  area.m
+X           ----->  intsecl.m
+X           ----->  iscross.m
+X
+X
+X  2. Three-dimensional and spherical geometry .....
+X
+Xsphangle.m
+Xbodyang.m
+Xeqdsph.m
+X
+Xrotsolve.m -----> rotmat3.m
+Xz2rot.m    -----> rotmat3.m
+Xrotmat3.m
+Xrotmat.m   -----> combin.m >>
+X
+X
+X  3. Multi-dimensional computational geometry .....
+X
+Xfitplane.m
+Xproject.m
+Xconvexh.m  -----> cvxadd.m   ----> unique.m
+X           -----> initspx.m
+Xaddpt2ch.m -----> spx2fac.m  >>
+X           -----> unique.m
+Xdelaunay.m -----> mapsph.m
+X           -----> convexh.m  >>
+Xvoronoi2.m -----> triangul.m >>
+Xisdln.m    -----> circmsph.m >>
+Xspx2fac.m  -----> unique.m
+Xinpolyhd.m -----> inspx0.m
+Xvolspx.m
+Xcircmsph.m -----> circmsph0.m
+Xrandsph.m
+Xrandisph.m
+X
+X
+X  4. Interpolation, triangulation, mapping ........
+X
+Xtriangul.m -----> inflate.m
+X           -----> convex2.m  >>
+X           -----> unique.m
+Xinmesh.m   <----  interptr.m
+Xinterptr.m -----> triangul.m >>
+X           -----> inmesh.m
+X           -----> grad2est.m >>
+X           -----> uniquept.m >>
+X           -----> extraptr.m >>
+Xextraptr.m -----> adjspx.m
+X           <----- interptr.m
+Xgrad2est   -----> grad2ls.m
+X           -----> grad2tcp.m
+X           <----- interptr.m
+Xobjmap.m   -----> quadtree.m >>
+X           -----> mkblocks.m
+X           -----> ptsinblk.m
+X           -----> uniquept.m >>
+Xkriging.m  -----> quadtree.m >>
+X           -----> mkblocks.m
+X           -----> ptsinblk.m
+X           -----> uniquept.m >>
+Xmincurvi.m -----> quadtree.m >>
+X           -----> mkblocks.m
+X           -----> ptsinblk.m
+X           -----> uniquept.m >>
+Xinvdisti.m
+X
+Xinterpm.m  -----> lagrcoef.m
+Xfillmiss.m
+Xlocfilt.m
+X
+X
+X  5. Graphics .....................................
+X
+Xcircle.m
+Xellipsd.m
+Xpolyplot.m -----> area.m
+Xcontourf.m -----> isinpoly.m
+X
+Xellipsd.m
+Xtubes.m
+Xtorus.m
+Xknots.m    -----> tubes.m
+Xmebius.m   -----> tubes.m
+X
+Xsurftri.m  -----> triangul.m  >>
+X           -----> surf3chk.m
+X           -----> surf3inf
+Xfilltetr.m
+X
+X
+X 6. Auxillary .....................................
+END_OF_FILE
+if test 2835 -ne `wc -c <'Flowchart'`; then
+    echo shar: \"'Flowchart'\" unpacked with wrong size!
+fi
+chmod +x 'Flowchart'
+# end of 'Flowchart'
+fi
+if test -f 'License' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'License'\"
+else
+echo shar: Extracting \"'License'\" \(1772 characters\)
+sed "s/^X//" >'License' <<'END_OF_FILE'
+X<plaintext>
+X***  This is a licensing information for SaGA -  ***
+X***   Spacial and Geometrical Analysis Toolbox   ***
+X
+X   SaGA, version 1.0 is SHAREWARE.
+XIt may be distributed freely as such and used used
+Xfor a trial period of 15 days free of charge.
+XAfter that it must be registered.
+X
+XRegistration fee:
+X-----------------
+XSingle users:                $40.
+XMulti-user licenses:
+X  first 5 users              $40/user,
+X  next  10 users             $20/user,
+X  unlimited number of users  $400.
+X
+XStudent license              $20
+X(full-time registered undegraduate or graduate students).
+X
+XLimited license              $20
+Xis allowed with written (or e-mailed) note from a user 
+Xexplaining that (he/she) needs only a small part of the 
+XSaGA Toolbox and considers full fee of $40 too high for
+Xsuch usage.
+X
+XPorting license              free
+X  Authors who plan to port this toolbox or part of it
+Xto other languages and environments should contact me
+Xfor specific arrangements.
+X
+XFREE within :
+X  Department of Earth, Atmospheric & Planetary Sciences,
+X  Massachusetts Institute of Technology
+X    and
+X  Woods Hole Oceanographic Institution.
+X
+X
+XRegistered users are entitled to unlimited technical
+Xsupport and free updates via e-mail.
+X
+X
+XSend registration fees (in US dollars) to
+X
+XKirill Pankratov,
+X117 Central St, A2,
+XActon, MA, 01720
+X(Memo: SaGA Registration)
+X
+X
+XInclude your name, e-mail address, mailing address, 
+Xphone number, platform and version of MATLAB which you
+Xare using, and the type of license and number of users.
+X
+X
+XRegistered users may modify m-files provided that the
+Xreference and copyright information about unmodified
+Xfiles is present.
+XOriginal unmodified files may be distributed only as an 
+Xentire group.
+X
+X
+XQuestions or comments may be sent to:
+X kirill@plume.mit.edu
+X
+END_OF_FILE
+if test 1772 -ne `wc -c <'License'`; then
+    echo shar: \"'License'\" unpacked with wrong size!
+fi
+chmod +x 'License'
+# end of 'License'
+fi
+if test -f 'Readme' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'Readme'\"
+else
+echo shar: Extracting \"'Readme'\" \(2563 characters\)
+sed "s/^X//" >'Readme' <<'END_OF_FILE'
+X<plaintext>
+X
+X    SaGA  -  Spatial and Geometric Analysis Toolbox
+X    -----------------------------------------------
+X
+X  SaGA is a collection of MATLAB programs dealing with
+Xvarious aspects of geometric modeling and spatial data
+Xinterpolation and analysis.
+X
+X  Its capabilities range from relatively simple yet
+Xhandy functions such a plotting circles, ellipsoids
+Xor some fancy surfaces to very sophisticated 
+Xcomputational procedures such as  multi-dimensional 
+Xconvex hull and Delaunay triangulation.
+X
+X  Its core consists of functions dealing with irregular
+Xtwo-, three- and multi-dimensional data sets.
+XIn particular there are variety of programs for
+Xinterpolation and mapping from irregular points.
+XMost of them are intended for 2-dimensional data but
+Xthere are also procedures and templates for
+Xmulti-dimensional datasets.
+X
+X
+X  Its functionalities can be broadly divided into the
+Xfollowing categories:
+X
+X  Planar geometry:
+X      points, lines, polygons - 
+X      area, centroid, intersections, point-in-polygon,
+X      boolean operations on pairs of polygons, etc.
+X  3-dimensional and spherical geometry:
+X      angles and distances on a sphere, 
+X      3-d motions and rotations.
+X  Multi-dimensional computational geometry:
+X      convex hull, n-dimensional Delaunay triangulation,
+X      volume, circumspheres,  boolean operations, etc.
+X  Interpolation, fitting, mapping:
+X      Triangulation, natural neighbour interpolation,
+X      options for extrapolation and blending with
+X      gradient information, objective mapping,
+X      kriging, minimum curvature,inverse distance, etc.
+X  Graphics:
+X      circles, ellipses, polygons, filled contour plots, 
+X      triangulated "patchwork" surfaces in 2- and 3-d,
+X      ellipsoids, tori, "tubes" and some other fancy
+X      surfaces.
+X
+X  See  Contents  file for (partial) list of programs
+Xand capabilities offered with SaGA.
+X
+X
+XSaGA is a SHAREWARE.
+XSee  License  file for registration information.
+X
+X
+XSaGA is available on the web under URL:
+X--------------------------------------
+X  directory:
+Xhttp://puddle.mit.edu/~kirill/PUB/MATLAB/SAGA
+X  homepage:
+Xhttp://puddle.mit.edu/~kirill/PUB/MATLAB/SAGAHTML/saga.html
+X  archives:
+Xhttp://puddle.mit.edu/~kirill/PUB/MATLAB/SAGA_Z
+X(or alternatively, "lake" instead of "puddle"):
+Xhttp://lake.mit.edu/~kirill/PUB/MATLAB/SAGAHTML/saga.html
+X
+X
+X=========================
+XAuthor:
+X
+X  Kirill Pankratov, Ph.D.
+X  54-1523, Dept. of Earth, Atmos. & Planetary Sci.,
+X  Massachusetts Institute of Technology,
+X  Cambridge, MA, 02139
+X  Office (617)-253-5938
+X
+X  kirill@plume.mit.edu
+X=========================
+X
+END_OF_FILE
+if test 2563 -ne `wc -c <'Readme'`; then
+    echo shar: \"'Readme'\" unpacked with wrong size!
+fi
+chmod +x 'Readme'
+# end of 'Readme'
+fi
+if test -f 'SagaFAQ' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'SagaFAQ'\"
+else
+echo shar: Extracting \"'SagaFAQ'\" \(28915 characters\)
+sed "s/^X//" >'SagaFAQ' <<'END_OF_FILE'
+X<plaintext>
+X***********           This is the              **********
+X***********   "FREQUENTLY ASKED QUESTION"      **********
+X***********    file for the SaGA Toolbox       **********
+X
+XThis is just a beginning.
+XThis file will be constantly expanded and updated as a
+Xresult of user's input.
+X
+X                        CONTENTS:
+X
+X  1. General.
+X
+X1.1 What is it all about?
+X1.2 How do I find quickly what this toolbox can/can't do
+X    and whether it has a capability I need?
+X1.3 What are the current MATLAB capabilities for spacial
+X    analysis?
+X1.4 Why does GRIDDATA bogs down?
+X1.5 Should I wait instead for the MATLAB 5.0 release for
+X    many improvements in this area?
+X
+X
+X  2. Registration, license.
+X
+X2.1 What is Limited license?
+X2.2 Do I have to prove that I am a full-time student for
+X    the student license registration?
+X2.3 Why such a short free trial period?
+X
+X
+X  3. Analysis of irregular spacial data.
+X
+X3.1 What are the most important methods of dealing with
+X    irregular spatial data?
+X3.2 What is a triangulation method?
+X3.3 What is natural neighbour interpolation?
+X3.4 What is kriging, objective maping, optimal
+X    interpolation, minimum curvature interpolation?
+X3.5 What is an inverse distance method?
+X3.6 What is extrapolation as opposed to interpolation?
+X3.7 Which interpolation/gridding method should I use?
+X
+X
+X  4. Issues in Computational Geometry.
+X
+X4.1 What is a convex hull of a set of points?
+X4.2 What is a simplex?
+X4.3 What is Delaunay triangulation?
+X4.4 What is Voronoi tesselation?
+X4.5 Where these terms - Delaunay, Voronoi - come from and how to 
+X    pronounce them?
+X4.6 What is the volume of an n-dimensional simplex?
+X4.7 How to calculate a circumsphere around an n-dimensional
+X    simplex?
+X
+X
+X
+X        1. General.
+X        -----------
+X
+X1.1 What is it all about?
+X
+X    SaGA is a toolbox intended to deal with geometry
+X  and spatial - planar, spherical, three-dimensional and 
+X  multidimensional data.
+X  Its capabilities can approximately be divided into two groups.
+X    First - which will probably find the most usage - is a set
+X  of routines for for interpolation/mapping from irregularly-
+X  spaced points (observations). This is a complicated problem 
+X  frequently encountered in geology, geophysics, meteorology and
+X  many other fields.
+X  One can find and try different methods used in this
+X  complex operation: triangulation, natural-neighbour,
+X  inverse distance, kriging, objective mapping, minimum
+X  curvature techniques with various options and parameters.
+X  No single method is well suitable for all purposes and
+X  datasets. Yet by trying various methods and programs
+X  contained in SaGA one can most probably find a way which is
+X  most suitable for his/her data.
+X    Second - there is a large number of routines dealing with
+X  geometric modeling and computational geometry. They can be 
+X  used for many purposes, from simple plotting to constructive
+X  geometry, mesh generation, visibility analysis, etc.
+X  These routines range from relatively simple operations on 
+X  planar polygons, like area and center of mass computations,
+X  intersections, unions, point-in-polygon, etc. to very
+X  sophisticated multi-dimensional computational geometry
+X  algorithms, like convex hull and Delaunay triangulation.
+X    In addition to these two groups there are also quite a few
+X  qraphics programs. They include simple planar drawings, like 
+X  ellipses and circles, filled contour plots and a variety of 
+X  surface-plotting routines. Some of them produce quite a 
+X  beautiful 3-d pictures, like "knots" or Mebius strips.
+X
+X
+X1.2 How do I find quickly what this toolbox can/can't do
+X  and whether it has a capability I need?
+X
+X  There is a fairly extensive on-line documentation available for SaGA.
+X  It is detailed in the "Doclist" file in the /SAGA directory.
+X  Generally various documentation files start with a capital letter,
+X  so they appear first in the directory listing.
+X  For a very quick overview one can start with the "Readme" file.
+X  Most of the files (at least front-end routines) are listed in the 
+X  "Contents". The "Flowchart" contains information about the calling
+X  sequence and dependencies among various programs (which routine calls
+X  which). "Whatsnew" informs about upgrades, bug fixes, further 
+X  development and is updated regularly. This file "SagaFAQ" contains 
+X  many useful stuff about various routines and underlying methods.
+X  And don't forget to read the "License" file about the registration
+X  and licensing.
+X
+X
+X1.3 What are the current MATLAB capabilities for spatial
+X    analysis?
+X
+X  Well, there aren't many. MATLAB was originally intended to deal with 
+X  _matrices_, that is "regular data" objects. Algorithms dealing with 
+X  irregular data are often difficult to put in the form of matrix 
+X  algebra (where MATLAB is at its best) or vectorizable in other ways.
+X  About the only function designed to deal with irregularly-spaced 
+X  2-dimensional data - GRIDDATA has a very poor performance in terms of
+X  memory, speed, flexibility, accuracy. Because of this it has drawn 
+X  hundreds of complaints from users.
+X    Concerning the development in this area within the MATLAB environment
+X  but outside of The MathWorks, I am currently aware of one publication 
+X  (and a program) for kriging by Denis Marcotte "Cokriging with Matlab"
+X  in Computers in Geosciences, 1991.
+X  Many scientists and engineers no doubt has done a lot of work in this 
+X  area using MATLAB for their problems, yet not much is readily available
+X  for other users.
+X
+X
+X1.4 Why does GRIDDATA bogs down?
+X
+X  GRIDDATA is a 2-dimensional gridding problem supplied with MATLAB since
+X  4.0. It has some very serious drawbacks which caused grievances from 
+X  large number of users. In particular is uses too much memory (it does
+X  not have any division procedure similar to the QUADTREE which is used 
+X  throughout the SaGA toolbox and moreover uses more large matrices
+X  than actualy needed).
+X  In fact one should not use GRIDDATA at all unless:
+X   - dataset is small enough (no more than several hundred points),
+X   - extrapolation is not required,
+X   - accuracy and performance constraints are lax enough.
+X  In addition input to GRIDDATA requires some important preprocessing:
+X  data must be well-scaled in all directions, mean and trend removed,
+X  otherwise results can be ridiculous - one can get highly biased estimates,
+X  especially for points near the boundary or outside of the known set.
+X
+X
+X1.5 Should I wait instead for the MATLAB 5.0 release for
+X    many improvements in this area?
+X
+X  One can certainly expect many improvement in the area of spatial data 
+X  analysis (especially considering the current rudimentary level). 
+X  During the MATLAB user conference in October 16-18, 1995 in Cambridge The 
+X  MathWorks gave overvew of many new features iof MATLAB version 5.
+X  Some of the capabilities currently available in SaGA will be offered
+X  (for example, there going to be a MEX-file for 2-dimensional Delaunay
+X  triangulation). I haven't seen however a serious breakthrough in the area
+X  of spatial interpolation or geometrical modeling.
+X  I belive The MathWorks major interests encompass linear algebra, signal 
+X  processing, control, simulation, optimization and some other fields.
+X  Although among the MATLAB users there is a great number of geophysisists,
+X  geologists, oceanographers for whom analysis of spatial irregular data is
+X  very important, The MathWorks currently does not seem to have either
+X  expertise or commitment to address these needs.
+X  In short, I argue that the SaGA toolbox provides much more in this area
+X  than what The MathWorks would be able to come up with any time soon.
+X  There are many features however which the future releases of SaGA can
+X  benefit from. Among them there are "vectorized patch" 3-d graphics, more
+X  sophisticated data structures, etc. I will try to incorporate these
+X  improvements into SaGA as soon as the version 5 will be released.
+X
+X
+X
+X      2. Registration, license.
+X      -------------------------
+X
+X2.1 What is a Limited license?
+X
+X  Limited registration assumes that user needs only a small part of this 
+X  toolbox capabilities and feels that full registration fee is more than
+X  he/she can afford for this level of usage. It is nevertheless entitles 
+X  users to full technical support and updates.
+X
+X
+X2.2 Do I have to prove that I am a full-time student for
+X    the student license registration?
+X
+X  No, I believe you. Just let me know what college or university you are 
+X  enrolled in and the department you are affiliated with (for statistical
+X  survey purposes).
+X
+X
+X2.3 Why such a short free trial period?
+X
+X  The free trial period of 15 days is certainly too short to become familiar
+X  with all capabilities of the SaGA toolbox. However I believe it can be 
+X  enough to determine whether you need it or not principally. I encourage 
+X  earlier registration to start interacting with users, listen to their 
+X  comments and needs and make improvements and additions as soon as
+X  possible. I already received and further expect very valuable input from
+X  users for future development. Together we can make it a better product.
+X
+X
+X
+X      3. Analysis of irregular spacial data
+X      -------------------------------------
+X
+X3.0 ***  This section is intended to provide only basic information about
+X  various interpolation methods. To really learn a lot of practical and 
+X  useful things about interpolation, mapping, contouring I highly recommend
+X  an excellent book by David F. Watson "Contouring: a practical guide ..." 
+X  (see Bibliogr file).
+X
+X
+X3.1 What are most commonly used methods of dealing with
+X    irregular spatial data?
+X
+X  Most data analysis methods assume that data must lie on a regular grid.
+X  It is incomparably easier to organize, manipulate and analyze data in this
+X  case. Yet for a great number of real-world situations this is not the case
+X  - data are not where we want them to be but where it happened to
+X  be measured or available. To manipulate and visualize data easily one needs
+X  to interpolate them to a regular grid or some other points where they are
+X  needed. 
+X    There are many methods of doing that as well as many classification
+X  principles to group them. I prefer the following (incomplete and
+X  approximate at best) classification:
+X  - geometrical:
+X    These are based mostly on the Delaunay/Voronoi decomposition of a domain.
+X    The information for a given grid point is obtained from the nearest
+X    points which share the same of adjacent Delaunay triangles. This is
+X    implemented in the program INTERPTR (which has auxillaries EXTRAPTR and
+X    GRAD2EST for extrapolation and gradient information). There is also a
+X    newer and more advanced method of "natural neighbour interpolation"
+X    based on Voronoi tesselation. It will be implemented in future versions.
+X  - algebraic (e.g. polynomial, rational):
+X      Unlike 1-dimensional and 2-d regular grid cases polynomials themselves
+X    did not prove particulaly useful for irregular data interpolation.
+X    Various rational functions are used much more frequently, such as in 
+X    "inverse distance" method, which is probably the simplest gridding
+X    algorithm (in SaGA it is implemented in the INVDISTI function). There 
+X    are aslo spline-type methods based also on rational functions, such as 
+X    "minimum curvature" type (MINCURVI in SaGA). 
+X    These group of methods differ from geometrical ones in that they are 
+X    global - all observations are used for each grid point (although this is
+X    not the case with use of quadtree subdivision procedure). In geometrical
+X    methods only near neighbouring points are used. Another difference is 
+X    that geometric methods operate only with the metric properties (distance)
+X    of data and do not use any parametric (polynomial, rational) 
+X    representation. Algebraic ones explicitly rely on such representation 
+X    for the "Green's function" of influences. In this sence geometrical 
+X    methods are more "natural", while algebraic are smoother, with ready 
+X    expressions for derivatives, etc.
+X  - statistical:
+X    These methods are based on the idea that the interpolated field can be
+X    represented as a sum of space-time mean (and may be a trend) plus random
+X    component with known covarianvce function. The expected mean-squared 
+X    error of a linear combination of observed values is the minimized and
+X    resuilting interpolation coefficients are obtained through inversion of
+X    "Green's function matrix" between all observation points. Formally it 
+X    is similar to some algebraic spline-type methods, such as minimum
+X    curvature, but the "Green's function matrix" is calculated using
+X    covariances betwen points and not predefined algebraic expressions.
+X    Two widely used methods of this class are "objective mapping" and
+X    "kriging" (also a more general term "optimal interpolation" is used).
+X    They are veru similar up to each other. Probably the main difference is
+X    the application domain: "kriging" is popular with geologists,
+X    geophysisists while meteorologists, oceanographers use "objective
+X    mapping". In SaGA both methods are represented, corresponding functions
+X    are KRIGING and OBJMAP.
+X
+X
+X3.2 What is a triangulation-based interpolation?
+X
+X  This is a group of methods which belongs to a broader class of what I call
+X  "geometric interpolation methods". First we perform a triangulation of a
+X  set of observation points - in SaGA there are two program for doing this - 
+X  TRIANGUL (only for planar sets) and DELAUNAY (general-purpose, for 
+X  arbitrarily-dimensional sets). Both perform a Delaunay triangulation (see 
+X  section 4.3). Then we find which point belong to which triangle (The 
+X  program INMESH does that). Then we perform a linear interpolation within
+X  each triangle to inside interpolation points. The weights of the data at 
+X  triangle vertices are proportional to the so-called baricentric area-based
+X  coordinates. The resulting surface is equivlent to a tout rubber sheet 
+X  meeting all data. Interpolation is continuous (and linear) inside each
+X  triangle but the gradient has jumps across triangles boundaries.
+X  It is possible to use gradient information to make it smooth. See INT3INFO
+X  for more details and description of INTERPTR routine which performs this
+X  interpolation. It has options for extrapolation beyond the convex hull 
+X  (using EXTRAPTR) and incorporating gradient information (with GRAD2EST).
+X
+X
+X3.3 What is natural neighbour interpolation?
+X
+X  Natural neighbour interpolation is among of the most sophisticated and 
+X  reliable (although computationally expensive) methods. It is also related
+X  to Delaunay triangulation but more complicated than the simplest 
+X  triangulation-based interpolation decribed in the previous section.
+X  Firstly, one needs to introduce the concept of natural neighbours. 
+X  Natural neihgbours for a point X are points belonging to all Delaunay 
+X  triangles for which X is inside circumferences of these triangles. Then 
+X  the "natural  neighbour coordinates" are computed for all natural
+X  neighbours. This coordinates are area-based and are equal to fraction of
+X  Voronoi polytope of a given data point which intersects the Voronoi
+X  polytope of a given interpolation point in a set of basis points.
+X  The actual calculations are simpler than that and use Delaunay triangles
+X  rather than Voronoi polytopes. The interpolation coefficients can be 
+X  negative when corresponding triangles are opposite-signed.
+X  Construction method is described in a paper by Sibson and Watson's book
+X  (see Bibliogr).
+X  Implementation of this method in SaGA is reserved for future version.
+X
+X
+X3.4 What is kriging, objective maping, optimal
+X    interpolation, minimum curvature interpolation?
+X
+X  All of them are methods of "global" interpolation (like splines) in the
+X  sense that all available data points formally participate in the 
+X  calculation of values for each interpolation point. The weights for each
+X  datum are calculated by inversion of a "Green's function" matrix 
+X  depending on the distances between each data points.
+X    Green's functions are different for all these methods.
+X  For minimum curvature method Green's function is standard (such as
+X  r^2*(log(r)-1) ), for kriging and objective mapping it depends on the
+X  correlation function and semivariogram of the interpolated field 
+X  respectively. Therefore some apriory statistics should be known (or
+X  assumed).
+X    For more details and syntax of the corresponding routines MINCURVI,
+X  OBJMAP, KRIGING see MAPINFO file and "help" sections for the those 
+X  programs.
+X
+X
+X3.5 What is an inverse distance method?
+X
+X  Basically it is a fairly simple weighted average method. Inverse distance
+X  method uses estimates for interpolation points as weighted sum of data 
+X  values. Weights are inversely proportional to the distance R between
+X  interpolation and basis points: w ~ R^(-n)
+X  where  n - some positive index. The choice of power index  n  can depend
+X  on the dimensionality of the problem and data itself. There are no
+X  universal optimal values. One reasonable constraint is that n should be
+X  more than d - dimension of the data set. This ensures that if a dataset
+X  contains many points and thery are approximately uniformly (although may
+X  be randomly) distributed in space the total influence of far-away points
+X  will not increase with distance, so the nearest points will be given
+X  larger weights. Thus, for example, for planar dataset on can choose n = 3,
+X  4, for 3-D - n = 4,5, etc. The program INVDISTI allows to choose the power
+X  index n. Moreover, it allows to blend estimates with different n in one
+X  call. One can experiment with data to choose the best combination of n and
+X  blending coefficients for a particular dataset.
+X  The  INVDISTI program is currently the only one in SaGA which can
+X  interpolate data in dimension higher than 2.
+X
+X
+X3.6 What is extrapolation as opposed to interpolation?
+X
+X  It is very easy in one-dimensional case. Let's assume that all available
+X  data x_i lie between points A=min(x_i) and B=max(x_i). Then if our 
+X  interpolation point is also between A and B it is interpolation, if it
+X  is <A or >B it is extrapolation.
+X  For 2-d and higher-dimensional case it is a little bit more complicated.
+X  Interpolation - for points inside a _convex hull_ of a set of points 
+X  (see 4.1 section). In 2-d it can be viewed as the inside of the "fence"
+X  corraling all the points of a set.
+X  Extrapolation - for points beyond the convex hull of a set.
+X    Interpolation and extrapolation typically have significant differences
+X  in accuracy. Interpolation usually can be made much more accurately, 
+X  because the known points are "all around" the interpolation points.
+X  Moreover, some methods (especially geometrical ones) are intrinsically 
+X  designed for interpolation, and for the extrapolation points the rigorous
+X  rules of these methods do not apply and some "ad hoc" generalizations 
+X  are usually implemented.
+X    Various methods handle extrapolation differently. Global spline-like
+X  methods, such as minimum curvature (in MINCURVI) are the least reliable
+X  and can produce artificial overshoots and trends. On the other hand
+X  formally similar to that kriging and objective mapping methods handle 
+X  distant points without strong overshoots, although with relatively low
+X  accuracy. Inverse distance is probably the most robust: for infinitely 
+X  distant points the extrapolated value tends to a simple average of all
+X  the  available values.
+X    For triangulation-based methods, such as triangular baricentric or
+X  natural neighbour coordinates there is no unique way to extrapolate.
+X  Various ad-hoc methods can give either resonable or very poor results
+X  depending on the data.
+X    In general one should be very cautiuos about values for extrapolation
+X  points, especially when data are highly variable near the boundaries of
+X  convex hull and extrapolation points are far away from the dataset.
+X
+X
+X3.7 Which interpolation/gridding method should I use?
+X
+X  SaGA toolbox offers a variety of tools for interpolation from
+X  irregular points. They can be roughly divided into 3 groups:
+X    1. Inverse distance - the simplest although often the least accurate
+X  method, works for arbitrary-dimensional datasets, implemented in the
+X  function INVDISTI. If you not particularly concerned about accuracy but
+X  would rather prefer speed, try it. To improve accuracy you can experiment
+X  with power index n and weights for estimates with different n. For some
+X  cases one can optimize these parameters to achieve pretty good
+X  interpolation.
+X    2. Triangulation-based method. Usually robust and accurate enough,
+X  although one must be cautios about points near the boundary of a convex
+X  hull (where Delaunay triangles are often long and thin). In SaGA it is
+X  implemented in the INTERPTR function and has various options: to 
+X  extrapolate beyond the convex hull (perimeter encompassing the set of 
+X  points), to "smooth" the results using the gradient estimates with control
+X  of the "toutness" of the resulting surface. 
+X  It uses the following functions:
+X  TRIANGUL, CONVEX2, CONVEX20, INFLATE, INMESH, 
+X  ETRAPTR, ADJSPX, GRAD2EST, GRAD2LS, GRAD2TCP, UNIQUE.
+X    3. "Global" interpolation (objective mapping, kriging, minimal 
+X  curvature method). All these methods require inversion of some kind of a
+X  "Green's function" matrix. Such methods are most often used in geophysics,
+X  meteorology, oceanography. They usually require some apriory information 
+X  about structure of "correlation function" or "variogram" of the field to
+X  be interpolated. These methods are implemented in the functions OBJMAP,
+X  KRIGING, MINCURVI. They also need functions DETREND2, MKBLOCKS, PTSINBLK,
+X  QUADTREE, QTREE0.
+X     
+X
+X
+X  4. Issues in Computational Geometry.
+X  ------------------------------------
+X
+X4.1 What is a convex hull of a set of points?
+X
+X  This is one of the most fundamental concepts in computational geometry.
+X  Convex hull can be viewed as "inside" region of a dataset. For a planar
+X  case one can visualize data points as nails in the board and there is a
+X  string which is pulled over these nails so that all of them are inside.
+X  The area bounded by this string is a convex hull and the string itself 
+X  is its boundary. Similarly in 3-d case it canbe viewed as inside of a
+X  "wrapping paper" over a set od points.
+X    More rigorous definition for n-dimensional set can be the following:
+X  take all the (hyper)planes passing through n points of a set so that one
+X  of the half-spaces separated by such a plane does not contain any points
+X  of a set. The intersection of all the other half-spaces (containing all
+X  points of a set) of all these (hyper)planes is a convex hull of this set.
+X    In practical terms computing convex hull means finding all the facets 
+X  of its boundary - combinations of n points which define the plane dividing
+X  space into 2 half-spaces, one of which is void of set points. Therefore
+X  the data structure of a convex hull can be a matrix N by n of indices of
+X  set points, so that each row is a list of vertices of such a facet.
+X    The CONVEXH routine returns such a  list and also (optional) matrix of
+X  the same N by n size where each row is a normal vector to each facets.
+X    For planar case the output is actually simpler - all we need to know is
+X  a list of vertices of a polygon which define the boundary of a convex hull.
+X  For this case there is a separate (much simpler) program CONVEX2 which 
+X  returns a vector of indices of points in this polygon.
+X
+X
+X4.2 What is a simplex?
+X
+X  The "simplest" combination of points in n-dimensional space
+X  enclosing a finite volume. 
+X  One can probably imagine the simplest object to be a
+X  (hyper)-cubic cell in n-dimensions, such as rectangle in 2-D, cube in 3-D,
+X  etc. Yet such a cell is _not_ the simplest or most convenient object. 
+X  The simplest object is a triangle in the planar case, tetrahedron in 3-D,
+X  etc.
+X    Its convenience and universality can be illustarted by the following
+X  important property: any polygon (polyhedron) can be divided into non-
+X  intersecting triangles (tetrahedra) possibly having adjacent vertices,
+X  edges or faces, but it can not in general be divided into rectangles
+X  (cubes) in general. This property is used for triangulation - a procedure 
+X  having many applications, from interpolation to mesh generation and finite
+X  element analysis.
+X    There is a general property of a set of points in n-dimensional space:
+X  a convex hull of any such set can be divided into non-intersecting (but
+X  possibly adjacent) simplices with vertices belonging to this set of points.
+X
+X
+X4.3 What is Delaunay triangulation?
+X
+X  Planar triangulation is a division of a convex hull of a set 
+X  of points into adjacent triangles with vertices from this set.
+X  Triangulation can be done in many ways, obviously some ways are better
+X  than others. The Delaunay triangulation is the one which has the following
+X  important property: inside the circumference of any triangle there are no
+X  other points of this set. Therefore  such triangulation is "natural" and
+X  optimal in many respects. It is relatively easy to construct and there are
+X  many known algorithms which perform such a triangulation. The program
+X  TRIANGUL (and also DELAUNAY) perform a planar triangulation.
+X    This concept can easily be generalized to an n-dimensional set. Delaunay
+X  triangulation (in this case a partition into simplices) among many other 
+X  possible triangulations has the property that inside a circumsphere of any
+X  simplex there are no other points belonging to this set. Delaunay
+X  triangulation is proven to be statistically optimal in some sense and is 
+X  most widely used in practice.
+X    The program DELAUNAY computes the Delaunay triangulation
+X  in arbitrary dimension. It returns a matrix where each row is
+X  a list of indices of points defining a simplex. 
+X
+X
+X4.4 What is Voronoi tesselation?
+X
+X  This is another fundamental partition of a domain.
+X  The simplest definition is probably the following: Voronoi polytope for
+X  an point A in a set S is a subset of all points in S which are closer to
+X  A than to any other points in this set. The whole space can be divided 
+X  into Voronoi polytopes. Voronoi tesselation is dual to Delaunay 
+X  triangulation. Its vertices are circumcenters of Delaunay triangles 
+X  (simplices in higher dimensions). These two structures can be relatively
+X  easily constructed from one another.
+X  The program VORONOI2 calculates and plots a 2-dimensional Voronoi diagram.
+X
+X
+X4.5 Where have these terms - Delaunay, Voronoi - come from and how to 
+X    pronounce them?
+X
+X  Such questions arise regularly in the newsgroups such as
+X  sci.math.num-analysis or comp.graphics.algorithms.
+X  Delaunay and Voronoi are probably two biggest names in computational
+X  geometry. Delaunay was a math professor at Moscow University in 20- 
+X  30-ies(?). He seems to be of a French descent. There are no Russian
+X  name which have similar spelling, while it is a fairly frequent French
+X  name [de - la -'ne]. This is quite possible, since there were quite a lot
+X  of French settled in Russia after French Revolution and in 19-th century.
+X  Voronoi worked in Germany and in France at the beginning of this
+X  century. It is interesting to note that in contrast to Delaunay he
+X  probably was of Russian origin. This is a typical Russian word and name 
+X  pronounced [vo-ro-'noy]. It means "raven" (color, typically of a horse).
+X  These names are connected with a fundamental partition of a domain -
+X  Delaunay triangulation and Voronoi tesselation. This partition and
+X  discovery of its many properties is also connected with other names - 
+X  such as Dirichle and Thiessen.
+X
+X
+X4.6 What is the volume of an n-dimensional simplex?
+X
+X  Choose one point of a simplex to be the origin. The coordinates 
+X  of other points relative to it will form an n by n matrix R.
+X  The determinant of this matrix divided by the factorial of n will
+X  give the volume:
+X  Det(R)/n!
+X  In 2-d (triangle) it is equal to 1/2 of the cross-product of the
+X  vectors forming two sides of a triangle.
+X  In 3-d (tetrahedron) - 1/6 of the triple product of vectors forming
+X  3 edges (volume of a parallelepiped formed by these edges).
+X  The routine VOLSPX calculates this value given the vertices 
+X  coordinates.
+X
+X
+X4.7 How to calculate a circumsphere around an n-dimensional
+X    simplex?
+X
+X  Choose one point of a simplex to be the origin.
+X  The coordinates of other points relative to it will
+X  form an nxn matrix R. Normalize each vector (row of a 
+X  matrix R) by its squared length divided by 2.  This will
+X  give equations of normal vectors to the planes through mid-
+X  points of edges of a simplex. Intersections of these planes
+X  will give the center of a circumcircle. In MATLAB the
+X  latests stage is a single backslash operation:
+X  c = R\[1 1 ... 1]'.
+X  This method is implemented in the program CIRCMSPH in SaGA.
+X
+X
+X
+END_OF_FILE
+if test 28915 -ne `wc -c <'SagaFAQ'`; then
+    echo shar: \"'SagaFAQ'\" unpacked with wrong size!
+fi
+chmod +x 'SagaFAQ'
+# end of 'SagaFAQ'
+fi
+if test -f 'Whatsnew' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'Whatsnew'\"
+else
+echo shar: Extracting \"'Whatsnew'\" \(3609 characters\)
+sed "s/^X//" >'Whatsnew' <<'END_OF_FILE'
+X<plaintext>
+X
+X_________ This is WHATSNEW file for SaGA Toolbox _______
+X
+X/-------------- Last updated  09/27/95 -----------------/
+X
+X
+X==== 09/27/95  Update ===========================================
+X
+XThe SaGA version 1.3 (as of 09/28/95) is now complete.
+X    ----------------
+X
+XThere were both additions and improvement/correction of various routines
+Xin comparison to previous sub-release.
+X
+XOne important addition is a function INPOLYHD (and its auxillaries)
+Xwhich determines whether points in a set are inside or outside of
+Xa multi-dimensional polyhedron.
+X
+XAlso important is that most of the programs dealing with polygons,
+Xsuch as ISCROSS.M, INTSECL.M, INTSECPL.M, ISINTPL.M, POLYBOOL.M
+Xwere improved for correct handling various exceptional and degenerate
+Xsituations.
+X
+XDELAUNAY.M is corrected so that it always produces exact n-dimensional
+XDelaunay triangulation.
+X
+XInterpolation routines INTERPTR.M and its auxillaries EXTRAPTR.M,
+XINFLATE.M, ADJSPX.M are also improved to deal with special cases.
+X
+XCONVEXH.M is improved for better handling of degenerate-rank cases.
+X
+XAdded functions:
+X---------------
+X
+X BINARY.M    - binary representation of an integer
+X               (used in COMBIN);
+X
+X COMBIN.M    - combinations of N choose K
+X               (used in ROTMAT);
+X
+X INPOLYHD.M  - true for a point in a multi-dimensional polyhedron;
+X
+X INSPX0.M    - true for a points inside a multi-dimensional simplex
+X               (auxillary for INPOLYHD);
+X
+X INTERVAL.M  - intersection and union of 1-d intervals (used in
+X               some polygon routines);
+X
+X LINECHK.M   - checks line type input arguments, used in ISCROSS,
+X               INTSECL;
+X
+X ROTMAT.M    - multi-dimensional rotation matrix
+X               (used in INPOLYHD);
+X
+X UNIQUEPT.M  - removes coincident points in many interpolation
+X               routines;
+X
+X Doclist     - a summary of various types of documentation
+X               for SaGA.
+X
+X
+X
+X
+X==== 06/30/95  Update ==========================================
+X(posted to the MATLAB newsgroup):
+X
+XHere I announce the completion of a suite of various
+Xroutines for polygon computations within the SaGA -
+XSpatial and Geometric Analysis toolbox.
+X
+X  Planar geometry is quite an important area for many
+Xapplications and related questions are fairly often
+Xasked in this newsgroup.
+X  Unfortunately MATLAB currently offers very little
+Xhere except plotting commands. Even such basic functions
+Xas polygon area or intersection of line segments 
+Xcalculations are not available.
+X
+XSaGA in addition to its core spatial data interpolation
+Xand computational geometry routines now contains many
+Xfunctions for dealing with points, lines and polygons.
+X
+XThey range from relatively simple, like area and centroid
+Xcalculations to quite sophisticated ones, like Boolean
+Xoperation on pairs of polygons (intersections, unions.
+Xetc.) For the latter see a graphics example in the 
+X"gallery".
+X
+X
+X
+X======================================================
+X============ Further development =====================
+X
+XThe functions to be added in the nearest few days:
+X------------------------------------------------------
+X
+X Additional demo, info scripts 
+X
+X
+XFunctionalities which are soon to be included in SaGA:
+X------------------------------------------------------
+X  Interpolation by objective mapping and kriging methods
+Xwith automatic calculation of correlation function and
+Xsemi-variogram respectively; automatic rescaling
+X
+X  Objective mapping and kriging of 3-dimensional
+Xdatasets.
+X
+X  Adaptive (successive correction)
+Xmulti-dimensional inverse distance interpolation.
+X
+X  2-d natural neighbour interpolation 
+X(based on Delaunay tesselation).
+X
+END_OF_FILE
+if test 3609 -ne `wc -c <'Whatsnew'`; then
+    echo shar: \"'Whatsnew'\" unpacked with wrong size!
+fi
+chmod +x 'Whatsnew'
+# end of 'Whatsnew'
+fi
+echo shar: End of shell archive.
+exit 0

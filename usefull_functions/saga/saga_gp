@@ -1,0 +1,2297 @@
+#! /bin/sh
+# This is a shell archive.  Remove anything before this line, then unpack
+# it by saving it into a file and typing "sh file".  To overwrite existing
+# files, type "sh file -c".  You can also feed this as standard input via
+# unshar, or by typing "sh <file", e.g..  If this archive is complete, you
+# will see the following message at the end:
+#		"End of shell archive."
+# Contents:  circle.m contourf.m ellipsd.m ellipse.m filltetr.m knots.m
+#   mebius.m polyplot.m sagapic.m sagawcm.m surf3chk.m surftri.m
+#   torus.m tubes.m
+# Wrapped by kirill@gyre on Thu Oct 26 21:08:42 1995
+PATH=/bin:/usr/bin:/usr/ucb ; export PATH
+if test -f 'circle.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'circle.m'\"
+else
+echo shar: Extracting \"'circle.m'\" \(2304 characters\)
+sed "s/^X//" >'circle.m' <<'END_OF_FILE'
+Xfunction [x,y] = circle(r,x,y,clr,lw,np)
+X% CIRCLE  Plotting circle(s). 
+X%	CIRCLE(R,X,Y) Plots circles with centers specified by
+X%	vectors X and Y and radii by vector R (if R is a number
+X%	all circles have the same radii equal to this number).
+X%	CIRCLE(R,X,Y,CLR,LW,NP) Specifies additional parameters
+X%	(scalar or vector): colors CLR, linewidths LW and a 
+X%	number of points in each circle line NP.
+X%	CIRCLE([RMIN RMAX],...) Specifies minimum and maximum
+X%	radii (this affects linewidth) which allows to plot 
+X%	donut-like circles. 
+X%	L = CIRCLE(...)  Returns handles of circle lines.
+X%	[X,Y] = CIRCLE(...) Returns coordinates X,Y instead.
+X%
+X%	See also ELLIPSE.
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	05/10/95
+X
+X % Defaults and parameters ......................
+Xclr_dflt = get(gca,'colororder');
+Xclr_dflt = clr_dflt(1,:);
+Xlw_dflt = .5;
+Xnp_dflt = 100;
+X
+X % Handle input .................................
+Xif nargin==0, help circle, return, end
+Xif nargin<6,  np = np_dflt; end
+Xif nargin<5,  lw = lw_dflt; end
+Xif nargin<4,  clr = clr_dflt; end
+Xif nargin<3,  y = 0; end
+Xif nargin<2,  x = 0; end
+X
+X % Make sure X and Y are of the same size .......
+Xwid = 0;
+Xif size(r,2)==2
+X  rmax = max(r');
+X  rmin = min(r');
+X  wid = (rmax-rmin)';
+X  r = (rmax+rmin)/2;
+Xend
+Xx = x(:);
+Xy = y(:);
+Xr = r(:);
+Xif length(x)~=length(y)
+X  error('  X and Y must have the same lengths')
+Xend
+X
+X % Expand color and linewidth parameters in vectors if needed
+Xnc = length(x);
+Xonc = ones(nc,1);
+Xif size(r,1)==1,   r   = r(onc,:);   end
+Xif isstr(clr), clr = clr(:); end
+Xif size(clr,1)==1, clr = clr(onc,:); end
+Xif size(lw,1)==1,  lw  = lw(onc,:);  end
+X
+X % Generic coordinates ..........................
+Xt = linspace(0,2*pi,np+1);
+Xc = cos(t);
+Xs = sin(t);
+X
+X % Plotting circles .............................
+Xl = zeros(nc,1);
+Xfor jj = 1:nc
+X  xc = r(jj)*c+x(jj);
+X  yc = r(jj)*s+y(jj);
+X  l(jj) = line(xc,yc);
+X  set(l(jj),'color',clr(jj,:))
+Xend
+X
+X % Calculate width in points ....
+Xalim = get(gca,'xlim');
+Xold_units = get(gca,'units');
+Xset(gca,'units','points');
+Xapos = get(gca,'pos');
+Xwid = wid*apos(3)./diff(alim);
+Xlw = max(lw,wid);
+X
+X % Set linewidth ................
+Xfor jj=1:nc
+X  set(l(jj),'linewidth',lw(jj));
+Xend
+X
+Xset(gca,'units',old_units) % Set units back
+X
+Xif nargout==1, x = l; end
+Xif nargout==2, x = xc; y = yc; end
+X
+END_OF_FILE
+if test 2304 -ne `wc -c <'circle.m'`; then
+    echo shar: \"'circle.m'\" unpacked with wrong size!
+fi
+chmod +x 'circle.m'
+# end of 'circle.m'
+fi
+if test -f 'contourf.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'contourf.m'\"
+else
+echo shar: Extracting \"'contourf.m'\" \(8653 characters\)
+sed "s/^X//" >'contourf.m' <<'END_OF_FILE'
+Xfunction  [cout,hp] = contourf(arg1,arg2,arg3,arg4,arg5)
+X% CONTOURF  Filled contour plot.
+X%	Similar to CONTOUR command but fills the space between
+X%	contour lines with uniform color (according to the
+X%	figure colormap) instead of just contour lines.
+X%	Syntax is similar to the CONTOUR command.
+X%	CONTOURF(Z), CONTOURF(X,Y,Z), CONTOURF(Z,N),
+X%	CONTOURF(Z,V) and CONTOURF(X,Y,Z,V) are valid options.
+X%	Also allows  CONTOURF(...,EC) where EC is the edgecolor of 
+X%	patches (contour lines); EC should be a string such as
+X%	'r','g','b','y','c','m','w','k', or 'none'.
+X%	[C,H] = CONTOURF(...) returns contour matrix C and
+X%	handles H of patches used in filling between contours.
+X
+X%  For correct results needs auxillary program ISINPOLY.M
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	9/2/94, 10/25/94
+X
+X%  Revised 12/01/94 (bug found by Dr. Phil Morgan,
+X%  morgan@ml.csiro.au)
+X
+X % Defaults and parameters ......................................
+Xedgecolordflt = 'k';    % Edge color of patches
+X
+X % Check if auxillary file ISINPOLY around
+Xishere = exist('isinpoly');
+X
+X % Handle input ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Xif nargin < 1, error('Not enough input arguments.'), end
+Xisxy = 0;
+Xif nargin>2
+X  if any(size(arg1)==1)&any(size(arg2)==1), isxy = 1; end
+Xend
+Xif isxy          % If vectors x and y are input
+X  x = arg1; y = arg2; z = arg3;
+Xelse             % The first argument is matrix  z
+X  z = arg1;
+X  [ly,lx] = size(z);
+X  x = 1:lx; y = 1:ly;
+Xend
+X
+X % Get edgecolor argument if input .........................
+Xlast_arg = []; edgecolor = '';
+Xif nargin>1, last_arg = eval(['arg' num2str(nargin)]); end
+Xis = isstr(last_arg);
+Xif is
+X  last_arg = last_arg(last_arg>='a');
+X  if last_arg~=[], edgecolor = last_arg; end
+Xend
+Xif edgecolor=='',
+X  edgecolor = edgecolordflt;
+Xelse
+X  nargin = nargin-1;
+Xend
+X
+X % Sizes and limits ........................................
+Xlx = length(x); ly = length(y);
+Xxmin = min(x);  xmax = max(x);
+Xymin = min(y);  ymax = max(y);
+X
+X % Pass arguments to the CONTOUR program ...................
+Xarguments = 'arg1';
+Xfor jj = 2:nargin
+X  arguments = [arguments ',arg' num2str(jj)];
+Xend
+Xeval(['[cc,hl] = contour(' arguments ');']);
+X
+X % Check all contours for "open/closed" ^^^^^^^^^^^^^^^^^^^^^^^^^
+Xlcc = length(cc);
+Xjj = 1; jc = 1;   % Initialize
+Xwhile jj<lcc      % Get beginnings and ends of all contours
+X  lc = cc(2,jj);
+X  num = jj+(1:lc);
+X  xc = cc(1,num);
+X  yc = cc(2,num);
+X  nb(jc) = jj+1;
+X  ne(jc) = jj+lc;
+X  open(jc) = any(xc==xmin|xc==xmax|yc==ymin|yc==ymax);
+X  if open(jc)
+X    xe = [xe; xc(1) xc(lc)];
+X    ye = [ye; yc(1) yc(lc)];
+X  end
+X  zc(jc) = cc(1,jj);  % Level
+X  % Min and max
+X  cmin(jc,:) = [min(xc) min(yc)];
+X  cmax(jc,:) = [max(xc) max(yc)];
+X  jj = jj+lc+1;
+X  jc = jc+1;
+Xend
+Xfndo = find(open);
+Xnoopen = 0;
+X
+Xif fndo==[]   % If no open contours
+X  noopen = 1;
+X  open = [open 1];
+X  fndo = length(open);
+X  nb = [nb 2]; ne = [ne 1];
+X  zc = [zc z(1,1)];
+X  xe = [xmin xmin];
+X  ye = [ymin ymin]; 
+Xend
+Xopen = cumsum(open).*open;
+X[zc,ind] = sort(zc);
+Xopen = open(ind);
+Xnb = nb(ind); ne = ne(ind);
+Xfndo = find(open);
+Xxe = xe(open(fndo),:);
+Xye = ye(open(fndo),:);
+X
+Xncont = length(open);
+Xfnd = [1 find(diff(zc))+1];
+Xlevels = zeros(1,ncont);
+Xlevels(fnd) = ones(size(fnd));
+Xlevels = cumsum(levels);
+Xnlevel = max(levels)+1;       % Nmb. of different levels
+X
+X % Sort open ends by apc (along-perimeter coordinate) ..........
+Xcoordp = [xmin xmax xmax xmin; ymin ymin ymax ymax];
+Xapccorn = [xmin+ymin xmax+ymin xmax+ymax 2*xmax-xmin+ymax];
+Xcoordp = [coordp [xe(:,1)' xe(:,2)'; ye(:,1)' ye(:,2)']];
+Xapc = (xe==xmin)|(ye==ymax);
+Xlapc = 2*(xmax+ymax);
+Xapc = (lapc-xe-ye).*apc+(xe+ye).*(~apc);
+Xlapc = size(apc,1);
+Xapc = [apccorn apc(:,1)' apc(:,2)'];
+Xbore = [zeros(1,4) ones(1,lapc) 2*ones(1,lapc)];
+Xnapc = [zeros(1,4) fndo fndo];
+X[apc,ind] = sort(apc);
+Xnapc = napc(ind);                   % # of contour
+Xfndc = min(find(napc));
+Xnapc = [napc napc(1:fndc)];
+Xbore = bore(ind);                   % Beginning or end
+Xbore = [bore bore(1:fndc)];
+Xcoordp = coordp(:,ind);
+Xcoordp = [coordp coordp(:,1:fndc)]; % Coordinates of boundary pts
+Xlapc = length(napc);
+X
+X
+X % Calculate the coordinates of "open" patches ^^^^^^^^^^^^^^^^^^^
+Xnewplot;
+Xp = zeros(nlevel,1);  % Initialize patches handles
+Xjp = 1;
+Xintv = zeros(1,lapc); % Along-perimeter intervals (to be covered)
+Xintv(1) = 1;
+Xfnd = find(napc);
+Xjo = 0;
+X
+X % While not all the boundaries is covered ``````````````````````1
+Xwhile ~jo&fnd~=[]
+X  if noopen, jo=1; end
+X  fndc = fnd(1);
+X  intv(fndc) = 1;
+X  ccoord = [];
+X  clevel = [];
+X  isopen = 1;
+X  pointsp = [];
+X
+X  % Continue a contour until it is closed `````````````````` 2
+X  while isopen
+X    % Start with beginning of a contour ........
+X    nc = napc(fndc);            % # of current contour
+X    clevel = [clevel nc];
+X    fndc1 = find(napc(1:lapc-1)==nc);
+X    pointsp = [pointsp fndc1];
+X    fndc1 = fndc1(fndc1~=fndc); % The other end of the contour
+X    numc = nb(nc):ne(nc);
+X    if bore(fndc)==2, numc = fliplr(numc); end
+X    ccoord = [ccoord cc(:,numc)];
+X
+X    % Along the perimeter .....................
+X    fndc = fndc1+(1:min(find(napc(fndc1+1:lapc))));
+X    ccoord = [ccoord coordp(:,fndc)];
+X    intv(fndc) = ones(size(fndc));
+X    fndc = max(fndc);   % Last point
+X    isopen = ~(any(pointsp==fndc)|fndc==lapc);
+X  end  % End one open contour '''''''''''''''''''''''''''''' 2
+X
+X  % Determine which height interval is surrounded by a contour
+X  ismore = 0;
+X  zin = zc(clevel);
+X
+X  if min(zin)<max(zin)  % Easy if between 2 different levels
+X
+X    ismore = 1;
+X
+X  elseif ishere % If only 1 level find a grid point and compare
+X
+X    % Find 4 grid pts. surrounding the first point of a contour
+X    fndc = max([max(find(x<=ccoord(1,1))) 1]);   % x
+X    fndc = [fndc fndc+1]-(fndc>=lx);
+X    xsq = x(fndc);
+X    fndc = max([max(find(y<=ccoord(2,1))) 1]);   % y
+X    fndc = [fndc fndc+1]-(fndc>=ly);
+X    ysq = y(fndc);
+X    xsq = xsq([1 2 2 1]);         % Make a rectangle
+X    ysq = ysq([1 1 2 2]);
+X    is = isinpoly(xsq,ysq,ccoord(1,:),ccoord(2,:));  % Is inside
+X    fndc  = find(is~=.5);          % Discard pts. on the contour
+X    if fndc~=[], fndc = fndc(1);
+X    else, fndc = 1; end
+X    is  = is(fndc);
+X    nx = find(xsq(fndc)==x);
+X    ny = find(ysq(fndc)==y);
+X    zis = z(ny,nx);
+X    ismore = (zis>zin(1)&is)|(zis<zin(1)&~is);
+X  end
+X
+X  % Create a patch ...................................
+X  p(jp) = patch('xdata',ccoord(1,:),'ydata',ccoord(2,:));
+X  ccol = levels(min(clevel))+ismore;
+X  set(p(jp),'cdata',ccol,'facecolor','flat')
+X  set(p(jp),'edgecolor',edgecolor)
+X  jp = jp+1;
+X  fnd = min(find(~intv&napc));
+Xend  % End patchs for "open" contours''''''''''''''''''''''''''' 1
+X
+X
+X % Now create patchs for closed contours ^^^^^^^^^^^^^^^^^^^^^^^^
+Xfnd = find(open);
+Xzopenmin = min(zc(fnd));
+Xzopenmax = max(zc(fnd));
+Xout = zc<zopenmin|zc>zopenmax;
+X
+X % Find which contours are inside which ...............
+Xfnd = find(~open&~out);
+Xlfnd = length(fnd);
+Xind = ones(lfnd,1);
+Xisin = cmax(fnd,ind);
+Xisin = isin<isin';
+Xisin = isin&(cmax(fnd,2*ind)<cmax(fnd,2*ind)');
+Xisin = isin&(cmin(fnd,2*ind)>cmin(fnd,2*ind)');
+Xisin = isin&(cmin(fnd,ind)>cmin(fnd,ind)');
+X[isin,ind] = sort(-sum(isin));
+Xif fnd==[], ind=[]; end
+X
+Xnum = 1:min(find(~out))-1;
+Xnc = max(find(~out))+1;
+Xnum = [fnd(ind) fliplr(num)];
+Xismore = zeros(size(num));
+Xnum = [num nc:ncont];
+Xismore = [ismore ones(size(nc:ncont))];
+X
+Xfor jj = 1:length(num)     % Make all "closed" patchs `````````` 1
+X  nc = num(jj);
+X  numc = nb(nc):ne(nc);
+X  ccoord = cc(:,numc);
+X
+X  % Find points inside or outside ......................
+X  if ~out(nc)&ishere
+X    % Find 4 grid pts. surrounding the first point of a contour
+X    fndc = max([max(find(x<=ccoord(1,1))) 1]);    % x
+X    fndc = [fndc fndc+1]-(fndc>=lx);
+X    xsq = x(fndc);
+X    fndc = max([max(find(y<=ccoord(2,1))) 1]);    % y
+X    fndc = [fndc fndc+1]-(fndc>=ly);
+X    ysq = y(fndc);
+X    xsq = xsq([1 2 2 1]);          % Make a rectangle
+X    ysq = ysq([1 1 2 2]);
+X    is = isinpoly(xsq,ysq,ccoord(1,:),ccoord(2,:));  % Is inside
+X    fndc  = find(is~=.5);          % Discard pts on the contours
+X    if fndc~=[], fndc = fndc(1);
+X    else, fndc = 1; end
+X    is  = is(fndc);
+X    nx = find(xsq(fndc)==x);
+X    ny = find(ysq(fndc)==y);
+X    zis = z(ny,nx);
+X    ismore(jj) = (zis>zc(nc)&is)|(zis<zc(nc)&~is);
+X  end
+X
+X  % Create a patch itself ..............................     
+X  p(jp) = patch('xdata',ccoord(1,:),'ydata',ccoord(2,:));
+X  ccol = levels(nc)+ismore(jj);
+X  set(p(jp),'cdata',ccol,'facecolor','flat')
+X  set(p(jp),'edgecolor',edgecolor)
+X  jp = jp+1;
+Xend  % End "closed" patches '''''''''''''''''''''''''''''''''''' 1
+X
+Xaxis([xmin xmax ymin ymax]);
+X
+X
+X % Output ..............................................
+Xif nargout > 0
+X  cout = cc;
+X  hp = p(find(p));
+Xend
+X
+END_OF_FILE
+if test 8653 -ne `wc -c <'contourf.m'`; then
+    echo shar: \"'contourf.m'\" unpacked with wrong size!
+fi
+chmod +x 'contourf.m'
+# end of 'contourf.m'
+fi
+if test -f 'ellipsd.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'ellipsd.m'\"
+else
+echo shar: Extracting \"'ellipsd.m'\" \(1269 characters\)
+sed "s/^X//" >'ellipsd.m' <<'END_OF_FILE'
+Xfunction  [x,y,z] = ellipsd(smax,nrm,n)
+X% ELLIPSD  Plotting ellipsoid.
+X%	ELLIPSD(SA,NRM,N) plots ellipsoid with
+X%	semiaxes vector SA=[SAX SAY SAZ] and
+X%	axes orientation given in the matrix NRM.
+X%	N specifies dimension of coordinate matrices
+X%	X, Y, Z (all NxN matrices).
+X%	[x,y,z] = ELLIPSD(...) does not plot the surface
+X%	but instead returns coordinate matrices X, Y, Z.
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%       kirill@plume.mit.edu
+X%       05/16/95
+X
+X % Handle input .....................
+Xsmax0 = [1 1 1];
+Xif nargin==0, smax = [1 1 1]; end
+Xif nargin < 3, n=20; end
+Xif nargin < 2, nrm = eye(3); end
+Xsmax0(1:length(smax)) = smax(:)';
+X
+X
+X % Calculate orientation ............
+Xsz = size(nrm);
+Xif all(sz==[3 3])
+X  R=nrm;
+Xelseif all(sz==[3 1]) | all(sz==[1 3])
+X  R = z2rot(nrm);
+Xelseif all(sz==[2 1]) | all(sz==[1 2])
+X  R = rotmat3([nrm 0],'euler');
+Xend
+X
+X % Create a sphere ..................
+X[x,y,z] = sphere(n);
+X[mm,nn] = size(x);
+X
+X % Rotate coordinates ...............
+XC = [x(:)*smax(1) y(:)*smax(1) z(:)*smax(3)];
+XC = C*R;
+Xclr = z;
+X
+X % Split coordinate matrix into x,y,z
+Xx = C(:,1); y = C(:,2); z = C(:,3);
+Xx = reshape(x,mm,nn);
+Xy = reshape(y,mm,nn);
+Xz = reshape(z,mm,nn);
+X
+X % Plotting .........................
+Xif nargout<2,  x = surface(x,y,z,clr); end
+X
+END_OF_FILE
+if test 1269 -ne `wc -c <'ellipsd.m'`; then
+    echo shar: \"'ellipsd.m'\" unpacked with wrong size!
+fi
+chmod +x 'ellipsd.m'
+# end of 'ellipsd.m'
+fi
+if test -f 'ellipse.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'ellipse.m'\"
+else
+echo shar: Extracting \"'ellipse.m'\" \(808 characters\)
+sed "s/^X//" >'ellipse.m' <<'END_OF_FILE'
+Xfunction  [x,y] = ellipse(a,b,phi,x0,y0,n)
+X% ELLIPSE  Plotting ellipse.
+X%       ELLIPSE(A,B,PHI,X0,Y0,N)  Plots ellipse with
+X%	semiaxes A, B, rotated by the angle PHI,
+X%	with origin at X0, Y0 and consisting of N points
+X%	(default 100).
+X%	[X,Y] = ELLIPSE(...) Instead of plotting returns
+X%	coordinates of the ellipse.
+X
+X%  Copyright (c) 1995  by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	03/21/95
+X
+Xn_dflt = 100;   % Default for number of points
+X
+X % Handle input ................
+Xif nargin < 6, n = n_dflt; end
+Xif nargin < 5, y0 = 0; end
+Xif nargin < 4, x0 = 0; end
+Xif nargin < 3, phi = 0; end
+Xif nargin < 2, b = 1; end
+Xif nargin < 1, a = 1; end
+X
+X
+Xth = linspace(0,2*pi,n+1);
+Xx = a*cos(th);
+Xy = b*sin(th);
+X
+Xc = cos(phi);
+Xs = sin(phi);
+X
+Xth = x*c-y*s+x0;
+Xy = x*s+y*c+y0;
+Xx = th;
+X
+Xif nargout==0, plot(x,y); end
+X
+X
+END_OF_FILE
+if test 808 -ne `wc -c <'ellipse.m'`; then
+    echo shar: \"'ellipse.m'\" unpacked with wrong size!
+fi
+chmod +x 'ellipse.m'
+# end of 'ellipse.m'
+fi
+if test -f 'filltetr.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'filltetr.m'\"
+else
+echo shar: Extracting \"'filltetr.m'\" \(2069 characters\)
+sed "s/^X//" >'filltetr.m' <<'END_OF_FILE'
+Xfunction [p,order] = filltetr(R4,cdata,shade)
+X% FILLTETR  Plotting a tetrahedron.
+X%	FILLTETR(R) Plots a tetrahedon with coordinates
+X%	of 4 vertices given by a matrix R (4 by 3).
+X%	FILLTETR(R,CDATA,SHADE) Can also specify color
+X%	data and shading (such as 'flat' or 'interp')
+X%	of tetrahedral facets.
+X
+X%  Copyright (c) 1995  by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	11/30/94
+X
+X % Defaults and parameters .........................
+Xcdatadflt = (0:3)'*16+1;  % Spans 64-colormap
+Xshadedflt = 'flat';
+X
+X % Handle input .....................................
+Xif nargin<3, shade = shadedflt; end
+Xif nargin<2, cdata = cdatadflt; end
+Xif isstr(cdata)
+X  shade = cdata;
+X  cdata = cdatadflt;
+Xend
+X
+X % Auxillary ........
+Xo3 = ones(3,1); zr3 = zeros(1,3);
+Xv3 = 0:2;
+XN = [2 3 4; 1 3 4; 1 2 4; 1 2 3]';
+X
+X % Get figure and axes parameters
+Xclim = get(gca,'clim');
+Xview_v = get(gca,'view')*pi/180;
+Xszcm = size(get(gcf,'colormap'),1);
+X
+Xif size(cdata,1)==1, cdata = cdata'; end
+Xif size(cdata,1)<4, cdata = cdatadflt; end
+Xif size(cdata,2)==3, shade = 'interp'; end
+Xif strcmp(shade,'interp')&size(cdata,2)==1
+X  cdata = reshape(cdata(N'),4,3);
+Xend
+Xset(gca,'climmode','manual')
+X%set(gca,'drawmode','fast')
+X % Set to caxes limits
+Xcdata = clim(1)+cdata*(clim(2)-clim(1))/szcm;
+X
+X % Calculate the view vector
+X[xv,yv,zv] = sph2cart(-pi/2+view_v(1),view_v(2),1);
+Xview_v = [xv,yv,zv];
+X
+X % Compute drawing order of plane segments
+Xshift_R = max(R4);
+Xshift_R = shift_R+sign(shift_R).*(shift_R-min(R4));
+XR4s = R4+shift_R(ones(4,1),:);
+Xfor jj = 1:4
+X  norm(:,jj) = R4s(N(:,jj),:)\o3;  % Normal
+Xend
+Xsgn_v = sign(view_v*norm);
+Xsgn_4 = sign(diag(R4s*norm)-1)';
+Xsgn_4 = -sgn_4.*sgn_v;
+X
+X[sgn_4,order] = sort(sgn_4);
+XN = N(:,order);
+Xcdata = cdata(order,:);
+X
+X % Create a patch
+Xch = get(gca,'child');
+Xif ch==[], p0=patch(zr3,zr3,zr3,'w'); end
+Xp = patch('facecolor',shade,'cdata',cdata(1,:)); drawnow
+X
+X % Paint all 4 facets successively with one patch
+Xset(p,'erasemode','none')
+Xfor jj = 1:4
+X  R3 = R4(N(:,jj),:);
+X  set(p,'xdata',R3(:,1),'ydata',R3(:,2),'zdata',R3(:,3));
+X  set(p,'cdata',cdata(jj,:))
+X  drawnow
+Xend
+X
+END_OF_FILE
+if test 2069 -ne `wc -c <'filltetr.m'`; then
+    echo shar: \"'filltetr.m'\" unpacked with wrong size!
+fi
+chmod +x 'filltetr.m'
+# end of 'filltetr.m'
+fi
+if test -f 'knots.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'knots.m'\"
+else
+echo shar: Extracting \"'knots.m'\" \(1664 characters\)
+sed "s/^X//" >'knots.m' <<'END_OF_FILE'
+Xfunction [x,y,z] = knots(n,rat,w,h,np)
+X% KNOTS Plotting periodic "knots" surface.
+X%	[X,Y,Z] = KNOTS(N) Calculates coordinates of 
+X%	periodic "knot" surface of the order N
+X%	(default is 3).
+X%	[X,Y,Z] = KNOTS(N,RAT,W,H,NP) also specifies
+X%	ratio RAT of minimal to maximal radius in a
+X%	horizontal plane, tube radius (half-thickness) W,
+X%	maximum "height" H and number of points NP along
+X%	each leg.
+X%
+X%	See also TUBES, TORUS, ELLIPSD.
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%       kirill@plume.mit.edu
+X%       05/17/95
+X
+X % Defaults and parameters ..............
+Xn_dflt = 3;
+Xrat_dflt = 1/3;
+Xw_dflt = .1;
+Xh_dflt = .5;
+Xnp_dflt = 80;
+X
+X % Handle input .........................
+Xif nargin < 1, n = n_dflt; end
+Xif nargin < 5, np = np_dflt; end
+Xif nargin < 4, h = h_dflt; end
+Xif nargin < 3, w = w_dflt; end
+Xif nargin < 2, rat = rat_dflt; end
+Xif nargin < 1, n = n_dflt; end
+X
+Xif n==[],     n = n_dflt;   end;   n = n(1);
+Xif rat==[], rat = rat_dflt; end;   rat = rat(1);
+Xif w==[],     w = w_dflt;   end;   w = w(1);
+Xif h==[],     h = h_dflt;   end;   h = h(1);
+Xif np==[],    np = np_dflt; end;   np = np(1);
+X
+X
+X % Calculate elementary leg of axis .....
+Xcc = 2*(1-1/n);
+Xth = linspace(0,pi,np)';
+Xxa = cos(th);
+Xya = rat*sin(th);
+X[th,r] = cart2pol(xa,ya);
+X
+X % Extend n times (to make it periodic)
+Xth = th*cc;
+Xxa = th;
+Xya = r;
+Xfor jj = 2:n
+X  xa = [xa; xa(length(xa))+th(2:np)];
+X  ya = [ya; r(2:np)];
+Xend
+X
+X[xa,ya] = pol2cart(xa,ya);
+Xth = linspace(0,2*pi*(n-1),length(xa));
+Xcc = 1-1/n;
+Xza = h*sin(th/cc);
+X
+X
+X % Calculate surface coordinates in TUBES function
+X[x,y,z] = tubes(xa,ya,za,w);
+X
+X % Plotting .....................................
+Xif nargout<2, x = surface(x,y,z); end
+X
+END_OF_FILE
+if test 1664 -ne `wc -c <'knots.m'`; then
+    echo shar: \"'knots.m'\" unpacked with wrong size!
+fi
+chmod +x 'knots.m'
+# end of 'knots.m'
+fi
+if test -f 'mebius.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'mebius.m'\"
+else
+echo shar: Extracting \"'mebius.m'\" \(1436 characters\)
+sed "s/^X//" >'mebius.m' <<'END_OF_FILE'
+Xfunction [x,y,z] = mebius(n,wid,rat,np)
+X% MEBIUS Plotting mebius strip.
+X%	[X,Y,Z] = MEBIUS(N,W,RAT,NP) calculates
+X%	coordinates of a "Mebius strip" surface -
+X%	a torn, twisted and reconnected "belt".
+X%	N (order) - the number of times it is twisted
+X%	before reconnecting (default is 1 - classical
+X%	Mebius strip), W is the width relative to
+X%	radius, RAT is the ratio of width to thickness
+X%	NP is a number of points along the tube.
+X%	S=MEBIUS(...) Plots the surface and returns 
+X%	surface handle instead of coordinates.
+X%
+X%	See also TUBES, TORUS, KNOTS, SURFACE.
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%       kirill@plume.mit.edu
+X%       05/18/95
+X
+X
+X % Defaults and parameters ................
+Xwid_dflt = .3;  % Strip width (relative to radius)
+Xrat_dflt = 8;   % Ratio of width to thickness
+Xnp_dflt = 150;  % Nmb. of points aling the tube
+X
+X
+X % Handle input ...........................
+Xif nargin<1, n = 1; end
+Xif nargin<2, wid = wid_dflt; end
+Xif nargin<3, rat = rat_dflt; end
+Xif nargin<4, np = np_dflt; end
+X
+X
+X % Create twisted tube
+Xv = linspace(0,2*pi,np);
+Xxa = ones(size(v));
+Xya = v;
+Xza = zeros(size(v));
+X[x,y,z] = tubes(xa,ya,za,wid*[1 1/rat],...
+X           [cos(v*n/2); za; sin(v*n/2)]',30);
+X
+X % Bend the tube into a circle ...........
+Xsz = size(x);
+Xo2 = ones(1,sz(2));
+Xc = cos(v'); t = x.*c(:,o2);
+Xc = sin(v'); y = x.*c(:,o2);
+Xx = t;
+X
+X % Plot surface ..........................
+Xif nargout<2
+X  s = surface(x,y,z);
+X  x = s;
+Xend
+END_OF_FILE
+if test 1436 -ne `wc -c <'mebius.m'`; then
+    echo shar: \"'mebius.m'\" unpacked with wrong size!
+fi
+chmod +x 'mebius.m'
+# end of 'mebius.m'
+fi
+if test -f 'polyplot.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'polyplot.m'\"
+else
+echo shar: Extracting \"'polyplot.m'\" \(2785 characters\)
+sed "s/^X//" >'polyplot.m' <<'END_OF_FILE'
+Xfunction p = polyplot(x,y,a1,a2)
+X% POLYPLOT Plotting or filling polygons.
+X%	L = POLYPLOT(X,Y) plots polygon(s)
+X%	concatenated into coordinate vectors X, Y.
+X%	If X, Y consist of coordinates of several
+X%	polygons they must be separated by NaN:
+X%	X = [X1 NaN X2 NaN X3 ...]. In this case each
+X%	polygon is "closed" and plotted separately.
+X%	L is a vector of handles of lines defining
+X%	polygon boundaries, one handle per line.
+X%	L = POLYPLOT(X,Y,C) also specifies line color.
+X%	C can be a letter such as 'w', 'y', 'c', etc.,
+X%	a 1 by 3 vector in RGB format or a string of 
+X%	such letters, like 'rgby' or n by 3 matrix.
+X%	In the latter case this string or matrix plays the
+X%	role of color order for succession of polygons.
+X%	If the number of polygons is more than number of
+X%	colors, colors are cyclically repeated.
+X%
+X%	P = POLYPLOT(X,Y,'fill',C) fills polygons
+X%	creating a patch rather than a line and returns
+X%	patch handles P.
+X%
+X%	This program can also fill non-simply connected
+X%	polygons, such as ones with holes. It checks
+X%	the direction of each polygons separated by
+X%	NaN in coordinate vectors. If the contour is
+X%	clock-wise (signed area is negative) then it
+X%	interprets such a polygon as a "hole" and fills
+X%	it with the background color.
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov,
+X%       kirill@plume.mit.edu.
+X%       06/25/95, 09/07/95  
+X
+X%  May call AREA function.
+X
+X % Handle input ....................................
+Xif nargin==0, help polyplot, return, end
+Xis_patch = 0;
+Xclr = get(gca,'colororder');
+Xif nargin>2
+X  lm = min(length(a1),4);
+X  names = ['fill '; 'patch'];
+X  is_patch = all(a1(1:lm)==names(1,1:lm));
+X  is_patch = is_patch | all(a1(1:lm)==names(2,1:lm));
+X
+X  if is_patch
+X    if nargin>3, clr = a2; end
+X  else
+X    clr = a1;
+X  end
+Xend
+Xif isstr(clr), clr=clr(:); end
+Xnclr = size(clr,1);
+X
+Xx = x(:); y = y(:);
+X
+X % Check hold state ............
+Xif ~ishold, newplot, end
+X
+X % Setup a call ................
+Xif is_patch
+X  call = 'patch';
+X  cpn = 'facecolor';
+Xelse
+X  call = 'line';
+X  cpn = 'color';
+Xend
+Xcall = ['p(jj)=' call '(''xdata'',xx,''ydata'',yy);'];
+X
+X % Get color for "holes" polygons ..................
+Xclrh = get(gca,'color');
+Xif strcmp(clrh,'none'), clrh = get(gcf,'color'); end 
+X
+X % Process chunks separated by NaN .................
+Xin = [0; find(isnan(x)); length(x)+1];
+Xn = length(in)-1;
+Xfor jj=1:n
+X  ii = in(jj)+1:in(jj+1)-1;
+X  ii = [ii ii(1)];
+X  xx = x(ii); yy = y(ii);
+X
+X  % Check area
+X  a(jj) = area(xx,yy);
+X
+X  % Create the patch or line
+X  eval(call)
+X  ic = rem(jj-1,nclr)+1;
+X  set(p(jj),cpn,clr(ic,:))
+X
+Xend
+X
+X
+X % If non-simply-connected patch, fill "holes" with 
+X % background color ...............................
+Xif is_patch & n>1
+X
+X  % Find which polygons are inside which
+X  holes = find(a<0);
+X
+X  % Set color
+X  set(p(holes),'facecolor',clrh)
+X
+Xend
+X
+END_OF_FILE
+if test 2785 -ne `wc -c <'polyplot.m'`; then
+    echo shar: \"'polyplot.m'\" unpacked with wrong size!
+fi
+chmod +x 'polyplot.m'
+# end of 'polyplot.m'
+fi
+if test -f 'sagapic.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'sagapic.m'\"
+else
+echo shar: Extracting \"'sagapic.m'\" \(20439 characters\)
+sed "s/^X//" >'sagapic.m' <<'END_OF_FILE'
+Xfunction sagapic(flag)
+X% SAGAPIC Pictures illustrationg SAGA Toolbox.
+X%	SAGAPIC(NAME)  creates pictures illustrating
+X%	various programs and algorithms in the 
+X%	SAGA Toolbox.
+X%
+X%	      NAME can be one of the following strings:
+X%	knots    - "knots collection",
+X%	map      - topographic map,
+X%	polybool - Boolean operations with polygons,
+X%	ched     - convex hull of "equilibrium points on 
+X%	           a sphere,
+X%	chrs     - convex hull of random points on a sphere,
+X%	add2ch   - adding a point to a convex hull,
+X%	mebius   - Mebius strip,
+X%	delaunay - relation between the Delaunay triangu-
+X%	           lation and a convex hull on a sphere,
+X%	voronoi  - planar Voronoi diagram
+X%	triang   - triangulated plane with TRIANG command,
+X%	dlncirc  - 2-d Delaunay triangulation and
+X%	           circles through each triangles,
+X%	membrane - MATLAB logo as a triangulated
+X%	           surface,
+X%	interp   - interpolation from irregular data using
+X%	           triangulation method,
+X%	fillmiss - restoration of missing values in a matrix,
+X%	quadtree - adaptive division with QUADTREE,
+X%	objmap   - objective mapping interpolation.
+X%	inpolyhd - points in/out of 3-d polyhedron.
+X%
+X%	Example:
+X%	>> sagapic mebius
+X%
+X%	Abbreviations such as SAGAPIC TRI are allowed.
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%       kirill@plume.mit.edu
+X%       05/18/95
+X
+Xif nargin==0, help sagapic, return, end
+Xif ~isstr(flag)
+X  error(' NAME must be a string variable')
+Xend
+X
+X% ================= KNOTS ==============================
+X% === "Knots" collection (periodic tubes) ==============
+Xname = 'knots';
+Xlm = min(length(flag),length(name));
+Xif strcmp(flag(1:lm),name(1:lm))
+X
+X  % Axes positions .....................
+X  sza = [.5 .5];
+X  apos = [.0 .5; .51 .5; 0 .01; .51 .01]; 
+X 
+X  % Create KNOTS surfaces ..............
+X  for jj=1:4
+X    ax(jj) = subplot(2,2,jj);
+X    set(ax(jj),'pos',[apos(jj,:) sza])
+X    num = jj+2;
+X    s(jj) = knots(num,[],.12);
+X    str = ['knots(' num2str(num) ')'];
+X    t(jj) = text(0.35+jj*.1,-.75,str);
+X    set(t(jj),'fontsize',14)
+X    axis equal, axis square,axis off
+X  end
+X 
+X  % Coloring ...........................
+X  set(s,'edgecolor','r')
+X  colormap pink
+X 
+X  % Global title .......................
+X  ag = axes('pos',[0 0 1 1]);
+X  tt = text(.3,.95,'KNOTS  Collection');
+X  set(tt,'fontsize',22)
+X  axis off
+X
+X  set(gcf,'color',[.2 .2 .5])
+Xreturn, end
+X
+X
+X% ================== MAP ===============================
+X% === Topographic map filled with CONTOURF command
+Xname = 'map';
+Xlm = min(length(flag),length(name));
+Xif strcmp(flag(1:lm),name(1:lm))
+X
+X  load topo
+X  contourf(topo,[-1000 -500 0 500 1000])
+X  clr = hsv(64);
+X  clr = clr([44 40 36 22 9 4],:);
+X  colormap(clr)
+X  title('Topographic map filled with CONTOURF')
+X  set(get(gca,'title'),'fontsize',16)
+X
+X  set(gcf,'color',[.2 .2 .4])
+Xreturn, end
+X
+X
+X% ================== POLYBOOL ==========================
+X% === Boolean operations on polygons
+Xname = 'polybool';
+Xlm = min(length(flag),length(name));
+Xif strcmp(flag(1:lm),name(1:lm))
+X  clg
+X
+X  % Intersections of 3 simple polygons: rectangle,
+X  % triangle, ellipse ..................................
+X  ax1 = subplot(2,2,1);
+X  [x1,y1] = ellipse(.85,.2,pi/2.8,.4,.3);
+X  x2 = [0 1 1 0]; y2 = [0 0 1 1];
+X  x3 = [.1 .95 .45]; y3 = [-.1 -.1 1.3];
+X  % Now calculate intersections themselves:
+X  [x12,y12] = polyints(x1,y1,x2,y2);      % P1 & P2
+X  [x13,y13] = polyints(x1,y1,x3,y3);      % P1 & P3
+X  [x23,y23] = polyints(x2,y2,x3,y3);      % P2 & P3
+X  [x123,y123] = polyints(x12,y12,x3,y3);  % P1 & P2 & P3
+X  p = fill(x1,y1,'r',x2,y2,'g',x3,y3,'b'); hold on
+X  pp = fill(x12,y12,'y',x13,y13,'m',x23,y23,'c',x123,y123,'w'); 
+X  hold off, axis off
+X  text(.4,-.2,'simple intersections')
+X  drawnow
+X
+X  % XOR of 2 "arcs" ....................................
+X  ax2 = subplot(2,2,2);
+X  a = 1.5;
+X  [x1,y1] = ellipse(.2,1);
+X  x1 = x1-a*y1.^2;
+X  x2 = -x1-.55; y2 = y1+.13;
+X  [x12,y12] = polyxor(x1,y1,x2,y2);
+X  p = fill(x1,y1,'r',x2,y2,'g'); hold on
+X  px = polyplot(x12,y12,'fill','y'); hold off
+X  axis off
+X  text(-.3,-.8,'XOR')
+X  drawnow
+X
+X
+X  % Multiple intersections of non-convex polygons ......
+X  % First polygon ..........
+X  th = linspace(0,2*pi,176);
+X  rad = 1+.8*cos(9*th);
+X  x1 = rad.*cos(th);
+X  y1 = rad.*sin(th);
+X
+X  % Second polygon .........
+X  th = linspace(0,2*pi,111);
+X  rad = 1+.9*cos(6*th);
+X  x2 = rad.*cos(th)+.75;
+X  y2 = rad.*sin(th)+.32;
+X
+X  [xi,yi] = polyints(x1,y1,x2,y2); % Intersection
+X  ax3 = subplot(2,2,3);
+X  fill(x1,y1,'r',x2,y2,'g'), hold on
+X  polyplot(xi,yi,'fill','y'); % Call POLYPLOT command
+X  axis off
+X  text(.5,-1.5,'intersection')
+X  drawnow
+X
+X  x2 = x2+.41; y2 = y2-.68;
+X  [xu,yu] = polyuni(x1,y1,x2,y2); % Union
+X  ax4 = subplot(2,2,4);
+X  fill(x1,y1,'r',x2,y2,'g')
+X  polyplot(xu,yu,'fill','y'); % Call POLYPLOT command
+X  axis off
+X  text(-.75,-1.8,'union')
+X
+X  set(ax1,'pos',[-.08 .49 .45 .5])
+X  set(ax2,'pos',[.48 .5 .5 .5])
+X  set(ax3,'pos',[-.02 -.02 .52 .54])
+X  set(ax4,'pos',[.49 -.06 .56 .6])
+X
+X  % Global title
+X  a = axes('pos',[0 0 1 1]); axis off
+X  t = text(.5,.96,'Boolean operations with polygons');
+X  set(t,'horizontal','center','fontsize',18)
+X
+X  set(gcf,'color',[.2 .2 .5])
+Xreturn, end
+X
+X
+X
+X% =================== CHED =============================
+X% === Convex hull of "equilibrium points" on a sphere
+Xname = 'ched';
+Xlm = min(length(flag),length(name));
+Xif strcmp(flag(1:lm),name(1:lm))
+X  n = 60;
+X  R = eqdsph(n);    % Constructing "equilibrium points
+X
+X  N = convexh(R);
+X  p = surftri(N,R,[-30,50])
+X
+X  caxis([-1.5 1.5])
+X  axis square, axis off
+X  set(gca,'pos',[-.1 -.1 1.2 1.2])
+X
+X  % Labels
+X  a=axes('pos',[0 0 1 1]);
+X  str = ['Convex hull of ' num2str(n) ...
+X         ' "equlibrium points" on a sphere'];
+X  t1 = text(.18,.95,str);
+X  set(t1,'fontsize',16)
+X  t2 = text(.1,.05,'Used routines: EQDSPH, CONVEXH');
+X  axis off
+X
+X  set(gcf,'color',[.2 .2 .4])
+Xreturn, end
+X
+X
+X% ==================== CHRS ============================
+X% === Convex hull of "random uniform" points on a sphere
+Xname = 'chrs';
+Xlm = min(length(flag),length(name));
+Xif strcmp(flag(1:lm),name(1:lm))
+X  n = 100;
+X  R = randsph(n);
+X  N = convexh(R); % "Uniform random" points on a sphere
+X  p = surftri(N,R,[80,-60])  % Patchwork
+X
+X  % Set axes ..................
+X  colormap cool
+X  axis square  axis off
+X  set(gca,'pos',[-.1 -.1 1.2 1.2])
+X
+X  % Make a title ..............
+X  a=axes('pos',[0 0 1 1]);
+X  str = ['Convex hull of ' num2str(n)...
+X        ' "random uniform" points on a sphere'];
+X  t1=text(.15,.95,str)
+X  set(t1,'fontsize',16)
+X  t2 = text(.1,.05,'Used routines: RANDSPH, CONVEXH');
+X  axis off
+X
+X  set(gcf,'color',[.2 .2 .4])
+Xreturn, end
+X
+X
+X% ================== ADD2CH ============================
+X% === Adding point to a 3-d convex hull:
+X% === Illustration of convex hull algorithm
+Xname = 'add2ch';
+Xlm = min(length(flag),length(name));
+Xif strcmp(flag(1:lm),name(1:lm))
+X  np = 40;
+X  R = rand(np,3);
+X  R(np,:) = [.5 .5 1.5];    % External point
+X  N = convexh(R(1:np-1,:)); % Convex hull of n-1 points
+X
+X  clg, p = surftri(N,R);
+X
+X  % Calculate new facets (call ADDPT2CH command)
+X  [Nn,mi] = addpt2ch(R,N,np);
+X  n_old = sum(mi);
+X  n_new = size(Nn,1);
+X  % Plot 3-d faceted surface
+X  pn = surftri(Nn(n_old+1:n_new,:),R,'w','none');
+X  set(pn,'linewidth',3)
+X
+X  colormap pink
+X  hold on
+X  rn = R(np,:);
+X  plot3(rn(1),rn(2),rn(3),'*');
+X  text(rn(1),rn(2),rn(3)+.05,'New point')
+X  hold off
+X
+X  axis square, axis equal, axis off
+X  set(gca,'pos',[-.1 -.15 1.2 1.3])
+X
+X  at = axes('pos',[0 0 1 1]);
+X  tt = text(.2,.95,'Construction of a 3-d convex hull');
+X  set(tt,'fontsize',20)
+X  axis off
+X
+X  set(gcf,'color',[.2 .2 .4])
+X  return
+Xend
+X
+X
+X% ============= MEBIUS =================================
+X% === "Mebius strip" surface with MEBIUS routine
+Xname = 'mebius';
+Xlm = min(length(flag),length(name));
+Xif strcmp(flag(1:lm),name(1:lm))
+X  clg
+X  s = mebius;
+X  view(-165,60)
+X  colormap hot,brighten(.6)
+X
+X  axis square, axis equal, axis off
+X  set(gca,'pos',[-.1 -.15 1.2 1.3])
+X
+X  at = axes('pos',[0 0 1 1]);
+X  tt1 = text(.5,.95,'Mebius  strip');
+X  set(tt1,'fontsize',25,'fontweight','bold')
+X  set(tt1,'horizontal','center')
+X  tt2 = text(.05,.03,'Created with  MEBIUS  and  TUBE  programs');
+X  axis off
+X  set(gcf,'color',[.25 .25 .5])
+X
+X  return
+Xend
+X
+X
+X% ======= DELAUNAY =====================================
+X% === Relation between Delanay triangulation and 
+X% === a convex hull on a higher-dimensional sphere
+Xname = 'delaunay';
+Xlm = min(length(flag),length(name));
+Xif strcmp(flag(1:lm),name(1:lm))
+X  clg
+X  np = 40;
+X  x=rand(np,1); y=rand(np,1);
+X  R = mapsph([x y],-1);
+X  p1 = triangul(x,y,2);
+X
+X  [D,Nrm] = convexh(R);
+X  s = find(Nrm(:,3)<=0);
+X  D(s,:) = [];
+X  R = R*.7;
+X  p2 = surftri(D,R,20*(R-min(min(R))));
+X  view(-45,25)
+X  axis square, axis equal, axis off
+X  set(gca,'pos',[-.2 -.15 1.5 1.3])
+X
+X  % Title
+X  at = axes('pos',[0 0 1 1]);
+X  t(1) = text(.5,.95,'Planar Delaunay triangulation');
+X  t(2) = text(.5,.88,'as a convex hull on 3-d sphere');
+X  set(t,'fontsize',16,'horizontal','center')
+X  axis off
+X
+X  set(gcf,'color',[.25 .25 .6])
+Xreturn, end
+X
+X
+X% ============ VORONOI =================================
+X% === Planar Voronoi diagram ===========================
+Xname = 'voronoi';
+Xlm = min(length(flag),length(name));
+Xif strcmp(flag(1:lm),name(1:lm))
+X  clg
+X  np = 15;
+X  clp = 'c';
+X  cld = 'y';
+X  lwv = 3;
+X
+X  x = rand(1,np); y = rand(1,np);
+X  [xc,yc,S,Nt,lv] = voronoi2(x,y,1); % Call VORONOI2
+X  set(lv,'linewidth',3)
+X  ii = find(all(Nt<=np));
+X  p = surftri(Nt(:,ii),x,y);
+X  set(p,'edgecolor',cld,'facecolor','none')
+X  set(p,'linewidth',2)
+X  lp = line('xdata',x,'ydata',y);
+X  set(lp,'linestyle','.','marker',18,'color',clp)
+X  axis([-.1 1.1 -.1 1.1])
+X  set(gca,'pos',[.02 .0 .85 .9])
+X  title('Planar Voronoi diagram')
+X  set(get(gca,'title'),'fontsize',16,'fontwe','bold')
+X  axis off
+X
+X  al = legend('w','Voronoi polygons',...
+X       cld,'Delaunay triangles')
+X  set(al,'color',[.2 .2 .5])
+X
+X  set(gcf,'color',[.25 .25 .4])
+Xreturn, end
+X
+X
+X% ============ TRIANG ==================================
+X% === Planar Delaunay triangulation with TRIANGUL 
+Xname = 'triang';
+Xlm = min(length(flag),length(name));
+Xif strcmp(flag(1:lm),name(1:lm))
+X  clg
+X  np = 200;
+X  x=randn(1,np); y = randn(1,np);
+X  N = triangul(x,y,1);
+X  set(gca,'pos',[0.02 -.05 .96 .98])
+X  axis square,axis off
+X
+X  at = axes('pos',[0 0 1 1]);
+X  t1 = text(.5,.96,'Delaunay triangulation of a planar set')
+X  set(t1,'horizontal','center','fontsize',16)
+X  t2 = text(.5,.91,'with TRIANGUL function');
+X  set(t2,'horizontal','center','fontsize',16)
+X  axis off
+X
+X  set(gcf,'color',[.25 .25 .6])
+Xreturn, end
+X
+X
+X% ============ DLNCIRC =================================
+X% === Illustration of empty circumference property of
+X% === Delaunay triangulation 
+Xname = 'dlncirc';
+Xlm = min(length(flag),length(name));
+Xif strcmp(flag(1:lm),name(1:lm))
+X  clg
+X  n = 10;
+X  x = rand(n,1); y = rand(n,1);
+X 
+X  N = triangul(x,y,1);
+X  [c,r] = circmsph([x y],N);
+X 
+X  % Plot circles trough each triangle
+X  circle(r,c(:,1),c(:,2))  % Call CIRCLE
+X  axis equal, axis square  % Make proportions right
+X
+Xreturn, end 
+X
+X
+X
+X% ======= MEMBRANE =====================================
+X% === Triangulated "patchwork" membrane surface -
+X% === illustration of SURFTRI command
+Xname = 'membrane';
+Xlm = min(length(flag),length(name));
+Xif strcmp(flag(1:lm),name(1:lm))
+X  clg
+X  np = 500;
+X  M=membrane;
+X  sz = size(M);
+X  [xg,yg] = meshgrid(1:sz(2),1:sz(1));
+X  x = rand(1,np)*sz(2); y=rand(1,np)*sz(1);
+X  z = interp2(xg,yg,M,x,y);
+X  p = surftri(x,y,z);                 % Call SURFTRI
+X  set(gca,'pos',[-.15 -.08 1.25 1.25])
+X  axis off
+X
+X  at = axes('pos',[0 0 1 1]);
+X  t1 = text(.5,.96,'MATLAB  Logo  in a "triangular"  form')
+X  set(t1,'horizontal','center','fontsize',18)
+X  t2 = text(.5,.89,'used SURFTRI (and TRIANGUL) functions');
+X  set(t2,'horizontal','center','fontsize',14)
+X  axis off
+X
+X  set(gcf,'color',[.2 .2 .55])
+X  axis off
+Xreturn, end
+X
+X
+X% ========== INTERP ====================================
+X% === Interpolation by triangulation method (INTERPTR)
+Xname = 'interp';
+Xlm = min(length(flag),length(name));
+Xif strcmp(flag(1:lm),name(1:lm))
+X  clg
+X  set(gcf,'pos',[15 350 580 520])
+X  np = 60;
+X  axpos = [-.18 .4 .85 .85;
+X           .35  .35 .85 .85;
+X           .05  -.12 .9 .95];
+X  x = randn(1,np); y = randn(1,np);
+X  z = exp(-(x*1.2).^2-(y*1.5).^2);
+X  z = z+1.1*exp(-((x+.8)*2.5).^2-((y-.8)*2.5).^2);
+X
+X  v = linspace(-2,2,50);
+X  [xi,yi] = meshgrid(v,v);
+X
+X  for jj = 1:3
+X    if jj==1
+X      zi = interptr(x,y,z,xi,yi);
+X    elseif jj==2
+X      zi = interptr(x,y,z,xi,yi,'e');
+X    elseif jj==3
+X      zi = interptr(x,y,z,xi,yi,'eg');
+X    end
+X    axes;
+X    s = surface(xi,yi,zi);
+X    caxis([-.1 1.2])
+X    hold on
+X    l = plot3(x,y,z,'.w');
+X    set(l,'markersize',15)
+X    set(gca,'pos',axpos(jj,:))
+X    view(-50,55), axis off, drawnow
+X  end
+X
+X  % Labels .....
+X  at = axes('pos',[0 0 1 1]);
+X  t1 = text(.5,.97,'Gridding by triangulation method');
+X  set(t1,'horizontal','center','fontsize',18)
+X
+X  t2(1) = text(.2,.45,'interptr(x,y,z,xi,yi)');
+X  t2(2) = text(.8,.45,'interptr(x,y,z,xi,yi,''e'')');
+X  t2(3) = text(.72,.03,'interptr(x,y,z,xi,yi,''eg'') /with gradients/');
+X  set(t2,'horizontal','center','fontsize',14)
+X  axis off
+X 
+X  set(gcf,'color',[.1 .1 .4])
+Xreturn, end
+X
+X
+X% ================ FILLMISS ============================
+X% === Restoration of missing values in a matrix ========
+Xname = 'fillmiss';
+Xlm = min(length(flag),length(name));
+Xif strcmp(flag(1:lm),name(1:lm))
+X  np = [.1 1.0];
+X  clg
+X  P0 = peaks;
+X  nn = prod(size(P0));
+X
+X  subplot(2,3,4)
+X  pcolor(P0); shading flat
+X  axis off
+X  title('Original')
+X  set(gca,'pos',[.01 .01 .31 .38])
+X
+X  % A few missing values ...............
+X  ind = ceil(rand(1,np(1)*nn)*nn);
+X  P = P0;
+X  P(ind) = P(ind)*nan;
+X  np(1) = sum(sum(isnan(P)))/nn;
+X  subplot(2,3,2)
+X  pcolor(P); shading flat
+X  axis off
+X  title(['Missing ' num2str(np(1)*100) '%'])
+X  set(gca,'pos',[.35 .46 .31 .38])
+X
+X  P = fillmiss(P);
+X  subplot(2,3,5)
+X  pcolor(P); shading flat
+X  axis off
+X  set(gca,'pos',[.35 .01 .31 .38])
+X  title('Restored')
+X
+X  % Many missing values
+X  ind = ceil(rand(1,np(2)*nn)*nn);
+X  P = P0;
+X  P(ind) = P(ind)*nan;
+X  np(2) = sum(sum(isnan(P)))/nn;
+X  subplot(2,3,3)
+X  pcolor(P); shading flat
+X  axis off
+X  title(['Missing ' num2str(np(2)*100) '%'])
+X  set(gca,'pos',[.68 .46 .31 .38])
+X
+X  P = fillmiss(P);
+X  subplot(2,3,6)
+X  pcolor(P); shading flat
+X  axis off
+X  title('Restored')
+X  set(gca,'pos',[.68 .01 .31 .38])
+X
+X  % Title
+X  at = axes('pos',[0 0 1 1]);
+X  t1 = text(.5,.97,'Filling  missing  values  with  FILLMISS');
+X  set(t1,'horizontal','center','fontsize',18)
+X  axis off
+X  colormap jet
+X
+X  set(gcf,'color',[.1 .1 .5])
+Xreturn, end
+X
+X
+X% ==================== QUADTREE =========================
+X% === Adaptive division with QUADTREE program ===========
+Xname = 'quadtree';
+Xlm = min(length(flag),length(name));
+Xif strcmp(flag(1:lm),name(1:lm))
+X  clg
+X
+X  % Parameters ..................................
+X  np = 400;  % Number of points
+X  clr = 'ygmc';
+X  sty = '.*xo';
+X  mksz = 5;
+X
+X  x = randn(np,1);
+X  y = randn(np,1);
+X  s = ones(size(x));   % Auxillary vector
+X  n0 = 40;             % Maximal allowed number of points
+X
+X  [ind,bx,by,Nb,lx,ly] = quadtree(x,y,s,n0);
+X  nbl = size(Nb,1);
+X  Sp = sparse(ind,1:np,1,nbl,np);
+X
+X  % Number of points in each block ...............
+X  npb = full(sum(Sp'));
+X
+X  isup = npb<n0/4;    % Mask for underpopulated blocks
+X  [ii,ib] = sort(-npb);
+X
+X  % Find a "representative" block 
+X  % (with some neighbouring blocks underpopulated)
+X  is = 0;
+X  jj = 0;
+X  while ~is
+X    jj = jj+1;
+X    jc = ib(jj);
+X    i_nb = find(Nb(jc,:));
+X    is = any(isup(i_nb));
+X  end
+X
+X  i_up = i_nb(isup(i_nb));
+X  a = zeros(1,nbl);
+X  a(i_nb) = ones(size(i_nb));
+X  a = ~a & any(Nb([i_up i_up(1)],:));
+X  i_sn = find(a);
+X  i_nb = i_nb(i_nb~=jc);
+X
+X  % Plot boundaries of divided regions:
+X  close
+X  xb = lx(:,[1 2 2 1 1])';
+X  yb = ly(:,[1 1 2 2 1])';
+X  lb = plot(xb,yb,'w');
+X  set(lb,'linewidth',2)
+X
+X  % Plot all points
+X  l = line('xdata',x,'ydata',y,'zdata',-ones(size(x)));
+X  set(l,'linestyle',sty(1))
+X  set(l,'color',clr(1),'markersize',10)
+X
+X  % Plot points in a current block
+X  ii = find(ind==jc);
+X  lc = line('xdata',x(ii),'ydata',y(ii),'linestyle',sty(2));
+X  set(lc,'color',clr(2),'markersize',mksz)
+X
+X  % Plot points in neighbouring blocks
+X  ii = find(any(Sp(i_nb,:)));
+X  ln = line('xdata',x(ii),'ydata',y(ii));
+X  set(ln,'linestyle',sty(3))
+X  set(ln,'color',clr(3),'markersize',mksz)
+X
+X  % Plot points in "secondary neighb" blocks
+X  ii = find(any(Sp(i_sn,:)));
+X  ln = line('xdata',x(ii),'ydata',y(ii),'linestyle',sty(4));
+X  set(ln,'color',clr(4),'markersize',mksz)
+X
+X  axis off
+X  set(gca,'pos',[0 0 1 1])
+X
+X  set(0,'defaultlinemarkersize',mksz)
+X  set(0,'defaulttextfontweight','bold')
+X  al = legend([sty(2) clr(2)],'current block',...
+X    [sty(3) clr(3)],'neighbouring blocks',...
+X    [sty(4) clr(4)],'secondary neighb.');
+X  set(al,'color',[.2 .2 .4])
+X  posal = get(al,'pos');
+X  posal(1:2) = [0 0];
+X  set(al,'pos',posal)
+X
+X  % Title
+X  at = axes('pos',[0 0 1 1]);
+X  t1 = text(.5,.97,'Division with QUADTREE');
+X  set(t1,'horizontal','center','fontsize',16)
+X  axis off 
+X
+X  set(gcf,'color',[.1 .1 .5])
+X  refresh
+X  axes(al)
+X
+Xreturn, end
+X
+X
+X% =========== OBJMAP ====================================
+X% === Objective mapping with error estimation
+Xname = 'objmap';
+Xlm = min(length(flag),length(name));
+Xif strcmp(flag(1:lm),name(1:lm))
+X
+X  clg
+X  np = 200;        % Number of points
+X  err = .1;        % Error scale
+X  x = randn(1,np);
+X  y = randn(1,np);
+X  z = peaks(x,y)+err*randn(1,np);
+X
+X  vx = linspace(-2,2,50);
+X  vy = linspace(-2,2,60);
+X  [xi,yi] = meshgrid(vx,vy);
+X
+X  [zi,em] = objmap(x,y,z,xi,yi,[],.1);
+X
+X  % Error map first .................................
+X  colormap hot
+X  ac = subplot(1,2,2);
+X  cc = contourf(vx,vy,em,[.02 .05 .1 .2 .4 .6 .8 1]);
+X  set(gca,'pos',[.57 .05 .4 .8])
+X  lpe = line('xdata',x,'ydata',y,'zdata',zeros(size(x))+1);
+X  set(lpe,'linestyle','.','color','c','markersize',10)
+X  caxis([-5 6])
+X  title('Error map')
+X  clabel(cc,'manual')
+X  t = findobj(gca,'type','text');
+X  set(t,'fontweight','bold','fontsize',12,'color','b')
+X  for jj = 1:length(t)
+X    pos = get(t(jj),'pos'); pos(3) = 1;
+X    set(t(jj),'pos',pos)
+X  end
+X  set(get(gca,'title'),'color','w')
+X
+X  % Surface plot
+X  as = subplot(1,2,1);
+X  surf(xi,yi,zi);
+X  %set(gca,'pos',[-.0 .0 .6 1])
+X  set(gca,'pos',[-.15 -.2 .85 1.3])
+X  view([-30 55])
+X  lps = line('xdata',x,'ydata',y,'zdata',z+.05);
+X  set(lps,'linestyle','.','color','c','markersize',14)
+X  caxis([-15 10])
+X  axis off
+X
+X  % Global title ............
+X  at = axes('pos',[0 0 1 1]);
+X  t1 = text(.5,.97,'Objective mapping with OBJMAP');
+X  set(t1,'horizontal','center','fontsize',16)
+X  axis off
+X  t2 = text(.05,.05,['Relative error: ' num2str(err/mean(std(z)))]);
+X  set(t2,'fontsize',15)
+X
+X  set(gcf,'color',[.1 .1 .5])
+Xreturn, end
+X
+X% ============ POLYHD =============================
+X% === Points inside and outside of 3-d polyhedron
+Xname = 'polyhd';
+Xlm = min(length(flag),length(name));
+Xif strcmp(flag(1:lm),name(1:lm))
+X
+X  clg
+X  nv = 25;
+X  ni = 15;
+X  no = 15;
+X  Rv = eqdsph(nv);
+X  Ri = randisph(ni,3)*.8;
+X  Ro = randsph(no)*1.2;
+X
+X  % Calculate convex hull ................
+X  [N,Nrm] = convexh(Rv);
+X  p = surftri(N,Rv);
+X
+X  % Make forward facets transparent ......
+X  [az,el] = view;
+X  az = (az-90)/180*pi;
+X  el = el/180*pi;
+X  [xv,yv,zv] = sph2cart(az,el,1);
+X  dirv = [xv yv zv]';
+X  ii = find(Nrm*dirv>0);
+X  set(p,'edgecolor','w')
+X  set(p(ii),'facecolor','none',...
+X     'linewidth',3,'edgecolor','w')
+X
+X
+X  % Plot points - vertices, in, out
+X  hold on
+X  lv = plot3(Rv(:,1),Rv(:,2),Rv(:,3),'oc');
+X  li = plot3(Ri(:,1),Ri(:,2),Ri(:,3),'or');
+X  lo = plot3(Ro(:,1),Ro(:,2),Ro(:,3),'oy');
+X  set(lv,'markersize',7)
+X  set(li,'markersize',7)
+X  set(lo,'markersize',7)
+X
+X
+X  % Call INPOLYHD
+X  R_all = [Rv; Ri; Ro];
+X  is = inpolyhd(R_all,Rv,N);
+X
+X  % Plot points according to results
+X  ii = find(is==0.5);
+X  Rc = R_all(ii,:);
+X  lv1 = plot3(Rc(:,1),Rc(:,2),Rc(:,3),'*c');
+X
+X  ii = find(is==1);
+X  Rc = R_all(ii,:);
+X  li1 = plot3(Rc(:,1),Rc(:,2),Rc(:,3),'.r');
+X  set(li1,'markersize',17)
+X
+X  axis off, axis square
+X  set(gca,'pos',[-.25 -.35 1.6 1.7])
+X
+X  % Legends ...............................
+X  al1 = legend([lv li lo lv1 li1]',str2mat(...
+X  'vertices','in','out','bound. pts. from INPOLYHD',...
+X  'inside pts. from INPOLYHD'));
+X  set(al1,'pos',[0 0 .4 .18])
+X  lli1 = findobj(al1,'type','line','linestyle','.');
+X  set(lli1,'markersize',16)
+X
+X  col = pink(64);
+X  colormap(col(20:40,:))
+X
+X  % Global title ............
+X  at = axes('pos',[0 0 1 1]);
+X  t1 = text(.5,.97,'Inside/out with INPOLYHD');
+X  set(t1,'horizontal','center','fontsize',16)
+X  axis off
+X
+X  set(gcf,'color',[.1 .1 .5])
+X
+Xreturn, end
+X
+X
+X % If still continuing, unknown name
+Xdisp(['Name  ' upper(flag) '  is not found'])
+X
+END_OF_FILE
+if test 20439 -ne `wc -c <'sagapic.m'`; then
+    echo shar: \"'sagapic.m'\" unpacked with wrong size!
+fi
+chmod +x 'sagapic.m'
+# end of 'sagapic.m'
+fi
+if test -f 'sagawcm.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'sagawcm.m'\"
+else
+echo shar: Extracting \"'sagawcm.m'\" \(3408 characters\)
+sed "s/^X//" >'sagawcm.m' <<'END_OF_FILE'
+Xfunction  sagawcm
+X% SAGAWCM "Welcome" figure for SaGA toolbox.
+X%	Can be used as a demonstration of various
+X%	plotting functions in SaGA toolbox.
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%       kirill@plume.mit.edu
+X%       05/10/95
+X
+X % Figure itself .........................
+Xclg
+Xset(gcf,'pos',[60 300 550 490])
+Xset(gcf,'color',[.15 .15 .5])
+Xcolormap jet
+Xbrighten(.6)
+X
+X
+X % Torus and ellipsoid ...................
+Xst = torus(1.9);
+Xse = ellipsd([1 1 5]);
+Xview(3)
+Xlim = 4;
+Xaxis([-1 1 -1 1 -1 1]*lim);
+Xazel = [20 20];
+Xang = -20;
+Xrotate(st,azel,ang)
+Xrotate(se,azel,ang)
+Xset(se,'edgecolor','c')
+Xset(st,'edgecolor','c')
+Xset(gca,'pos',[-.06 .58 .41 .45])
+Xcaxis([-2 1.5])
+Xaxis off
+X
+X
+X % Knot with a TUBE function .............
+Xakn = axes;
+Xskn = knots(3,'',.2);
+Xset(skn,'edgecolor',[1 .3 .7])
+Xaxis square, axis equal, axis off
+Xcaxis([-.8 1.5])
+Xset(gca,'pos',[.01 .3 .31 .33])
+X
+X
+X % Circles ...............................
+Xacr = axes;
+Xs3 = sqrt(3);
+Xr0 = [0 2; -s3 -1; s3 -1]/2;
+Xcircle(1,r0(:,1),r0(:,2),'gbr',12)
+Xaxis([-2.5 2.5 -2.5 2.5])
+Xaxis square, axis equal,axis off
+Xset(gca,'pos',[.79 .03 .21 .21])
+X
+X
+X % Hexagonals ...........................
+Xahx = axes;
+Xn = 12;
+Xr = (0:10)/10;
+Xth = .7*r*2*pi;
+Xx0 = r.*cos(th);
+Xy0 = -r.*sin(th);
+Xclr = hot;
+Xclr = clr(18:3:n*4,:);
+Xl = circle(.1+r/2,x0,y0,clr,5,6);
+Xaxis square, axis equal, axis off
+Xaxis([-1.5 1.5 -1.5 1.5])
+Xset(gca,'pos',[.65 -.04 .25 .28])
+X
+Xdrawnow
+X
+X % Filled contour plot .................
+Xacf = axes;
+Xcontourf(peaks,15)
+Xset(gca,'pos',[.34 .01 .3 .26])
+Xset(gca,'xticklabels','','yticklabels','')
+X
+X
+X % Triangulated plane ..................
+Xatp = axes;
+Xnp = 24;
+Xx = rand(1,np); y = rand(1,np);
+XN = triangul(x,y,2);
+Xii = 12:5:size(N,2);
+X[c,r] = circmsph([x' y'],N(:,ii));
+Xaxis(axis),circle(r,c(:,1),c(:,2),'w',2)
+Xaxis square, axis equal
+Xset(gca,'xticklabels','','yticklabels','','box','on')
+Xset(gca,'pos',[.71 .32 .29 .29])
+Xcaxis([-2 6])
+X
+X
+X % Convex hull of a uniform set of points
+X % on a sphere ..........................
+Xach = axes;
+XR = eqdsph(20);
+XN = convexh(R);
+Xsurftri(N,R,[80,60]);
+X%c = caxis; cm = mean(c);caxis(cm+(c-cm)*4);
+Xcaxis([-3 5])
+Xaxis square, axis equal, axis off
+Xset(gca,'pos',[.68 .46 .36 .68])
+X
+Xdrawnow
+X
+X % Fitting a surface by triangulation method
+X % with INTERPTR function  ...............
+Xafs = axes;
+Xnp = 300;
+Xr = randisph(np);
+Xx = 2*r(:,1);y=2*r(:,2);
+Xz = peaks(x,y)+5;
+X[p,N] = surftri(x,y,z);
+Xhold
+X % Interpolation ........
+Xv = linspace(-2,2,15);
+X[xi,yi] = meshgrid(v,v);
+Xzi = interptr(x,y,z,xi,yi,'g',.4);
+Xl1 = plot(xi,yi,'.y',xi',yi','.y');
+Xset(l1,'markersize',10)
+Xl2 = plot3(xi,yi,zi,'.w');
+Xset(l2,'markersize',10)
+Xaxis off
+Xset(gca,'pos',[.3 .2 .42 .54])
+X
+X
+X
+X % Title ************************************
+Xatt = axes('pos',[0 0 1 1]);
+Xt(1) = text(.5,.96,'SaGA');
+Xset(t(1),'fontsize',28,'fontweight','bold','color','y')
+Xt(2) = text(.5,.88,'Spatial and Geometric');
+Xset(t(2),'fontsize',20,'color','y')
+Xt(3) = text(.5,.81,'Analysis');
+Xset(t(3),'fontsize',20,'color','y')
+Xt(4) = text(.5,.74,'toolbox','color','y');
+Xset(t(4),'fontsize',16)
+Xt(5) = text(.5,.68,'by  Kirill Pankratov');
+Xset(t(5),'fontsize',15)
+Xset(t,'horizontal','center')
+Xset(t,'fontweight','bold')
+Xaxis off
+X
+X
+X % Tetrahedron
+Xatr = axes;
+Xset(gca,'pos',[-.03 .0 .32 .37])
+Xlim = [.3 1 .2 1];
+Xaxis(lim), axis off
+Xdrawnow
+Xr = [
+X    0.8211    0.6936    0.3391
+X    0.3993    0.5835    0.4535
+X    0.9789    0.2175    0.4207
+X    0.9257    0.8527    0.1390];
+Xfilltetr(r,'interp');
+X
+END_OF_FILE
+if test 3408 -ne `wc -c <'sagawcm.m'`; then
+    echo shar: \"'sagawcm.m'\" unpacked with wrong size!
+fi
+chmod +x 'sagawcm.m'
+# end of 'sagawcm.m'
+fi
+if test -f 'surf3chk.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'surf3chk.m'\"
+else
+echo shar: Extracting \"'surf3chk.m'\" \(3078 characters\)
+sed "s/^X//" >'surf3chk.m' <<'END_OF_FILE'
+Xfunction [R,cd,fc,ec] = surf3chk(d,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+X% SURF3CHK  Input processing for "triangulated surface" plots.
+X%
+X%	Input:  up to 10 arguments
+X%
+X% 	Output:
+X%	R   - Coordinates matrix
+X%	CD  - Color data
+X%	FC  - Face color
+X%	EC  - Edge color
+X
+X%  Copyright (c) 1995  by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	05/08/95
+X
+X % Defaults ................................................
+Xcd = [];                              % Color data
+Xfc = 'flat';                          % Facecolor
+Xec = get(0,'defaultpatchedgecolor');  % Edgecolor
+Xnx = 0; ny = 0; nz = 1;               % Coloring axis (vertical)
+Xis_rad = 0;                           % "Radial" mode
+X
+X % Key words.........................
+XFlags = str2mat('facecolor','edgecolor','interp','flat',...
+X        'none','radial');
+X
+Xni = nargin-1;
+X
+X % Process all input arguments for size and string/number ..
+Xsz = zeros(ni,2);
+Xiss = zeros(ni,1);
+Xfor jj = 1:ni
+X  c_arg = eval(['a' num2str(jj)]);
+X  sz(jj,:) = size(c_arg);
+X  iss(jj) = isstr(c_arg);
+Xend
+X
+X % Find string arguments ...................................
+Xii = find(iss);
+Xof = ones(size(Flags,1),1);
+Xfor jj = 1:length(ii)
+X  jc = ii(jj);
+X  c_arg = eval(['a' num2str(jc)]);
+X  len = min(length(c_arg),length(flag));
+X
+X  if len==1
+X    if any(c_arg=='rgbycmwk'), ec = c_arg; end
+X
+X  else
+X    % Find coincidences with keywords
+X    A = Flags(:,1:len)==c_arg(of,1:len);
+X    nc = find(all(A'));
+X    if nc==3, fc = 'interp';
+X    elseif nc==4, fc = 'flat';
+X    elseif nc==5, fc = 'none';
+X    elseif nc==6, is_rad = 1;
+X    elseif nc==1, fc = eval(['a' num2str(jc+1)]);
+X    elseif nc==2, ec = eval(['a' num2str(jc+1)]);
+X    end
+X
+X  end  % End if 
+X
+Xend  % End for 
+X
+X
+X % Find arguments for view-vector ..........................
+Xnrm = [];          % Initialize
+Xii = prod(sz')';   % Find vectors of 2 or 3 elements
+Xii = (ii==2 | ii==3) & ~iss;
+Xii = find(ii);
+Xif ii~=[]
+X  ii = max(ii);
+X  c_arg = eval(['a' num2str(ii)]);
+X  nrm = c_arg(:)';
+X  iss(ii) = 1;
+Xend
+X
+X
+X % Combine coordinates input into R matrix .................
+Xii = find(~iss);
+Xsz = sz(ii,:);
+XR = [];            % Initialize
+Xfor jj = 1:length(ii)
+X  c_arg = eval(['a' num2str(ii(jj))]);
+X  if diff(sz(jj,:))<0, c_arg = c_arg'; end
+X  R = [R; c_arg];
+Xend
+Xif size(R,1)<3, d = 2; end
+X
+X
+X % Calculate colors ........................................
+X
+X % If view-vector is 2 number it is in [AZ EL]
+X % format; transform it to cartesian - [NX,NY,NZ]
+Xif max(size(nrm))==2
+X  nrm = nrm*pi/180;
+X  [nx,ny,nz] = sph2cart(nrm(1),nrm(2),1);
+X
+Xelseif max(size(nrm))==3    % [NX,NY,NZ] format
+X  nx = nrm(1); ny = nrm(2); nz = nrm(3);
+X
+Xend
+X
+X % Coordinate along color direction .........
+Xcd = R(1,:)*nx+R(2,:)*ny;
+Xif size(R,1)>2, cd = cd+R(3,:)*nz; end
+X
+X % If Cdata input directly ..................
+Xif size(R,1)>3, cd = R(3+d:size(R,1),:); end
+X
+X % If "radial" coloring mode ................
+Xif (d==2 & ~nx & ~ny), is_rad=1; end
+Xif is_rad
+X  [R1,cd] = mapsph(R(1:d,:)',-.8);  % Map on a sphere
+X  lim = [min(cd) max(cd)];
+X  cd = cd';
+Xend
+X
+X % If facecolor is "none" make sure edges are visible
+Xif strcmp(fc,'none') & ~any(ec), ec = 'w'; end
+X
+END_OF_FILE
+if test 3078 -ne `wc -c <'surf3chk.m'`; then
+    echo shar: \"'surf3chk.m'\" unpacked with wrong size!
+fi
+chmod +x 'surf3chk.m'
+# end of 'surf3chk.m'
+fi
+if test -f 'surftri.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'surftri.m'\"
+else
+echo shar: Extracting \"'surftri.m'\" \(2747 characters\)
+sed "s/^X//" >'surftri.m' <<'END_OF_FILE'
+Xfunction [po,N] = surftri(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+X% SURFTRI  Triangulated surface "patchwork" plot.
+X%	SURFTRI(X,Y) Performs (Delaunay) triangulation
+X%	of a plane set of (irregular) points with 
+X%	coordinates X, Y and plots triangulation as a 
+X%	"patchwork", one patch per triangle, in XY plane.
+X%	SURFTRI(X,Y,Z,C) Plots triangulated surface 
+X%	with cooresponding hight data Z	and color data C
+X%	Color can be specified as a vector of the same 
+X%	size as X or Y or as a direction of "coloring"
+X%	axis (direction of color change) in the form
+X%	[NX NY NZ] or [AZ EL]. Default is vertical
+X%	direction for 3-d plot (color is proportional
+X%	to height) and so-called "radial mode" for 2-d
+X%	plot (see SURFTRI INFO for details).
+X%	[P,N] = SURFTR(...)  Returns handles P of all 
+X%	patchs in a surface, one patch per triangle and N
+X%	- matrix of indices of triangles (the output of the
+X%	triangulation program TRIANGUL).
+X%
+X%	  Examples:
+X%	1. Simple 2-d triangulation plot
+X%	surftri(rand(100,2));
+X%
+X%	2. 3-d triangulated surface
+X%	n = 300;
+X%	r = rand(1,n).^(1/2);
+X%	t = rand(1,n)*2*pi;
+X%	x = r.*cos(t); y = r.*sin(t);
+X%	z = exp(-4*(x.^2+y.^2));
+X%	surftr(x,y,z),  colormap cool
+X%
+X%	SURFTRI INFO (or, equivalently, TYPE SURF3INF)
+X%	shows some additional information about
+X%	capabilities and usage of SURFTRI program.
+X%	See also TRIANGUL,  PATCH, SURF.
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	05/10/95, 05/23/95
+X
+X % Check if the first parameter is indices .........
+XisN = all(all(round(a1)==a1));
+Xlim = [min(min(a1)) max(max(a1))];
+XisN = isN & any(size(a1)==3) & lim(1)>0;
+X
+Xif isN   % If the first argument is a matrix of indices
+X  N = a1;
+X  lim = size(N);
+X  if lim(1)~=3 & lim(2)==3, N = N'; end
+Xend
+X
+X % Set up SURFCHK function call ....................
+X % Retrieve combined coordinate matrix R, color data c
+X % facecolor fc and edgecolor ec
+Xeval_str = '[R,c,fc,ec] = surf3chk(3';
+Xfor jj = 1+isN:nargin
+X  eval_str = [eval_str ',a' num2str(jj)];
+Xend
+Xeval_str = [eval_str ');'];
+Xeval(eval_str);
+Xd = min(3,size(R,1));
+X
+X % Make separate coordinate vectors .......
+Xx = R(1,:);
+Xy = R(2,:);
+Xif d>2, z = R(3,:); end
+X
+X
+X % If no inices matrix, triangulate .....................
+Xif ~isN, N = triangul(x,y); end
+X
+X % Reshape everything into triangles ...... 
+Xntri = size(N,2);
+Xx = reshape(x(N),3,ntri);
+Xy = reshape(y(N),3,ntri);
+Xif d>2, z = reshape(z(N),3,ntri); end
+Xif size(c,1)==1, c = reshape(c(N),3,ntri); end
+X
+X % If "flat" mode, one color datum per triangle .........
+Xif ~strcmp(fc,'interp') & all(size(c)>1), c = mean(c); end
+X
+X % Plot one patch per triangle ..........................
+X%cla
+Xview(d)
+Xif d==2
+X p = patch(x,y,c);
+Xelse
+X  p = patch(x,y,z,c);
+Xend
+X
+Xset(p,'facecolor',fc)
+Xset(p,'edgecolor',ec)
+X
+Xif nargout>0, po = p; end
+X
+END_OF_FILE
+if test 2747 -ne `wc -c <'surftri.m'`; then
+    echo shar: \"'surftri.m'\" unpacked with wrong size!
+fi
+chmod +x 'surftri.m'
+# end of 'surftri.m'
+fi
+if test -f 'torus.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'torus.m'\"
+else
+echo shar: Extracting \"'torus.m'\" \(928 characters\)
+sed "s/^X//" >'torus.m' <<'END_OF_FILE'
+Xfunction [x,y,z] = torus(ro,ri,n)
+X% TORUS  Plotting toproidal surface.
+X%	[X,Y,Z] = TORUS(RO,RI) computes coordinates
+X%	X, Y, Z of a toroidal surface with "internal"
+X%	radius RI, "outer" (axis) radius RO>RI.
+X%
+X%	See also SPHERE, ELLIPSD, CYLINDER
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%       kirill@plume.mit.edu
+X%       05/10/95
+X
+X % Defaults and parameters ..........
+Xn_dflt = [30 30];
+Xro_dflt = 2;    % Axis radius twice the "tube"
+Xri_dflt = 1;
+X
+X % Handle input .....................
+Xif nargin==0, ro = ri_dflt; end
+Xif nargin < 2 ri = ri_dflt; end
+Xif nargin < 3, n = [30 30]; end
+Xif n<0 | n==[], n = n_dflt; end
+Xif length(n)==1, n = [n n]; end
+X
+X % Calculate torus coordinates ......
+Xvx = linspace(0,2*pi,n(1));
+Xvy = linspace(0,2*pi,n(2));
+X[x,y] = meshgrid(vx,vy);
+Xz = sin(y);
+Xt = cos(y)*ri+ro+ri/2;
+Xy = t.*sin(x);
+Xx = t.*cos(x);
+X
+X % Plotting .........................
+Xif nargout<3,
+X  s = surface(x,y,z);
+X  x = s;
+Xend
+X
+END_OF_FILE
+if test 928 -ne `wc -c <'torus.m'`; then
+    echo shar: \"'torus.m'\" unpacked with wrong size!
+fi
+chmod +x 'torus.m'
+# end of 'torus.m'
+fi
+if test -f 'tubes.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'tubes.m'\"
+else
+echo shar: Extracting \"'tubes.m'\" \(3487 characters\)
+sed "s/^X//" >'tubes.m' <<'END_OF_FILE'
+Xfunction [x,y,z] = tubes(xa,ya,za,r,v2,np)
+X% TUBES  Plotting a tube-like surface.
+X%	[X,Y,Z] = TUBES(XA,YA,ZA,RAD,V,NP) calculates 
+X%	coordinates of a tube-like (or hose-like)
+X%	surface with axis curve given by XA, YA, ZA
+X%	radius (thickness) RAD (scalar of vector of
+X%	the same length LA = length(XA). RAD can be
+X%	also 1 by 2 or LA by 2 vector in which case it
+X%	specifies semiaxes of elliptical (as opposed
+X%	to circular) cross-section.
+X%	V specifies the direction of one of 2 basis
+X%	vectors in the tube cross-section. By default
+X%	it is aligned along the curvature of the tube
+X%	axis direction. It can be specified as a string
+X%	such as 'xy' or 'z' in which case it lies in the
+X%	XY plane, 'xz' or 'y' - in XZ plane, etc, or 
+X%	explicitly as 1 by 3 or LA by 3 vector.
+X
+X%	See also SURFACE, TORUS, 
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%       kirill@plume.mit.edu
+X%       05/17/95
+X
+X % Defaults and parameters .................
+Xnp_dflt = 20;
+Xr_dflt = 1;
+Xv2_dflt = 'crv';
+Xopt = 0;
+Xtol = 1e-12; end
+X
+X % Handle input ............................
+Xif nargin < 6, np = np_dflt; end
+Xif nargin < 5, v2 = v2_dflt; end
+Xif nargin < 4, r  =  r_dflt; end
+X
+Xif r==[], r = r_dflt; end
+X
+X % Make all coordinates column vectors .....
+Xxa = xa(:);
+Xya = ya(:);
+Xza = za(:);
+Xla = length(xa);
+X
+Xola = ones(la,1);
+Xszr = size(r);
+Xif max(szr)==1, r = r(ones(la,2)); end
+Xif all(szr==[2 1]), r = r'; szr = fliplr(szr); end
+Xif all(szr==[1 2]), r = r(ola,:); end
+Xszr = size(r);
+Xif szr(2)==la, r = r'; end
+Xif size(r,2)==1, r = r(:,[1 1]); end
+X
+Xif v2==[], v2 = v2_dflt; end
+Xszr = size(v2);
+Xif min(szr)==1
+X  v2 = v2(:)';
+X  v2 = v2(ones(la,1),:);
+X  opt = 4;
+Xend
+Xif all(szr==[3 la]), v2 = v2'; end
+Xif all(size(v2)==[la 3]), opt = 4; end
+Xif isstr(v2)
+X  opt =  3*(strcmp(v2,'xy')|strcmp(v2,'z'));
+X  opt = opt+2*(strcmp(v2,'xz')|strcmp(v2,'y'));
+X  opt = opt+(strcmp(v2,'yz')|strcmp(v2,'x'));
+Xend
+X
+X % Auxillary
+Xo3 = ones(1,3);
+Xonp = ones(1,np);
+X
+X
+X % Calculate direction along the axis ........
+Xbv2 = [xa ya za];
+X[bv1,dr] = gradient(bv2);
+X%edges = [dr(2,:)-dr(1,:); dr(la,:)-dr(la-1,:)];
+X%dr(2:la-1,:) = dr(3:la,:)-dr(1:la-2,:);
+X%dr([1 la],:) = edges;
+Xnrm = sqrt(sum(dr'.^2))';  % Length
+Xnrm = nrm+eps*sign(nrm)+(~nrm);
+Xdr = dr./nrm(:,o3);        % Normalize
+X
+X % Calculate second basis vector - in the plane 
+X % perpendicular to the axis .............
+Xif opt==0
+X  [bv2,bv1] = gradient(dr);
+X  if all(all(abs(bv1')<tol)), opt = 3; end
+X  nrm = sqrt(sum(bv1'.^2))'; % Length
+X  nrm = nrm+eps*sign(nrm)+(~nrm);
+X  bv1 = bv1./nrm(:,o3);      % Normalize
+Xend
+X
+Xif opt<4 & opt>0  % The plane (xy,xz, or yz) is specified
+X  if ~any(abs(dr(:,opt))<tol), opt = rem(opt,3)+1; end
+X  a = ones(1,3);
+X  a(opt) = 0;
+X  a = find(a);
+X  bv1 = zeros(size(dr));
+X  bv1(:,a(1)) = -dr(:,a(2));
+X  bv1(:,a(2)) =  dr(:,a(1));
+X  nrm = find(all(~bv1'));
+X  if nrm~=[]
+X    bv1(nrm,a) = bv1(nrm,a)*nan;
+X    bv1(:,a(1)) = fillmiss(bv1(:,a(1)))
+X    bv1(:,a(2)) = fillmiss(bv1(:,a(2)))
+X  end
+X
+Xelseif opt==4
+X  bv1 = v2;
+X
+Xend
+X
+X
+X % Third basis vector ....................
+Xbv2 = cross(dr',bv1')';
+X
+X % Now calculate coordinates of a tube ^^^^^^^^^^
+X
+X % Generic tube coordinates ..............
+Xth = linspace(0,2*pi,np);
+Xxg = r(:,1)*cos(th);
+Xyg = r(:,2)*sin(th);
+X
+X % Coordinates transformation ............
+Xx = xg.*bv1(:,onp)  +yg.*bv2(:,onp);
+Xy = xg.*bv1(:,2*onp)+yg.*bv2(:,2*onp);
+Xz = xg.*bv1(:,3*onp)+yg.*bv2(:,3*onp);
+X
+Xx = x+xa(:,onp);
+Xy = y+ya(:,onp);
+Xz = z+za(:,onp);
+X
+X % Plotting ..............................
+Xif nargout<2
+X  s = surface(x,y,z);
+X  x = s;
+Xend
+X
+END_OF_FILE
+if test 3487 -ne `wc -c <'tubes.m'`; then
+    echo shar: \"'tubes.m'\" unpacked with wrong size!
+fi
+chmod +x 'tubes.m'
+# end of 'tubes.m'
+fi
+echo shar: End of shell archive.
+exit 0

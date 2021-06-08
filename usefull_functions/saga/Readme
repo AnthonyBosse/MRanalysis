@@ -1,0 +1,152 @@
+<plaintext>
+***   This is the list of archived and compressed    ***
+***         files in the   SaGA toolbox              ***
+
+%  Copyright (c) 1995  by Kirill K. Pankratov
+%	kirill@plume.mit.edu
+
+  This is the contents of archives containing most of
+SaGA Toolbox.
+
+  There are folowing archive files:
+
+ saga_gp  - graphical programs of SaGA
+ saga_ip  - interpolation/mapping routines
+ saga_cg  - planar, spherical and multi-dimensional
+              computational geometry
+ saga_doc - documentation
+
+   These archives are obtained by using the following 
+   command (platform SPARCstation-2):
+shar ... > saga_gp
+   and similarly for  saga_ip  and  saga_cg
+
+   Use the following command to unarchive:
+sh saga_gp
+   and similarly for  saga_ip  and  saga_cg.
+
+
+*********************************************************
+
+  Most (but not all) of the programs contained in each
+archive can be used independently of other archives.
+
+  Some of the exceptions are:
+polyplot.m (saga_gp) - calls     area.m     (saga_cg)
+contourf.m (saga_gp) - calls     isinpoly.m (saga_cg)
+surftri.m  (saga_gp) - may call  triangul.m (saga_cg)
+triangul.m (saga_ip) - may call  iscross.m  (saga_cg)
+convexh.m  (saga_cg) - may call  convex2.m, convex20.m
+                                            (saga_ip)
+
+unique.m   - contained both in saga_ip and saga_cg
+
+
+
+  And now the contents of each archive:
+  -------------------------------------
+
+ saga_gp ..............
+circle.m
+contourf.m
+ellipsd.m
+ellipse.m
+filltetr.m
+knots.m
+mebius.m
+polyplot.m
+sagapic.m
+sagawcm.m
+surf3chk.m
+surftri.m
+torus.m
+tubes.m
+
+
+ saga_ip ..............
+callchk.m
+convex2.m
+convex20.m
+detrend2.m
+extraptr.m
+fillmiss.m
+grad2est.m
+grad2ls.m
+grad2tcp.m
+inflate.m
+inmesh.m
+int3info
+interpm.m
+interptr.m
+interval.m
+invdisti.m
+kriging.m
+lagrcoef.m
+locfilt.m
+mapinfo
+mincurvi.m
+mkblocks.m
+objmap.m
+ptsinblk.m
+qtree0.m
+quadtree.m
+treedemo.m
+triangul.m
+unique.m
+uniquept.m
+
+
+ saga_cg ..............
+addpt2ch.m
+adjspx.m
+area.m
+bodyang.m
+centroid.m
+circmsph.m
+circmsph0.m
+convexh.m
+cvxadd.m
+delaunay.m
+dlndemo.m
+eqdsph.m
+fitplane.m
+initspx.m
+intsecl.m
+iscross.m
+isdln.m
+isinpoly.m
+isrect.m
+linechk.m
+mapsph.m
+perimetr.m
+planerot.m
+polybool.m
+polydiff.m
+polyints.m
+polyinfo
+polyuni.m
+polyxor.m
+project.m
+randisph.m
+randsph.m
+reflect.m
+rotmat3.m
+rotsolve.m
+sphangle.m
+spx2fac.m
+spx2nbr.m
+unique.m
+volspx.m
+voronoi2.m
+z2rot.m
+
+saga_doc ..............
+Bibliogr
+Contents
+Doclist
+Flowchart
+License
+Readme
+SagaFAQ
+Whatsnew
+

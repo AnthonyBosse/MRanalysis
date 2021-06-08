@@ -1,0 +1,3622 @@
+#! /bin/sh
+# This is a shell archive.  Remove anything before this line, then unpack
+# it by saving it into a file and typing "sh file".  To overwrite existing
+# files, type "sh file -c".  You can also feed this as standard input via
+# unshar, or by typing "sh <file", e.g..  If this archive is complete, you
+# will see the following message at the end:
+#		"End of shell archive."
+# Contents:  callchk.m convex2.m convex20.m detrend2.m extraptr.m
+#   fillmiss.m grad2est.m grad2ls.m grad2tcp.m inflate.m inmesh.m
+#   int3info interpm.m interptr.m interval.m invdisti.m kriging.m
+#   lagrcoef.m locfilt.m mapinfo mincurvi.m mkblocks.m objmap.m
+#   ptsinblk.m qtree0.m quadtree.m treedemo.m triangul.m unique.m
+#   uniquept.m
+# Wrapped by kirill@gyre on Thu Oct 26 21:08:43 1995
+PATH=/bin:/usr/bin:/usr/ucb ; export PATH
+if test -f 'callchk.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'callchk.m'\"
+else
+echo shar: Extracting \"'callchk.m'\" \(769 characters\)
+sed "s/^X//" >'callchk.m' <<'END_OF_FILE'
+Xfunction so = callchk(si,name)
+X% CALLCHK  Puts expression or function name into
+X%	a sform to be EVALuated.
+X%	SO = CALLCHK(SI,NAME)
+X
+X%	Called from OBJMAP, KRIGING.
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	05/25/95
+X
+Xif nargin<2, name = []; end
+X
+X % Check if a function or expression
+Xis_fun = exist(si);
+Xis_fun = is_fun & any(isletter(si));
+X
+Xif is_fun          % .. Function
+X
+X  so = [si ';'];
+X
+Xelse               % .. Expression
+X
+X  % Change to array operations (.* , .^, ./) :
+X  n_ins = si=='*' | si=='/' | si=='^';
+X  nn = find(n_ins);
+X  n_ins = cumsum(n_ins+1);
+X  so = zeros(size(max(n_ins)));
+X  so(n_ins) = si;
+X  so(~so) = '.'*ones(size(nn));
+X
+X  % Add output and semicolon
+X  so = setstr([so ';']);
+X
+Xend
+X
+Xif name~=[], so = [name '=' so]; end
+END_OF_FILE
+if test 769 -ne `wc -c <'callchk.m'`; then
+    echo shar: \"'callchk.m'\" unpacked with wrong size!
+fi
+chmod +x 'callchk.m'
+# end of 'callchk.m'
+fi
+if test -f 'convex2.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'convex2.m'\"
+else
+echo shar: Extracting \"'convex2.m'\" \(1201 characters\)
+sed "s/^X//" >'convex2.m' <<'END_OF_FILE'
+Xfunction e = convex2(x,y)
+X% CONVEX2  Finds a convex hull of a 2-dimensional set of points.
+X%	N = CONVEX2(X,Y)  Returns indices of elements of X, Y
+X%	set constituing convex hull, so that the convex hull 
+X%	coordinates are X(N), Y(N).
+X%	CONVEX2(X+Y*i) is the same as CONVEX2(X,Y).
+X
+X%	CONVEX2 uses a primitive (recursion) routine CONVEX20.
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%       kirill@plume.mit.edu
+X%  	04/24/94, 02/22/95, 04/19/95
+X
+X % Hande input ..............................................
+Xif nargin==0, help convex2, return, end
+Xif nargin==1, y = imag(x); x = real(x); end  % Complex input
+X
+Xx = x(:);
+Xy = y(:);
+Xl = length(x);
+Xif length(y)~=l
+X  error('  Vectors x, y must have the same length')
+Xend
+X
+X[x0,n0] = max(x);    % Find the left point
+X[x1,n1] = min(x);    % Find the right point
+X
+Xif n0==n1 % If all x are equal, find extremal y
+X  [x0,n0] = max(y);  % Find the upper point
+X  [x1,n1] = min(y);  % Find the lower point
+Xend
+Xif n0==n1, e = n0; return, end    % Single point
+X
+X % Recursively find all points on the convex hull ..........
+Xe1 = convex20(n0,n1,(1:l)',x,y);  % Upper  half-arc
+Xe2 = convex20(n1,n0,(1:l)',x,y);  % Lower half-arc
+X
+Xe = [e1; e2];  % Combine two half-arcs
+X
+END_OF_FILE
+if test 1201 -ne `wc -c <'convex2.m'`; then
+    echo shar: \"'convex2.m'\" unpacked with wrong size!
+fi
+chmod +x 'convex2.m'
+# end of 'convex2.m'
+fi
+if test -f 'convex20.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'convex20.m'\"
+else
+echo shar: Extracting \"'convex20.m'\" \(677 characters\)
+sed "s/^X//" >'convex20.m' <<'END_OF_FILE'
+Xfunction e = convex20(n0,n1,num,x,y)
+X% CONVEX20 Primitive for CONVEX2 (convex hull of a two-
+X%	dimensional dataset).
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	04/19/95, 05/21/95
+X
+Xx0 = x(n0); y0 = y(n0);
+Xx1 = x(n1); y1 = y(n1);
+X
+X
+X % Calculate cross-product to find the outermost point
+Xp = (x-x0)*(y1-y0)-(y-y0)*(x1-x0);
+Xii = find(p>0);
+X
+Xif ii==[]      % Stop
+X
+X  e = num(n1);
+X
+Xelse           % Continue recursion
+X
+X  p = p(ii);
+X  [xm,nm] = max(p);  % Find outermost point
+X  num = [num([n0 n1]); num(ii)];
+X  nm = nm+2;
+X  
+X  x = [x0; x1; x(ii)];
+X  y = [y0; y1; y(ii)];
+X
+X  e1 = convex20(1,nm,num,x,y);
+X  e2 = convex20(nm,2,num,x,y);
+X  e = [e1; e2];
+X
+Xend
+END_OF_FILE
+if test 677 -ne `wc -c <'convex20.m'`; then
+    echo shar: \"'convex20.m'\" unpacked with wrong size!
+fi
+chmod +x 'convex20.m'
+# end of 'convex20.m'
+fi
+if test -f 'detrend2.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'detrend2.m'\"
+else
+echo shar: Extracting \"'detrend2.m'\" \(848 characters\)
+sed "s/^X//" >'detrend2.m' <<'END_OF_FILE'
+Xfunction  [zo,r0,p] = detrend2(x,y,zi)
+X% DETREND2 Removing mean and slope in 2-d set.
+X%	[ZO,R0,P] = DETREND2(X,Y,ZI) calculates
+X%	and removes mean and slope of the dataset
+X%	with coordinates X, Y, Z.
+X%	Returns "detrended" value ZO so that
+X%	ZI = P(1)+(X-R0(1))*P(2)+(Y-R0(2))*P(3)+ZO.
+X
+X%  Copyright (c) Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	05/20/95	
+X
+X % Handle input ......................
+Xif nargin==0, help detrend2, return, end
+Xif nargin<3
+X  error('  Not enough input arguments')
+Xend
+X
+X % Make all coordinates column vectors
+Xsz = size(zi);
+Xx = x(:);
+Xy = y(:);
+Xzi = zi(:);
+X
+X % Find mean values
+Xr0(1) = mean(x);
+Xr0(2) = mean(y);
+Xz0 = mean(zi);
+X
+X % Extract mean values
+Xx = x-r0(1);
+Xy = y-r0(2);
+Xzo = zi-z0(1);
+X
+X % Find slope p = [zmean dx dy]
+Xp = [x y]\zo;
+Xp = [z0 p'];
+X
+X % Extract slope
+Xzo = zo-x*p(2)-y*p(3);
+Xzo = reshape(zo,sz(1),sz(2));
+END_OF_FILE
+if test 848 -ne `wc -c <'detrend2.m'`; then
+    echo shar: \"'detrend2.m'\" unpacked with wrong size!
+fi
+chmod +x 'detrend2.m'
+# end of 'detrend2.m'
+fi
+if test -f 'extraptr.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'extraptr.m'\"
+else
+echo shar: Extracting \"'extraptr.m'\" \(3634 characters\)
+sed "s/^X//" >'extraptr.m' <<'END_OF_FILE'
+Xfunction  ze = extraptr(x,y,z,N,xe,ye)
+X% EXTRAPTR Extrapolation beyond the convex hull of a 
+X%	triangulated domain.
+X%	ZE = EXTRAPTR(X,Y,Z,N,XE,YE) Performs extrapolation
+X%	of Z data from triangles having edges along the
+X%	convex hull of data set X, Y (their indices are
+X%	stored in matrix N (3 by ntr, where nc - number of
+X%	edges of the convex hull).
+X%
+X%	See also INTERPTR, TRIANGUL, CONVEX2.
+X
+X% Copyright (c)  Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	05/12/95, 09/15/95
+X
+Xpwr = 3;        % Power index (inverse) for weights
+Xshow_trng = 0;  % Is to plot triangles used in extrap.
+X
+X % Handle input .........................
+Xif nargin==0, help extraptr, return, end
+Xif nargin < 6
+X  error('  Not enough input arguments')
+Xend
+X
+Xszxe = size(xe);
+Xif any(~szxe), ze = xe; return, end
+Xx = x(:); y = y(:); z = z(:);
+Xxe = xe(:)'; ye = ye(:)';
+XszN = size(N);
+Xif szN(1)>3 & szN(2)==3
+X   N = N'; szN = fliplr(szN);
+Xend
+X
+X[w,ze] = adjspx(N);
+Xs1 = sum(~ze);
+Xi1 = find(s1>=1);
+Xi2 = find(s1==2);
+Xi_new = max(w(:,i2));
+XN(:,i2) = N(:,i_new);
+Xze(:,i2) = ze(:,i_new);
+X
+XNe = N(:,i1);
+XnNe = size(Ne,2);
+Xx2 = 1:nNe;
+Xx2 = x2(ones(3,1),:);
+Xcc = max(max(Ne))+2;
+Xs1 = sparse(Ne,x2(ones(3,1),:),1,cc,nNe);
+X
+X % Show triangles
+Xif show_trng
+X  cla
+X  for jj=1:size(Ne,2)
+X    c_t = Ne(:,jj);patch(x(c_t),y(c_t),z(c_t(1)));
+X  end
+X  drawnow
+Xend
+X
+Xs2 = sparse(ze(1:2,i1),x2(ones(2,1),:),10,cc,nNe);
+Xx2 = s1+s2;
+X[s1,s2,s3] = find(x2);
+Xs3 = -s3-s1/cc;
+Xx2 = reshape(s3,3,nNe);
+Xx2 = abs(sort(x2));
+XNe = round((x2-floor(x2))*cc);
+X
+X % Check areas of triangles
+Xs1 = reshape(x(Ne),3,nNe);
+Xs2 = reshape(y(Ne),3,nNe);
+Xs = (s1(2,:)-s1(1,:)).*(s2(3,:)-s2(1,:));
+Xs = s-(s1(3,:)-s1(1,:)).*(s2(2,:)-s2(1,:));
+Xi1 = find(s<0);    % Clock-wise triangles
+X
+X % Make all triangles anticlockwise and make the
+X % first edge "external"
+XNe([1 2],i1) = Ne([2 1],i1); 
+Xs = abs(s);
+X
+X
+X % Auxillary ..........
+Xoe = ones(length(xe),1);
+Xoc = ones(1,nNe);
+X
+X % Triangle coordinate vectors ..........
+Xx1 = x(Ne(1,:));
+Xx2 = x(Ne(2,:));
+Xx3 = x(Ne(3,:));
+X
+Xy1 = y(Ne(1,:));
+Xy2 = y(Ne(2,:));
+Xy3 = y(Ne(3,:));
+X
+X % Calculate (signed) area of triangles formed
+X % by all outer edges with all points of
+X % extrapolation
+X % Auxillary differences
+Xs1 = x1(:,oe)-xe(oc,:);
+Xs2 = x2(:,oe)-xe(oc,:);
+X
+X % Areas themselves
+Xs3 = s1.*(y2(:,oe)-ye(oc,:));
+Xs3 = s3-s2.*(y1(:,oe)-ye(oc,:));
+X
+X
+X % Find those pairs (triangles, extrap. points)
+X % for which area is negative ...........
+Xze = find(s3>0);  % These are to be excluded
+Xs3(ze) = zeros(size(ze));
+X[i1,i2,s3] = find(s3);
+X
+X%for jj=1:length(xe)
+X%plot(xe(jj),ye(jj),'o'); hold on
+X%fnd = find(i2==jj);  ij = i1(fnd);
+X%fill(X(:,ij),Y(:,ij),'r'), hold off, pause,end
+X
+X % Calculate relevant coordinate differences
+Xx1 = x1(i1)-xe(i2)';
+Xx2 = x2(i1)-xe(i2)';
+Xx3 = x3(i1)-xe(i2)';
+X
+Xy1 = y1(i1)-ye(i2)';
+Xy2 = y2(i1)-ye(i2)';
+Xy3 = y3(i1)-ye(i2)';
+X
+Xw = (x1.^2+y1.^2)+(x2.^2+y2.^2)+(x3.^2+y3.^2);
+Xw = w.^(-pwr);
+X
+X % Calculate areas of triangles formed by internal
+X % edges with extrapolation points ........
+Xs1 = x2.*y3-x3.*y2;
+Xs2 = x3.*y1-x1.*y3;
+X
+X % Now get Z data (label them y for memory economy)
+Xy1 = z(Ne(1,:));
+Xy2 = z(Ne(2,:));
+Xy3 = z(Ne(3,:));
+X
+Xy1 = y1(i1);
+Xy2 = y2(i1);
+Xy3 = y3(i1);
+X
+X
+X % Sum of all areas = area of basis triangles
+Xx1 = s(i1)';
+X
+X % Extrapolation from all relevant triangles
+Xx2 = (y1.*s1+y2.*s2+y3.*s3)./x1;
+X
+Xx2 = x2.*w;  % Multiply by weights
+X
+X % Add together extrapolations from relevant 
+X % triangles ........
+XS = sparse(1:length(i2(:)),i2,x2);
+X
+Xze = full(sparse(1,i2,x2));
+X
+X % Add together weights
+Xx3 = full(sparse(1,i2,w));
+X
+X % Divide sum of extrapolations by sum of weights
+Xze = ze./x3;
+X
+X % Reshape to the input size ........
+Xze = reshape(ze,szxe(1),szxe(2));
+END_OF_FILE
+if test 3634 -ne `wc -c <'extraptr.m'`; then
+    echo shar: \"'extraptr.m'\" unpacked with wrong size!
+fi
+chmod +x 'extraptr.m'
+# end of 'extraptr.m'
+fi
+if test -f 'fillmiss.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'fillmiss.m'\"
+else
+echo shar: Extracting \"'fillmiss.m'\" \(3858 characters\)
+sed "s/^X//" >'fillmiss.m' <<'END_OF_FILE'
+Xfunction Mf = fillmiss(M)
+X% FILLMISS Interpolation values in a matrix.
+X%	MF = FILLMISS(M) Interpolates missing values
+X%	of matrix M (marked by NaN) from a set of nearest
+X%	available elements.
+X%	MF = FILLMISS(M) Returns matrix MF equal to input M
+X%	except for the elements of M marked by NaN, where
+X%	MF is interpolated from available neighbouring 
+X%	elements. 
+X
+X%  Copyright (c)  1995 by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	12/19/94, 05/22/95
+X
+X%  Missing values are calculated as weighted sum of linear
+X%  interpolations from nearest available points.
+X%  Altogether 5 estimates from column-wise and 5 for row-wise
+X%  1-d linear interpolation are calculated.
+X%  Weights are such that for the best case (isolated missing
+X%  points away from the boundary) the interpolation is equvalent 
+X%  to average of 4-point Lagrangian polynomial interpolations 
+X%  from nearest points in a row and a column.
+X
+X%  Scott Richardson (srichard@prizm.nmt.edu)
+X%  has a very interesting alternative algorithm for this
+X%  operation.
+X
+X % Handle input .............................................
+X if nargin==0, help fillmiss, return, end
+X
+X % If no missing values, output=input, quick exit.
+X % If all values are missing, give up  (output=input)
+X % and prevent endless recursion ....................
+Xif all(all(isnan(M)))|~any(any(isnan(M)))
+X   Mf = M;
+X   return
+Xend
+X
+X % Interpolation coefficients .......................
+X % [left right left-left left-right right-right]
+Xcoef =  [eps eps 1/2 4/3 1/2];
+Xsparse_min = .2;  % Threshhold below which go to GRIDDATA
+X
+X % Sizes ...................
+Xn_miss = length(find(isnan(M)));
+XszM = size(M);
+XszMf2 = szM(2)+4;
+Xis_vec = szM==1;
+X
+X % If almost all missing, turn to griddata
+Xif n_miss/prod(szM) > 1-sparse_min
+X  [miss,exis] = find(~isnan(M));
+X  Mf = griddata(miss,exis,M(find(~isnan(M))),1:szM(2),(1:szM(1))');
+X  return
+Xend
+X
+X % Auxillary ...............
+Xv4 = -1:2;
+Xo4 = ones(1,4);
+Xo5 = ones(5,1);
+Xo2 = ones(2,1);
+Xomiss = ones(n_miss,1);
+Xwsum = zeros(n_miss,2);
+Xa = wsum;
+X
+X % Interpolate from both rows and columns, if possible
+Xfor jj = find(~is_vec)
+X
+X  bM = zeros(2,szM(3-jj));   % Make margins
+X  Mf = M; if jj==2, Mf = M'; end
+X  Mf = [bM; isnan(Mf); bM];
+X
+X  Mf = Mf(:);
+X  miss = find(Mf==1);       % Missing ##
+X  exis = find(~Mf);         % Available ##
+X  Mf = cumsum(~Mf);
+X  i_m = Mf(miss);
+X
+X  Mf = M; if jj==2, Mf = M'; end
+X  Mf = [bM*nan; Mf; bM*nan];
+X
+X  % Indices ................
+X  I = i_m(:,o4)+v4(omiss,:);
+X  I = reshape(exis(I),n_miss,4);    % Quartets of neib. pts for
+X                                    % each missing pts.
+X
+X  % Make 5 estimates ...................................
+X  W = miss(:,o4)-I;
+X  A = zeros(n_miss,5);
+X  A(:,1:2) = reshape(Mf(I(:,2:3)),n_miss,2);
+X  A(:,3:5) = (W(:,1:3)-W(:,2:4));
+X  A(:,3:5) = reshape(Mf(I(:,2:4)),n_miss,3).*W(:,1:3);
+X  A(:,3:5) = A(:,3:5)-reshape(Mf(I(:,1:3)),n_miss,3).*W(:,2:4);
+X  A(:,3:5) = A(:,3:5)./(W(:,1:3)-W(:,2:4));
+X
+X  % Calculate weights ......
+X  W = [abs(W(:,2:3)) abs(W(:,1:3))+abs(W(:,2:4))];
+X  W = (~isnan(A))./W;
+X
+X  W = W.*coef(omiss,:);
+X  wsum(:,jj) = sum(W')';
+X  wsum(:,jj) = wsum(:,jj)-(wsum(:,jj)==0);
+X  W = W./wsum(:,jj*ones(1,5));
+X  i_m = find(isnan(A));
+X  A(i_m) = zeros(size(i_m));
+X  A = A.*W;
+X  a(:,jj) = A*o5;
+Xend
+X
+X % Correspondence between row and column numbering .....
+Xexis = ceil(miss/szMf2);
+Xexis = exis+(miss-(exis-1)*szMf2)*szMf2;
+X[exis,i_m] = sort(exis);
+Xwsum(:,1) = wsum(i_m,1);
+Xa(i_m,1) = a(:,1);
+X
+X % Combine estimates from rows and columns .............
+Xwsum = wsum+(wsum==-1);
+Xexis = wsum*o2;
+Xi_m = exis==0;
+Xexis(i_m) = exis(i_m)+nan;
+Xwsum = wsum./exis(:,o2);
+Xexis = (a.*wsum)*o2;
+X
+X % Insert interpolated values into Mf ..................
+XMf(miss) = exis;
+X
+X  % Remove NaNs at the margins
+XMf = Mf(3:szM(jj)+2,:);
+Xif jj==2, Mf = Mf'; end
+X
+X % If there are still missing pts, repeat the procedure
+Xif any(any(isnan(Mf))), Mf = fillmiss(Mf); end
+X
+END_OF_FILE
+if test 3858 -ne `wc -c <'fillmiss.m'`; then
+    echo shar: \"'fillmiss.m'\" unpacked with wrong size!
+fi
+chmod +x 'fillmiss.m'
+# end of 'fillmiss.m'
+fi
+if test -f 'grad2est.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'grad2est.m'\"
+else
+echo shar: Extracting \"'grad2est.m'\" \(2897 characters\)
+sed "s/^X//" >'grad2est.m' <<'END_OF_FILE'
+Xfunction  [nx,ny,d] = grad2est(x,y,z,meth,opt)
+X% GRAD2EST 2-d Gradient estimation at irregular data.
+X%	[NX,NY] = GRAD2EST(X,Y,Z) Estimates horizontal
+X%	gradient at points with coordinates X, Y and 
+X%	"height" data Z.
+X%
+X%	[NX,NY] = GRAD2EST(X,Y,Z,METHOD,OPT) also accepts
+X%	input arguments METHOD and OPT.
+X%	METHOD can be one of the following: 
+X%	'triang'  - performs triangulation
+X%	'neighb'  - uses coordinate sorting routine NEIGHB
+X%	    to find neighbouring points.
+X%	'leastsquares', or simply 'ls' - uses least-square
+X%	plane fit (routine GRAD2LS)
+X%	'crossproduct', or simply 'cp' - uses triangulation
+X%	and combination of cross-products of triangle edges
+X%	for gradient estimation (routine GRAD2TCP).
+X%	In all cases abbreviations (like 'cro', 'tri') are valid.
+X%	OPT  can be option vector to GRAD2TCP (see that routine
+X%	for details).
+X%	
+X%	[NX,NY] = GRADTLS(X,Y,Z,N) Accepts triangulation matrix N
+X%	(so that it does not do it itself).
+X%	GRADTLS(X,Y,Z,N,'ls') or GRADTLS(X,Y,Z,N,'cp') are also
+X%	valid.
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	05/11/95
+X
+X % Defaults and parameters ...............
+Xmeth_dflt = 'leastsq';
+XFlags = str2mat('triangulate','neighbours','leastsquares','ls',...
+X                'crossproduct','cp');
+X
+X % Handle input ..........................
+Xif nargin==0, help grad2est, return, end
+Xif nargin<5, opt = []; end
+Xif nargin<4, meth = meth_dflt; end
+X
+Xof = ones(size(Flags,1),1);
+XNtr = [];
+X
+X % Check if 4-th argument is triangulation matrix
+Xmeth_n = [1 1];
+Xif min(size(meth))==3,
+X  Ntr = meth;
+X  if nargin==5,
+X    meth = opt; opt = [];
+X    meth_n(1) = 0;
+X  end
+Xend
+X
+X % Process "method" .......................
+Xif isstr(meth)
+X  len = min(length(meth),size(Flags,2));
+X  A = Flags(:,1:len)==meth(of,1:len);
+X  nc = find(all(A'));
+X  if     nc==1, meth_n = [1 1];
+X  elseif nc==2, meth_n = [2 1];
+X  elseif nc==3 | nc==4, meth_n(2) = 1;
+X  elseif nc==5 | nc==6, meth_n(2) = 2;
+X  end
+X
+Xelse
+X
+X  sz = size(meth);
+X  mm = [min(sz) max(sz)];
+X  if mm(1)==1 & mm(2)>2 & mm(2)<=5
+X    % Interpret as parameter vector to GRAD2CP
+X    opt = meth;
+X    meth_n = [1 2];
+X  else
+X    sz = min(2,max(sz));
+X    meth_n(1:len) = meth(1:len);
+X  end
+X
+Xend
+X
+X
+X % If triangulation matrix is supplied, transpose if needed
+Xsz = size(Ntr);
+Xif sz(1)>3, Ntr = Ntr'; end
+X
+X % Find neighbours of each point by triangulating (TRIANGUL)
+X % or coordinate sorting  (NEIGHB)
+Xif meth_n(1)==1,
+X  Ntr = triangul(x,y);
+X
+Xelseif meth_n(1)>1
+X  %Ntr = neighb(x,y);  % Not ready yet ???????????
+X
+Xend
+X
+X
+X % Change 0 to 1 if triangulation was already made
+Xmeth_n(1) = max(1,meth_n(1));
+X
+X
+X % Gradient estimation itself ...............................
+X % Call GRAD2LS (least-squares) or GRAD2TCP (cross-product)
+Xif     all(meth_n==[1 1])
+X  [nx,ny,d] = grad2ls(x,y,z,Ntr,1);
+X
+Xelseif all(meth_n==[2 1])
+X  [nx,ny,d] = grad2ls(x,y,z,Ntr,2);
+X
+Xelseif all(meth_n==[1 2])
+X  [nx,ny] = grad2tcp(x,y,z,Ntr,opt);
+X
+Xend
+X
+END_OF_FILE
+if test 2897 -ne `wc -c <'grad2est.m'`; then
+    echo shar: \"'grad2est.m'\" unpacked with wrong size!
+fi
+chmod +x 'grad2est.m'
+# end of 'grad2est.m'
+fi
+if test -f 'grad2ls.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'grad2ls.m'\"
+else
+echo shar: Extracting \"'grad2ls.m'\" \(1826 characters\)
+sed "s/^X//" >'grad2ls.m' <<'END_OF_FILE'
+Xfunction [nx,ny,del] = grad2ls(x,y,z,N,opt)
+X% GRADTLS Gradient estimation using least-squares fit.
+X%	[NX,NY] = GRAD2LS(X,Y,Z,N) Estimates horizontal
+X%	gradient at points with coordinates X, Y and 
+X%	"height" data Z.
+X%
+X%	[NX,NY,D] = GRAD2LS(...) also returns vector D
+X%	(of the same size as NX, NY) equal to the 
+X%	discriminant (Sxx*Syy-Sxy^2) in least-squares
+X%	inversion. It can be used as an estimate of robust-
+X%	ness of gradient estimation.
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	05/10/95
+X
+Xe = 1e-9;
+Xopt_dflt = 1;
+XisN = 0;
+X
+X % Handle input ..........................
+Xif nargin==0, help gradtls, return, end
+Xif nargin<4, opt = opt_dflt; isN = 0; end
+X
+X
+X % Sizes and dimensions ..................
+Xis_clmn = 0;
+Xif size(x,1)>1, is_clmn = 1; end
+Xx = x(:); y = y(:); z = z(:);
+Xd = 3;
+Xn_spx = size(N,2);
+X
+X % Get neighbour connections and indexing matrices
+X[Ns,Ni1,Ni2] = spx2nbr(N);
+X
+X % Construct coordinate difference matrices
+XXs = reshape((x(Ni1)-x(Ni2)),d*d,n_spx);
+XXs = sparse(Ni1,Ni2,Xs);
+XYs = reshape((y(Ni1)-y(Ni2)),d*d,n_spx);
+XYs = sparse(Ni1,Ni2,Ys);
+XZs = reshape((z(Ni1)-z(Ni2)),d*d,n_spx);
+XZs = sparse(Ni1,Ni2,Zs);
+X
+X % Correct coordinate difference matrices:
+X % Divide by number of neighbours  (Ns)
+XI = find(Ns);
+XXs(I) = Xs(I)./Ns(I);
+XYs(I) = Ys(I)./Ns(I);
+XZs(I) = Zs(I)./Ns(I);
+X
+X
+X % Now the gradient estimation itself .........
+X
+X % Summation terms for least-squares inversion
+Xsxx = full(sum(Xs.^2));
+Xsyy = full(sum(Ys.^2));
+Xsxy = full(sum(Xs.*Ys));
+Xsxz = full(sum(Xs.*Zs));
+Xsyz = full(sum(Ys.*Zs));
+X
+X % Discriminant ..............
+Xdel = sxx.*syy-sxy.^2;
+Xdel = del+e*sign(del);
+Xii = find(~del);
+Xdel(ii) = ones(size(ii));
+X
+X % Inversion itself ..........
+Xnx = (sxz.*syy-syz.*sxy)./del;
+Xny = (syz.*sxx-sxz.*sxy)./del;
+X
+X % Transpose if needed
+Xif is_clmn, nx = nx'; ny = ny'; del = del'; end
+END_OF_FILE
+if test 1826 -ne `wc -c <'grad2ls.m'`; then
+    echo shar: \"'grad2ls.m'\" unpacked with wrong size!
+fi
+chmod +x 'grad2ls.m'
+# end of 'grad2ls.m'
+fi
+if test -f 'grad2tcp.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'grad2tcp.m'\"
+else
+echo shar: Extracting \"'grad2tcp.m'\" \(2198 characters\)
+sed "s/^X//" >'grad2tcp.m' <<'END_OF_FILE'
+Xfunction [nx,ny] = gradtri(x,y,z,N,opt)
+X% GRADTCP  Gradient estimation at points of
+X%	triangulated 3-d surface.
+X%	[Nx,Ny] = GRADTCP(X,Y,Z,N) Accepts
+X%	coordinates X, Y, Z and a matrix of 
+X%	triangles N.
+X%	Estimates horizontal gradient [NX, NY]
+X%	by "cross-product" method: combining 
+X%	cross-products (normals*area) of edges of
+X%	each triangle which has a vertex at a given
+X%	point.
+X%	[Nx,Ny] = GRADTCP(X,Y,Z,N,OPT) uses also
+X%	"normalization options"...
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	05/10/95
+X
+X % Defaults and parameters .........
+Xopt_dflt = [0 1 0 0 0];
+X
+X % Handle input ....................
+Xif nargin<5, opt = opt_dflt; end
+Xif nargin<4, N = triangul(x,y); end
+X
+X % Auxillary ........
+Xd = 3;
+Xod = ones(d,1);
+Xis_clmn = 0;
+Xif size(x,1)>1, is_clmn = 1; end
+Xx = x(:); y = y(:); z = z(:);
+XR = [x y z]';
+X
+X % Process options .................
+Xif opt==[], opt = opt_dflt; end
+Xopt = opt(:)';
+Xsz = size(opt);
+Xa = zeros(1,5);
+Xif isstr(opt)
+X  % Not yet available ????????
+Xelse
+X  if max(sz)==1
+X    a(min(abs(opt),5)) = 1;
+X  else
+X    len = min(sz(2),5);
+X    a(1:len) = opt(1:len);
+X  end
+X  opt = a;
+Xend
+X
+X
+X % Set up differences vectors ..........
+XR1 = R(:,N(2,:))-R(:,N(1,:));
+XR2 = R(:,N(3,:))-R(:,N(1,:));
+X
+X % Cross-product (normal*area of each triangle).....
+XNrm = cross(R1,R2);
+X
+X % Check sign, make it positive
+Xii = find(Nrm(3,:)<0);
+XNrm(:,ii) = -Nrm(:,ii);
+X
+X
+X % Calculate different normalization options .......
+Xl1 = sum(R1.^2);  % Lengths of edges
+Xl2 = sum(R2.^2);
+Xl1 = l1.*l2;
+Xl2 = sqrt(l1);
+X
+Xnx = sum(Nrm.^2); % Lengths of normals
+Xny = sqrt(l1);
+Xcc = mean([l1; l2]');
+X
+XL = ones(5,length(l1));
+XL(2:3,:) = [cc(1)./l2; cc(2)./l1];
+Xcc = mean([nx; ny]');
+XL(4:5,:) = [cc(1)./ny; cc(2)./nx];
+X
+X
+X % Normalization itself ..............
+Xl1 = opt*L;
+XNrm = Nrm./l1(od,:);
+X
+X % Now for each points add together normals from all
+X % triangles having a vertex in this point .........
+Xl1 = Nrm(1,:);
+Xnx = full(sparse(1,N,l1(od,:)));
+Xl1 = Nrm(2,:);
+Xny = full(sparse(1,N,l1(od,:)));
+Xl1 = Nrm(3,:);
+Xl1 = full(sparse(1,N,l1(od,:)));
+X
+X % Now make a gradient estimate itself .............
+Xnx = -nx./l1;
+Xny = -ny./l1;
+X
+X % Transpose if needed
+Xif is_clmn, nx = nx'; ny = ny'; del = del'; end
+X
+END_OF_FILE
+if test 2198 -ne `wc -c <'grad2tcp.m'`; then
+    echo shar: \"'grad2tcp.m'\" unpacked with wrong size!
+fi
+chmod +x 'grad2tcp.m'
+# end of 'grad2tcp.m'
+fi
+if test -f 'inflate.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'inflate.m'\"
+else
+echo shar: Extracting \"'inflate.m'\" \(1168 characters\)
+sed "s/^X//" >'inflate.m' <<'END_OF_FILE'
+Xfunction Ro = inflate(Ri,p)
+X% INFLATE Changing convexity of a data set.
+X% 	RO = INFLATE(RI,P) transforms dataset RI
+X%	(N by D where N - number of points,
+X%	d - dimension) as follows: each point is 
+X%	translated along the line drawn from the 
+X%	center (mean(R)) so that the new distance
+X%	to the center is d^(1-P).
+X%	For 0 < P < 1 this means "inflation" set RO
+X%	is "more convex" than RI, negative P decreases
+X%	convexity.
+X%
+X%	Used in CONVEX and TRIANLUL programs.
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%       kirill@plume.mit.edu
+X%       05/18/95, 09/14/95
+X
+X % Defaults and parameters ................
+Xp_dflt = .01;  % Power (1-p)
+X
+X % Handle input
+Xif nargin==0, help inflate, return, end
+Xif nargin<2, p = p_dflt; end
+X
+X % Sizes and dimensions ...................
+X[n_pts,d] = size(Ri);
+Xopts = ones(n_pts,1);
+X
+Xr0 = mean(Ri);
+X
+XRo = (Ri-r0(opts,:))';
+Xrr1 = max(abs(Ro'))';
+XRo = Ro./rr1(:,opts);
+Xrr0 = sqrt(sum(Ro.^2));
+Xrmax = max(rr0);
+X
+X % Shift ...............
+Xrshft = rr1'.*(rand(1,d) -.5)*p;
+XRo = Ro-rshft(opts,:)';
+X
+X % Inflation itself
+Xrr1 = rmax*(rr0/rmax).^(1-p);
+Xrr1 = rr1./rr0;
+XRo = Ro.*rr1(ones(d,1),:);
+X
+X % Shift back
+XRo = Ro'+r0(opts,:)+rshft(opts,:);
+X
+END_OF_FILE
+if test 1168 -ne `wc -c <'inflate.m'`; then
+    echo shar: \"'inflate.m'\" unpacked with wrong size!
+fi
+chmod +x 'inflate.m'
+# end of 'inflate.m'
+fi
+if test -f 'inmesh.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'inmesh.m'\"
+else
+echo shar: Extracting \"'inmesh.m'\" \(1825 characters\)
+sed "s/^X//" >'inmesh.m' <<'END_OF_FILE'
+Xfunction  [in,A,S] = inmesh(xm,ym,x,y)
+X% INMESH  Determines which mesh cell points belong to.
+X%	[IN,A] = INMESH(XM,YM,X,Y) Returns vector
+X%	IN with indices of the mesh cells for
+X%	a set of points X, Y (0 if does not belong
+X%	to any cell) and matrix A (4 by nmb. of points)
+X%	with areas of elementary triangles formed by
+X%	points X, Y and all edges f relevant cells
+X%	(this is useful for interpolation from cell
+X%	vertices).
+X
+X%  Copyright (c) 1995  by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	02/27/95
+X
+X
+Xl_bl = 10;  % Block size
+X
+X % Sizes ..................
+Xx = x(:)'; y = y(:)';
+Xl = length(x); 
+X[nv,nm] = size(xm);
+Xn_bl = ceil(l/l_bl);
+X
+X % Auxillary ..............
+Xom = ones(1,nm);
+Xov = ones(1,nv);
+Xv1 = 1:nv;
+Xv2 = [2:nv 1];
+Xa = zeros(1,nm);
+X
+X % Calculate limits for each facet ...............
+Xxml = [min(xm); max(xm)]';
+Xyml = [min(ym); max(ym)]';
+X
+X % Make a preliminary test for ranges ............
+Xfor jb = 1:n_bl
+X  i_bl = (jb-1)*l_bl+1:jb*l_bl;
+X  if jb == n_bl, i_bl = (jb-1)*l_bl+1:l; end
+X  o_bl = ones(size(i_bl));
+X  A = x(om,i_bl)>=xml(:,o_bl) & x(om,i_bl)<=xml(:,2*o_bl);
+X  A = A & y(om,i_bl)>=yml(:,o_bl) & y(om,i_bl)<=yml(:,2*o_bl);
+X  S = [S sparse(A)];
+Xend
+X
+X % Check if inside (the cross-product)
+X[im,ip] = find(S);  % Find possible inside indices
+Xa(im) = ones(size(im));
+X
+X % Find area of relevant cells  ..................
+Xind = find(a);
+XA = -(xm(v2,ind)-xm(v1,ind)).*(ym(v1,ind)+ym(v2,ind));
+Xa(ind) = sum(A);
+X
+Xxd = xm(:,im)-x(ov,ip);
+Xyd = ym(:,im)-y(ov,ip);
+X
+XA = xd(v1,:).*yd(v2,:);
+XA = A-xd(v2,:).*yd(v1,:);
+X
+Xind = find(all(abs(sign(A)-sign(a(ov,im)))<=1));
+X
+X % Initialize output index vector
+Xin = zeros(size(x));
+X
+Xip = ip(ind);
+X
+X % Find and remove repeated indices ip
+Xii = find(~diff(ip))+1;
+Xip(ii) = []; ind(ii) = [];
+X
+XA = A(:,ind);
+Xim = im(ind);
+Xin(ip) = im;
+X
+XA = [a(im); A(v2,:)];   % Returned matrix A
+X
+END_OF_FILE
+if test 1825 -ne `wc -c <'inmesh.m'`; then
+    echo shar: \"'inmesh.m'\" unpacked with wrong size!
+fi
+chmod +x 'inmesh.m'
+# end of 'inmesh.m'
+fi
+if test -f 'int3info' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'int3info'\"
+else
+echo shar: Extracting \"'int3info'\" \(4860 characters\)
+sed "s/^X//" >'int3info' <<'END_OF_FILE'
+X% INT3INFO "Info" for INTERPTR roitine in SaGA -
+X%	Interpolation by triangulation method.
+X%       It can be called from MATLAB by typing:
+X%       >> type int3info    or
+X%       >> interptr info 
+X 
+X% Kirill K. Pankratov, kirill@plume.mit.edu
+X 
+X  INTERPTR routine performs 2-dimensional interpolation by the 
+Xtriangulation method - using the so-called triangular baricentric 
+Xcoordinates.
+X  By default it interpolates only for points inside a convex hull
+Xof a set of basis points, but has options for extrapolation 
+Xeverywhere and option for blending with gradient information
+X(see below).
+X
+X
+X  ALGORITHM:
+X
+X  First, a Delaunay triangulation is performed using TRIANGUL program.
+X  Then the routine finds which triangle each interpolation point belongs
+Xto, using INMESH program.
+X  After that it calculates the baricentric coordinates of each
+Xinterpolation point.
+X  Baricentric coordinates are essentially the weights of values of
+Xtriangular vertices for interpolation inside a triangle.
+XFor a triangle with vertices A,B,C and an interpolation point X
+Xinside it the weights wA, wB, wC are equal to the areas of triangles
+XXCB, AXC, ABX respectively, divided by the area ofthe triangle ABC 
+Xitself. 
+X  These weights are used in a linear interpolation procedure:
+Xz(X) = z(A)*wA+z(B)*wB+z(C)*wC.
+X
+X  This form is equivalent to a plane passing through all 3 points
+Xof a triangle.
+X  Such interpolation procedure is formally valid for any points on 
+Xa plane X,Y. For points outside a triangle the signed area should be
+Xused (so that weights can be negative).
+X  The resulting interpolated surface is equivalent to a tout rubber
+Xsheet fixed at all data points. Inside each triangle the surface is
+Xstrictly linear. At the boundaries of triangles it is continuous
+Xbut not smooth - the gradient is discontinuous.
+X
+X
+X  EXTRAPOLATION:
+X
+X  By default the estimates for points outside triangles are not 
+Xperformed (output is NaN). There is however the option for 
+Xextrapolation beyond the convex hull (i.e. to the points which do not
+Xbelong to any triangle). This can be specified by option 'e' as input
+Xargument:
+XZI = INTERPTR(X,Y,Z,XI,YI,'e')
+X  The algorithm for extrapolation is implemented in the routine
+XEXTRAPTR and includes the following:
+XAll "boundary" triangles having a side on the convex hull boundary
+Xare found. For each interpolation point only those triangles are
+Xselected which 
+XThen linear extrapolation is performed from all eligible triangles
+Xusing above described (signed) area-weighted method.
+X  All this estimates are in turn weighted inversely proportional to
+Xthe sum of distances from an interpolation point to all triangle 
+Xvertices. The result is combined estimate from several triangles to 
+Xenhance robustness and smoothness of extrapolation.
+XStill when extrapolated field  has a high variability near the
+Xboundaries of the convex hull, the results can be unreliable.
+X
+X
+X  GRADIENT ESTIMATION
+X
+X  The program also has an option for smoother interpolation - using 
+Xgradient estimates. Gradients are estimated at at the basis points
+Xusing all neigbouring triangles sharing this point.
+X  Gradient estimation is performed in the program GRAD2EST (front-end)
+Xwhich can call either GRAD2TCP or GRAD2LS (primitives).
+X  These are two different methods of gradient estimation:
+XGRAD2LS is a default routine for GRAD2EST and uses least-square
+Xfit of a plane passing through the point where gradients are 
+Xestimated;
+XGRAD2TCP uses cross-product method - the estimated gradient (as a 
+Xnormal vector to a tangent plane) is obtained as a sum of cross-
+Xproducts of sides of triangles sharing the vertex.
+XThere are also additional options in the GRAD2TCP program specifying
+Xthe methods of weighting of cross-products of each triangle.
+X  The extent to which gradient information is incorporated (toutness 
+Xor elasticity control) is specified by additional parameter P (the
+Xlast input argument). P=0 is equivalent to absence of the gradient
+Xinformation (tout surface), larger P correspond to more "elastic"
+Xsurfaces. Optimal values of P usually are about 1, P>>1 can cause
+X"overelastic", "inflated" surface.
+X
+X
+X  SYNTAX
+X
+XThe simplest call to INTERPTR must have at least 5 input arguments
+Xand is similar to other 2-D interpolation programs:
+X
+X  zi = interptr(x,y,z,xi,yi)
+X
+XNext argument is a string specifying whether extrapolation or gradient
+Xinformation or both should be used:
+X  interptr(x,y,z,xi,yi,'e')  - extrapolation,
+X  interptr(x,y,z,xi,yi,'g')  - incorporate gradient estimates,
+X  interptr(...,'eg')  or  interptr(...,'ge') - both.
+X
+XThe last argument is a toutness parameter (positive scalar) in case
+Xwhen gradient information is involved. for example:
+X  interptr(...,'eg',.5)   performs both extrapolation, gradient 
+Xsmoothing with toutness parameter .5.
+X
+XFor more information see "help" sections for the programs
+XTRIANGUL, EXTRAPTR, INMESH, GRAD2EST, GRAD2TCP, GRAD2LS.
+X
+END_OF_FILE
+if test 4860 -ne `wc -c <'int3info'`; then
+    echo shar: \"'int3info'\" unpacked with wrong size!
+fi
+chmod +x 'int3info'
+# end of 'int3info'
+fi
+if test -f 'interpm.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'interpm.m'\"
+else
+echo shar: Extracting \"'interpm.m'\" \(4733 characters\)
+sed "s/^X//" >'interpm.m' <<'END_OF_FILE'
+Xfunction  [Mf,Frow,Fcol] = interpm(M,n,option)
+X
+X% INTERPM   Interpolation between rows and columns of a matrix
+X%	MF = INTERPM(M,[NROW NCOL])  Resamples matrix  M  with
+X%	NROW times original rate for rows and NCOL for columns.
+X%	The resulting matrix  MF has (size(M,1)-1)*NROW+1  by
+X%	(size(M,2)-1)*NCOL+1 size and is obtained by local 
+X%	interpolation with Lagrange polynomials.
+X%	MF = INTERPM(M,N) uses the same resampling rate N for
+X%	rows and columns,
+X%	MF = INTERPM(M) uses default resampling rate equal 2.
+X%	MF = INTERPM(M,[NROW NCOL],[NPTROW NPTCOL]),
+X%	MF = INTERPM(... ,NPT)  or 
+X%	MF = INTERPM(... ,'linear')  (or 'quadratic' or 
+X%	'cubic'; 'l', 'q' or 'c' is enough) also allows to 
+X%	specify the order of Lagrange polynomial to be used:
+X%	NPTROW for interpolation between rows and NPTCOL 
+X%	between columns ('cubic' is equivalent to 4).
+X%
+X%	[MF,FROW,FCOL] = INTERPM(...)  Also returns (sparse) 
+X%	matrices FROW, FCOL of interpolation coefficients so 
+X%	that the matrix MF is the result of the matrix product
+X%	MF = FROW*M*FCOL.
+X
+X%  Copyright (c) 1995  by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	3/11/93,  12/12/94
+X
+X % Defaults and parameters ......................................
+Xn_dflt = 2;     % Default for resample rate
+X                % (expansion of matrix size)
+Xnpt_dflt = 4;   % Default for nmb. of points for interpolation
+X                % (4-pt. - cubic)
+X
+X % Handle input :::::::::::::::::::::::::::::::::::::::::::::::::
+Xnpt = [];
+XOptions = ['linear   '; 'quadratic'; 'cubic    '];
+Xif nargin == 3
+X  if isstr(option),
+X    option = [option(:)' ' '];
+X    [a,npt] = max(option(1)==Options(:,1));
+X    npt = npt+1;
+X  else
+X    npt = option;
+X  end
+Xend
+Xif npt == [], npt =  npt_dflt; end
+Xnpt = npt([1 1]);
+X
+Xif nargin < 2, n = n_dflt; end
+Xif n == [], n = n_dflt; end
+Xn = n([1 1]);
+X
+X % Calculate sizes and determine
+X % whether sparseness is useful and possible ....................
+Xv = version;       % If 4x sparseness is possible
+XszM = size(M);
+Xnpt = min([npt; szM]); % Make sure interp. order is not more
+X                       % than input matrix size
+X % Size of resized (filtered) matrices
+XszMf = (szM-1).*n+1;
+X
+X % Initialize filter matrices ...............
+Xif v(1)>='4'&any(npt<szM)
+X  Frow = sparse(szM(1),szMf(1));
+X  Fcol = sparse(szM(2),szMf(2));
+Xelse
+X  Frow = zeros(szM(1),szMf(1));
+X  Fcol = zeros(szM(2),szMf(2));
+Xend
+X
+X % Coefficients (Lagrange polynomials) ......
+XCrow = lagrcoef(0:npt(1)-1,0:1/n(1):npt(1)-1);
+XCcol = lagrcoef(0:npt(2)-1,0:1/n(2):npt(2)-1);
+X
+X
+X % Compute indices into filter matrices ^^^^^^^^^^^^^^^^^^^^^^^^^
+X
+X % For interpolations between rows ..............................
+Xif szM(1)>1
+X  % Auxillary numbers and vectors .........
+X  n_low = floor((npt(1)-1)/2);
+X  n_up = npt(1)-1-n_low;
+X  vn_low = 1:n_low;
+X  vn_up = szM(1)-(1:n_up);
+X
+X  ob = ones(npt(1)*(n(1)+1),1);
+X  ooffs = ones(1,szM(1)-1);
+X  [xb,yb] = meshgrid(1:n(1)+1,(1:npt(1))-n_low-1); % Local block
+X  xb = xb(:); yb = yb(:);
+X  yoffs = (1:szM(1)-1);                    % Offsets for blocks
+X  xoffs = (yoffs-1)*n(1);
+X  yoffs(vn_low) = n_low+ones(1,n_low);     % Lower edge
+X  yoffs(vn_up) = szM(1)-n_up*ones(1,n_up); % Upper edge
+X  Indf = xb(:,ooffs)+xoffs(ob,:);          % Composite index
+X  Indf = (Indf-1)*szM(1)+yb(:,ooffs)+yoffs(ob,:);
+X  Indf = Indf(:);
+X
+X  % Indices into coefficient matrices .....
+X  xb = (1:length(xb))';
+X  xoffs = n_low*ones(1,szM(1)-1);
+X  xoffs(vn_low) = vn_low-1;
+X  xoffs(vn_up) = vn_up-szM(1)+n_up+n_low;
+X  Indc = xb(:,ooffs)+xoffs(ob,:)*npt(1)*n(1);
+X  Indc = Indc(:);
+X
+X  % Put coefficients in Frow filter matrix
+X  Frow(Indf) = Crow(Indc);
+Xelse
+X  Frow = 1;
+Xend
+XFrow = Frow';
+X
+X
+X % For interpolations between columns ...........................
+Xif szM(2)>1
+X  % Auxillary numbers and vectors .........
+X  n_low = floor((npt(2)-1)/2);
+X  n_up = npt(2)-1-n_low;
+X  vn_low = 1:n_low;
+X  vn_up = szM(2)-(1:n_up);
+X
+X  ob = ones(npt(2)*(n(2)+1),1);
+X  ooffs = ones(1,szM(2)-1);
+X  [xb,yb] = meshgrid(1:n(2)+1,(1:npt(2))-n_low-1); % Local block
+X  xb = xb(:); yb = yb(:);
+X  yoffs = (1:szM(2)-1);                    % Offsets for blocks
+X  xoffs = (yoffs-1)*n(2);
+X  yoffs(vn_low) = n_low+ones(1,n_low);     % Lower edge
+X  yoffs(vn_up) = szM(2)-n_up*ones(1,n_up); % Upper edge
+X  Indf = xb(:,ooffs)+xoffs(ob,:);          % Composite index
+X  Indf = (Indf-1)*szM(2)+yb(:,ooffs)+yoffs(ob,:);
+X  Indf = Indf(:);
+X
+X  % Indices into coefficient matrices .....
+X  xb = (1:length(xb))';
+X  xoffs = n_low*ones(1,szM(2)-1);
+X  xoffs(vn_low) = vn_low-1;
+X  xoffs(vn_up) = vn_up-szM(2)+n_up+n_low;
+X  Indc = xb(:,ooffs)+xoffs(ob,:)*npt(2)*n(2);
+X  Indc = Indc(:);
+X
+X  % Put coefficients in Frow filter matrix
+X  Fcol(Indf) = Ccol(Indc);
+Xelse
+X  Fcol = 1;
+Xend
+X
+X
+X % Interpolation itself *****************************************
+XMf = Frow*M*Fcol;
+X
+END_OF_FILE
+if test 4733 -ne `wc -c <'interpm.m'`; then
+    echo shar: \"'interpm.m'\" unpacked with wrong size!
+fi
+chmod +x 'interpm.m'
+# end of 'interpm.m'
+fi
+if test -f 'interptr.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'interptr.m'\"
+else
+echo shar: Extracting \"'interptr.m'\" \(3519 characters\)
+sed "s/^X//" >'interptr.m' <<'END_OF_FILE'
+Xfunction  zi = interptr(x,y,z,xi,yi,opt,p)
+X% INTERPTR  Interpolation from 2-d irregular points by a
+X%	triangulation method.
+X%	ZI = INTERPTR(X,Y,Z,XI,YI) Returns values ZI at
+X%	points with coordinates XI, YI interpolated from
+X%	points with coordinates X, Y and values Z.
+X%	For points XI, YI outside of convex hull of a set
+X%	X, Y returns NAN (these points do not belong to any 
+X%	triangle of a set X, Y).
+X%	ZI = INTERPTR(X,Y,Z,XI,YI,OPT,P)  also has option
+X%	for blending with gradient estimation: OPT(1)=1 or 'g';
+X%	and extrapolation beyond the convex hull:
+X%	OPT(2)=1 or OPT='e'.  OPT = 'eg' or 'ge' means both
+X%	options are specified. Parameter P (in the range
+X%	[0 1]) controls "toutness" of the surface in case of
+X%	gradient estimation: P=0 correspond to a tout
+X%	surface (without gradient information), while P=1
+X%	corresponds to an "elastic" surface.
+X%
+X%	See also TRIANGUL, GRIDDATA.
+X
+X%  Copyright (c) 1995  by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	02/27/95, 05/25/95, 09/15/95
+X
+X % Defaults and parameters ..............................
+Xis_grad = 0;  % Is gradient information to be included
+Xis_extr = 0;  % Is extrapolate beyond the convex hull
+Xp_dflt = 1;   % "Toutness parameter" for gradient information
+X
+X % Handle input .........................................
+Xerror(nargchk(5,7,nargin)) % Must be 5 input arguments
+Xif nargin>=6        % Options for gradient and extrapolation
+X  if isstr(opt)
+X    is_grad = any(opt=='g');
+X    is_extr = any(opt=='e');
+X  else
+X    is_grad = opt(1);
+X    is_extr = opt(2);
+X  end
+Xend
+Xif nargin < 7, p = p_dflt; end  % Toutness parameter ....
+X
+X % Check input coordinates and make matrices XI, YI
+X % if necessary
+X[msg,x,y,z,xi,yi] = xyzchk(x,y,z,xi,yi);
+Xif length(msg)>0, error(msg); end
+X
+X % Auxillary ..........................
+Xszi = size(xi);
+Xxi = xi(:)';
+Xyi = yi(:)';
+Xl = length(xi);
+Xo3 = ones(3,1);
+X
+X % Check for coincident points ............
+X[A,z] = uniquept([x(:) y(:)],z(:));
+Xx = A(:,1); y = A(:,2);
+X
+X % Triangulate a set of points ..........................
+X[i3,nc] = triangul(x,y);
+Xn3 = size(i3,2);
+X
+X % Reshape into triangles ...............................
+Xx3 = reshape(x(i3),3,n3);
+Xy3 = reshape(y(i3),3,n3);
+Xd = reshape(z(i3),3,n3);
+X
+X % Determine which point in which triangle ..............
+X[in,A] = inmesh(x3,y3,xi,yi);
+Xfnd = find(in);
+Xin = in(fnd);
+X
+X
+X % Make a linear interpolation by area method ...........
+Xzi = nan*ones(1,l);
+XA = A(2:4,:)./A(ones(3,1),:); % Weights
+Xzi(fnd) = sum(d(:,in).*A);    % Interpolation itself
+X
+X
+X % Incorporate gradient information ......................
+Xif is_grad & p>0
+X
+X  % Calculate a cross product (normal to triangles)
+X  gx = x3(2:3,:)-x3([1 1],:);
+X  gy = y3(2:3,:)-y3([1 1],:);
+X  d  =  d(2:3,:)- d([1 1],:);
+X  d = [gy(1,:).*d(2,:) - gy(2,:).*d(1,:);
+X      -gx(1,:).*d(2,:) + gx(2,:).*d(1,:);
+X       gx(1,:).*gy(2,:)- gx(2,:).*gy(1,:)];
+X  gt = -d(1:2,:)./d([3 3],:);
+X
+X  A = A.*(1-A.^p);           % Weights
+X
+X  % Estimate gradients at node points 
+X  [gx,gy] = grad2est(x,y,z,i3,'ls');
+X  gx = reshape(gx(i3),3,n3);
+X  gx = gx - gt(o3,:);  % Differences with triangles
+X  gy = reshape(gy(i3),3,n3);
+X  gy = gy - gt(2*o3,:);
+X
+X  % Add gradient information
+X  d = xi(o3,fnd)-x3(:,in);
+X  gx = d.*gx(:,in);         % dx
+X  d = yi(o3,fnd)-y3(:,in);
+X  gx = gx+d.*gy(:,in);      % dy
+X  zi(fnd) = zi(fnd)+sum(gx.*A);
+X
+Xend
+X
+X % Extrapolation outside of the convex hull ..............
+Xif is_extr
+X  fnd = find(isnan(zi));
+X  zi(fnd) = extraptr(x,y,z,i3,xi(fnd),yi(fnd));
+Xend
+X
+X % Reshape output ...................
+Xzi = reshape(zi,szi(1),szi(2));
+X
+END_OF_FILE
+if test 3519 -ne `wc -c <'interptr.m'`; then
+    echo shar: \"'interptr.m'\" unpacked with wrong size!
+fi
+chmod +x 'interptr.m'
+# end of 'interptr.m'
+fi
+if test -f 'interval.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'interval.m'\"
+else
+echo shar: Extracting \"'interval.m'\" \(936 characters\)
+sed "s/^X//" >'interval.m' <<'END_OF_FILE'
+Xfunction [is,in,un] = interval(x1,x2)
+X% Intersection and union of 2 intervals.
+X%	[IS,IN,UN] = INTERVAL(X1,X2) calculates pair-wise
+X%	intersection IN and union UN of N pairs of
+X%	intervals with coordinates X1 and X2 (both are
+X%	2 by N vectors). Returns 1 by N boolean vector IS
+X%	equal to 1 if intervals have non-empty intersection
+X%	and 0 if they don't.
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov,
+X%       kirill@plume.mit.edu.
+X%       08/24/95
+X
+X % Handle input ...........................
+Xif nargin==0, help interval, return, end
+Xif nargin==1
+X  un = x1;
+Xelse
+X  un = [x1; x2];
+Xend
+X
+X[in,un] = sort(un);     % Sort both intervals together
+Xun = un(1:2,:)-1;
+Xis = sum(floor(un/2));  % Check for [0 0 1 1] or [1 1 0 0]
+Xis = (is==1);
+Xii = find(in(2,:)==in(3,:));
+Xis(ii) = .5*ones(size(ii));
+X
+X % Extract intersection and union from sorted coordinates
+Xif nargout>1
+X  un = in([1 4],:);
+X  in = in(2:3,:);
+X  in(:,~is) = flipud(in(:,~is));
+Xend
+X
+END_OF_FILE
+if test 936 -ne `wc -c <'interval.m'`; then
+    echo shar: \"'interval.m'\" unpacked with wrong size!
+fi
+chmod +x 'interval.m'
+# end of 'interval.m'
+fi
+if test -f 'invdisti.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'invdisti.m'\"
+else
+echo shar: Extracting \"'invdisti.m'\" \(3227 characters\)
+sed "s/^X//" >'invdisti.m' <<'END_OF_FILE'
+Xfunction  fi = invdisti(R,Ri,f,opt)
+X% INVDISTI Inverse distance interpolation.
+X%	FI = INVDISTI(R,RI,F) Interpolates multi-
+X%	dimensional set with coordinates R (N by D) 
+X%	where N is the number of points and D - 
+X%	dimension and values F to points with
+X%	coordinates RI.
+X%	Returns interpolated values FI at points RI.
+X%
+X%	FI = INVDISTI(R,RI,F,W) allows also W -
+X%	vector of coefficients (relative weights)
+X%	for combining results from interpolation
+X%	with different power law in the form:
+X%	FI = F1*W1+F2*W2+ ..., where F_i - estimates
+X%	of interpolation with weiths proportional to
+X%	R^(-D-i), (D - dimension).
+X%	Default W = 3 which is equivalent to W=[1 1 1]
+X%	is an equal-weight combination of estimates
+X%	from R^(-D-1), R^(-D-2), R^(-D-3) laws.
+X%		
+X%	Uses inverse distance interpolation method.	
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	05/20/95
+X
+X % Defaults and parameters .............
+Xtol = 1e-10;  % Substitute for zero distance
+Xl_ch = 200;   % Chunk length
+Xopt_dflt = 3; % 3 estimates (r^(-d-1), r^(-d-2),
+X              % r^(-d-3)
+X
+X
+X % Handle input ........................
+Xif nargin==0, help invdisti, return, end
+Xif nargin<3
+X  error('  Not enough input arguments')
+Xend
+Xif nargin<4, opt = opt_dflt; end
+X
+X % Sizes and dimensions ................
+Xsz = size(R);
+Xszi = size(Ri);
+Xif sz(1)==szi(1) & sz(2)~=szi(2)
+X   R = R'; Ri = Ri';
+Xelseif sz(1)==szi(2) & sz(2)~=szi(1)
+X   R = R';
+Xelseif sz(2)==szi(1) & sz(1)~=szi(2)
+X   Ri = Ri';
+Xend
+X[npb,d] = size(R);
+X[npi,d] = size(Ri);
+X
+X % Option .........
+Xif length(opt)>1
+X  comp_coef = opt(:);
+Xelse
+X  opt = max(opt,1);
+X  comp_coef = ones(ceil(opt),1);
+Xend
+Xcomp_coef = comp_coef/sum(comp_coef); 
+Xn_comp = length(comp_coef);
+X
+Xszf = size(f);
+Xis_trp = 0;
+Xif szf(2)==npb & szf(1)~=npb,
+X  f = f'; is_trp = 1;
+Xend
+X
+X % Number of chunks
+Xn_chi = ceil(npi/l_ch);
+Xn_chb = ceil(npb/l_ch);
+X
+X
+X % Initialize summation matrices ..........
+XSf = zeros(n_comp,npi); Sw = Sf;
+X
+X % Begin calculating distance matrices between
+X % chunks of basis points and chunks of interpolation
+X % points
+X % For each chunk find distance matrix **************
+Xfor ji = 1:n_chi % Chunks of interp. points `````````0
+X
+X  % Get current chunk
+X  li = min(ji*l_ch,npi);
+X  i_chi = (ji-1)*l_ch+1:npi;
+X  ochi = ones(size(i_chi));
+X
+X  Rchi = Ri(i_chi,:);
+X  r2si = sum((Rchi.^2)');
+X
+X  for jb = 1:n_chb % Chunks of basis points ```````1
+X
+X    % Get current chunk
+X    lb = min(jb*l_ch,npb);
+X    i_chb = (jb-1)*l_ch+1:npb;
+X    ochb = ones(size(i_chb));
+X
+X    Rchb = R(i_chb,:);
+X    r2sb = sum((Rchb.^2)')';
+X
+X    % D2 - squared distance matrix
+X    D2 = r2si(ochb,:)+r2sb(:,ochi);
+X    D2 = D2-2*(Rchb*Rchi');
+X
+X    ind0 = find(D2<tol);
+X    D2(ind0) = tol(ones(size(ind0)));
+X    D2 = 1./D2;
+X
+X    D = sqrt(D2);
+X    if d>2, D2 = D2.^(d/2); end
+X
+X    % For each power law component .........
+X    for j1 = 1:n_comp
+X      D2 = D2.*D;
+X      Sf(j1,i_chi) = Sf(j1,i_chi)+f(i_chb)'*D2;
+X      Sw(j1,i_chi) = Sw(j1,i_chi)+sum(D2);
+X    end
+X
+X  end  % End chunks of basis points ''''''''''''''1
+X
+Xend  % End chunks of interpolation points '''''''''''0
+X
+X % Interpolation itself ....................
+XSf = (Sf./Sw)';    % Divide by weights
+Xfi = Sf*comp_coef;
+X
+X % Transpose if necessary ..................
+Xif is_trp, fi = fi'; end
+X
+END_OF_FILE
+if test 3227 -ne `wc -c <'invdisti.m'`; then
+    echo shar: \"'invdisti.m'\" unpacked with wrong size!
+fi
+chmod +x 'invdisti.m'
+# end of 'invdisti.m'
+fi
+if test -f 'kriging.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'kriging.m'\"
+else
+echo shar: Extracting \"'kriging.m'\" \(6559 characters\)
+sed "s/^X//" >'kriging.m' <<'END_OF_FILE'
+Xfunction [xi,yi,zi] = kriging(xb,yb,zb,xi,yi,fun,p,err,n)
+X% KRIGING Interpolation from irregular points by Kriging.
+X%	[ZI,EM] = KRIGING(...,[LX LY],E) Specifies
+X%	lengthscales LX, LY and relative error E
+X%	(normalized value of semi-variogram at r=0)
+X%	(0 < E < 1) for gaussian semi-variogram function 
+X%	V(x,y) = V0*(1-(1-E)*exp(-(x/LX)^2-(y/LY)^2)-...
+X%	E*D(x,y)),  where D - Dirac delta function.
+X%
+X%	KRIGING(...,'FUN',P,E)  Allows to specify the
+X%	semi-variogram function 'FUN' as a string 
+X%	(expression or function name) depending on x, y,
+X%	r (r^2=x^2+y^2) and parameters (such as lengthscales)
+X%	in the vector P.
+X%
+X%	For large number of known points it divides
+X%	the domain into subdomains using the adaptive
+X%	QUADTREE procedure.
+X%
+X%	KRIGING(...,[LX LY],E,OPT) or 
+X%	KRIGING(...,'FUN',P,E,OPT) also allows OPT vector
+X%	argument to specify several parameters of quadtree
+X%	division:
+X%	OPT = [NB ND NMAX PB VERBOSE], where
+X%	NB   - max. number of points in one block
+X%	ND   - "depopulation" threshold - if number of
+X%	  points in a block is less than ND is is
+X%	  considered "depopulated" and its own "secondary"
+X%	  neighbours are used for interpolation.
+X%	NMAX - max. number of points below which domain
+X%	  is not divided into blocks.
+X%	PB - X,Y scales as part of average block sizes,
+X%	VERBOSE - verbosity (1 - display some values and
+X%	  number of processed blocks.
+X%	Default values [NB ND NMAX PB V] = [32 8 500 1/3 1].
+X%
+X%	For more information about quadtree division and
+X%	options see TREEINFO and TREEDEMO.
+X%
+X%	XI can be a row vector, in which case it specifies
+X%	a matrix with constant columns. Similarly, YI can
+X%	be a column vector and it specifies a matrix with 
+X%	constant rows.
+X%	[XI,YI,ZI] = KRIGING(...) also returns matrices
+X%	XI, YI formed from input vectors XI,YI in the way
+X%	described above.
+X%
+X%	See also GRIDDATA, MINCURVI, OBJMAP, QUADTREE.
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	05/25/95, 05/31/95
+X
+X % Defaults and parameters .............................
+Xn_dflt = [32 8];  % Default for max. and min number of 
+X                  %  points in elementary block
+Xnmax = 500;       % Default for max number of points
+X                  %  to be treated as one block
+Xpart_blk = 1/3;   % Default for x and y lengthscales
+X                  %  as parts of average block sizes
+X                  % when LY, LY not specified.
+Xverbose = 1;      % Verbosity (shows some parameters and 
+X                  % number of blocks processed).
+X
+X
+X % Handle input ........................................
+Xif nargin==0, help kriging, return, end
+Xif nargin==1
+X if strcmp(xb,'info'), more on, type mapinfo, more off, return, end
+Xend
+Xif nargin<5
+X  error('  Not enough input arguments')
+Xend
+X
+X % Insert defaults for missing arguments
+Xif nargin<9, n = 0; end
+Xif nargin<8, err = 0; end
+Xif nargin<7, p = 0; end
+Xif nargin<6, fun = 0; end
+Xis_call = isstr(fun);  % If function name or expression
+X
+Xif is_call   % Function name or expression
+X  call = callchk(fun,'r');
+Xelse         % Lengthscales for gaussian form
+X  n = err;
+X  err = p;
+X  sc = fun;
+X  call = '';
+Xend
+X
+Xif ~length(sc), sc = [0 0]; end
+Xif length(sc)==1, sc = sc([1 1]); end
+Xsc = max(sc,0); end
+X
+X % Options (vector n)
+Xif n==0 | n==[], n = n_dflt; end
+Xlen = length(n);
+Xif len>=3, nmax = n(3); end
+Xif len>=4, part_blk = n(4); end
+Xif len>=5, verbose = n(5); end
+X
+X % Relative error:
+Xif err==[], err=0; end  % Not empty
+Xerr = min(err,1);       % Not larger than 1
+X
+X % Check input coordinates and make matrices XI, YI
+X % if necessary
+X[msg,xb,yb,zb,xi,yi] = xyzchk(xb,yb,zb,xi,yi);
+Xif length(msg)>0, error(msg); end
+X
+X % Calculate quadtree divison into blocks and
+X % related objects
+X[xx,yy,s,nb,lb,ind,bx,by,Na,Lx,Ly,Sp,npb] = ...
+X           mkblocks(xb,yb,xi,yi,n(1),nmax);
+X
+Xif any(~sc) | sc==[]
+X  if lb==1, part_blk = part_blk/sqrt(2*nb/n(1)); end
+X  sc = max(sc,[mean(diff(Lx')), mean(diff(Ly'))]*part_blk);
+Xend
+X
+X % Process basis values vector ZB
+Xszb = size(zb);
+Xis_vec = 0; err_only = 0;
+Xif any(szb==1) | prod(szb)==nb
+X  zb = zb(:);
+Xelseif min(szb)>1
+X  if szb(2)==nb, zb = zb'; end
+X  is_vec = 1;
+Xelseif zb==[]
+X  err_only = 1;
+Xend
+Xszb = size(zb);
+Xoz = ones(1,szb(2));
+X
+Xz0 = mean(zb);
+Xvar = mean((zb-z0(:,oz)).^2);
+X
+X
+X % Mask for underpopulated blocks .......
+Xisup = npb<n(2);
+X
+X % Remove mean and trend ................
+Xfor jj=1:szb(2)
+X  [zb(:,jj),rc,gc] = detrend2(xb,yb,zb(:,jj));
+X  r0(jj,:) = rc;
+X  g(jj,:) = gc;
+Xend
+X
+X % Initialize output and weights
+Xzi = zeros(prod(size(xi)),szb(2));
+Xwi = zeros(prod(size(xi)),1);
+Xer1 = 1-err;
+X
+X % Tell some parameters and number of blocks ......
+Xif verbose
+X  fprintf('\n')
+X  if ~is_call
+X    fprintf('X, Y scales: %g, %g\n',sc(1),sc(2))
+X  end
+X  fprintf('Relative error: %g \n',err) 
+X  fprintf('Number of blocks: %g\nProcessing:\n',lb) 
+Xend
+X
+X % Process each block sequentially *********************
+Xfor jj=1:lb   % Begin blocks ``````````````````````````0
+X
+X  [ibp,iip,w,x,y] = ptsinblk(jj,xx,yy,Na,Sp,...
+X                             Lx,Ly,nb,isup);
+X  ob = ones(size(ibp));
+X  oi = ones(size(iip));
+X
+X  % Green's function (covariance) matrix for basis points
+X  if is_call
+X    r = sqrt(x.^2+y.^2);
+X    eval(call);
+X  else
+X    r = exp(-(x/sc(1)).^2-(y/sc(2)).^2);
+X  end
+X  r = (1-(er1*r)); % Add errors (variogram at 0)
+X
+X  A = r;
+X  v = r\zb(ibp,:);
+X
+X  % Interpolation points ...................
+X  len = length(iip);
+X  n_chunk = ceil(len/nmax);
+X  for j1=1:n_chunk    % Process each chunk
+X
+X    % Get current chunk
+X    nn = min(len,j1*nmax);
+X    i_ch = (j1-1)*nmax+1:nn;
+X    w_ch = w(i_ch);
+X    i_ch = iip(i_ch);
+X    och = ones(size(i_ch));
+X    x = xx(i_ch,ob)-xx(ibp,och)';
+X    y = yy(i_ch,ob)-yy(ibp,och)';
+X
+X    % Calculate covariance matrix
+X    if is_call
+X      r = sqrt(x.^2+y.^2);
+X      eval(call);
+X    else
+X      r = exp(-(x/sc(1)).^2-(y/sc(2)).^2);
+X    end
+X    r = (1-(er1*r)); % Add errors (variogram at 0)
+X
+X    % Interpolation itself ...................
+X    i_ch = i_ch-nb;
+X    zi(i_ch,:) = zi(i_ch,:)+w_ch(:,oz).*(r*v);
+X    wi(i_ch) = wi(i_ch)+w_ch;
+X
+X
+X  end
+X
+X  % Verbose mode, tell that a block is processed
+X  if verbose, fprintf('%g,',jj); end
+X
+Xend  % End all blocks '''''''''''''''''''''''''''''''''0
+X
+Xif verbose, fprintf('\n All done.\n'); end
+X
+Xzi = zi./wi(:,oz);     % Divide by weights
+X
+Xsz = size(xi);
+Xwi = reshape(wi,sz(1),sz(2));
+X
+X % Put mean and slope back ...............
+Xfor jj = 1:szb(2)
+X  zi(:,jj) = zi(:,jj)+g(jj,1)+(xi(:)-r0(jj,1))*g(jj,2);
+X  zi(:,jj) = zi(:,jj)+(yi(:)-r0(jj,2))*g(jj,3);
+Xend
+X
+X % Reshape if scalar z value
+Xif ~is_vec
+X  zi = reshape(zi,sz(1),sz(2));
+Xend
+X
+X % If XI, YI are not needed
+Xif nargout<=1,  xi = zi; end
+X
+END_OF_FILE
+if test 6559 -ne `wc -c <'kriging.m'`; then
+    echo shar: \"'kriging.m'\" unpacked with wrong size!
+fi
+chmod +x 'kriging.m'
+# end of 'kriging.m'
+fi
+if test -f 'lagrcoef.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'lagrcoef.m'\"
+else
+echo shar: Extracting \"'lagrcoef.m'\" \(1249 characters\)
+sed "s/^X//" >'lagrcoef.m' <<'END_OF_FILE'
+Xfunction  C = lagrcoef(xb,xi)
+X% LAGRCOEF Coefficients of Lagrange polynomial interpolation.
+X%	C = LAGRCOEF(XB,XI)  returns matrix C of the size 
+X%	length(XB) by length(XI) of Lagrange polynomials
+X%	interpolation coefficients from vector of "basis" 
+X%	points XB to vector of points to be interpolated XI.
+X%	The interpolated function values FI are can be 
+X%	obtained from values at basis points FB as a matrix 
+X%	product:
+X%	        FI = C*FB'
+X%	The order of interpolation is length(XB)-1.
+X
+X%  Copyright (c) 1995  by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	11/91,   12/13/94
+X
+X % Handle input ............................................
+Xif nargin < 2
+X  error('  Needs 2 input arguments: x_basis, x_interp. ')
+Xend
+X
+X % Auxillary
+Xxb = xb(:);
+Xxi = xi(:)';
+Xlxb = length(xb);
+Xlxi = length(xi);
+Xob = ones(1,lxb);
+Xoi = ones(1,lxi);
+X
+X % If 1 basis point, fast exit
+Xif lxb < 2
+X  C = oi;
+X  return
+Xend
+X
+Xxi = xi(ob,:);        % Make matrices out of vectors
+Xxb = xb(:,oi);
+XC = zeros(size(xb));  % Initialize output
+X
+X % For each basis point compute products ....................
+Xfor jj = 1:lxb
+X  vv = xb(jj,:);
+X  D = vv(ob,:)-xb;    % Denominator matrix
+X  D(jj,:) = oi;
+X  N = xi-xb;          % Numerator matrix
+X  N(jj,:) = oi;
+X  C(jj,:) = prod(N)./prod(D);
+Xend
+X
+END_OF_FILE
+if test 1249 -ne `wc -c <'lagrcoef.m'`; then
+    echo shar: \"'lagrcoef.m'\" unpacked with wrong size!
+fi
+chmod +x 'lagrcoef.m'
+# end of 'lagrcoef.m'
+fi
+if test -f 'locfilt.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'locfilt.m'\"
+else
+echo shar: Extracting \"'locfilt.m'\" \(6734 characters\)
+sed "s/^X//" >'locfilt.m' <<'END_OF_FILE'
+Xfunction Mf = locfilt(M,arg2,arg3,arg4,arg5,arg6,arg7,arg8)
+X% LOCFILTR   Local 2-dimensional filtering of a matrix.
+X%	Performs block-processed linear or non-linear 2-d
+X%	filtering.
+X%	MF = LOCFILT(M,F)  Convolves matrix M with filter matrix F
+X%	( size(F) presumed much smaller than size(M) ).
+X%	MF = LOCFILT(M,[P Q],FUN)  performs nonlinear filtering
+X%	using function FUN (string) with filter window size P by Q.
+X%	Function FUN must have syntax V=FUN(A): accept matrix input A,
+X%	process it column-wise and return row vector V (can be a 
+X%	function such as MAX, MEAN, MEDIAN etc.).
+X%
+X%	MF = LOCFILT(M,P,'FUN') uses square window of size P.
+X%	MF = LOCFILT(M,'FUN') uses default window size 3 by 3.
+X%	MF = LOCFILT(M,[P Q],'FUN',ARG1,ARG2,...) allows to pass
+X%       additional arguments (up to 5) to function in the
+X%	form FUN(X,ARG1,ARG2,...), where X is formed out of block
+X%	of matrix M: each column of A consists of values of M within
+X%	a filter window around some element of M.
+X%
+X%	MF = LOCFILT(...,METHOD,...) also allows to choose the method
+X%	of treating the edges of the matrix M. The following methods
+X%	are available:
+X%	'shifted'  -  filter window is shifted towards the interior:
+X%	for example the filter window of the size [3 4] for M(1,1)
+X%	is M(1:3,1:4).
+X%	'padded'   -  edges are padded with 0 for min(M)<1 and 1 for
+X%	min(M)>=1,
+X%	'periodic' -  simulates infinite periodic domain.
+X%	Abbrerviations, such as 'sh','per' are allowed.
+X%	Default method is 'shifted'.
+X%
+X%	Filter window for point M(I,J) consists of portion of M:
+X%	M(I-FLOOR((P-1)/2):I+FLOOR(P/2),J-FLOOR((Q-1)/2):I+FLOOR(Q/2))
+X%	e.g. for window size [3 4] and element M(10,10) the filter
+X%	window is M(9:11,9:12).
+X%
+X%	Examples:
+X%	locfilt(M,5,'median') - 5 by 5 median filter,
+X%	locfilt(M,[1 2 1; 2 4 2; 1 2 1]/16,'per') - boxcar filter
+X%	with periodic boundary conditions,
+X%	locfilt(M,'mean') and  locfilt(M,ones(3)/9)  produce
+X%	the same results (up to a numerical accuracy).
+X
+X%  Copyright (c) 1995  by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	1/20/94, 12/14/94
+X
+X % Defaults and parameters ......................................
+Xszfdflt = [3 3];      % Default for filter window size
+Xn_blocks = 32;        % Number of blocks
+Xflagdflt = 'shifted'; % Default for flag
+X
+XFlags = ['shifted '; 'periodic'; 'padded  '];
+X
+X
+X % Handle input ....................................................
+Xif nargin < 2
+X  error('  Not enough input arguments.')
+Xend
+X
+Xl_fl = size(Flags,2);
+Xn_fl = size(Flags,1);
+Xsza = zeros(nargin,2);
+Xiss = zeros(nargin,1);
+Xfun_arg = 0; filt = 0; fun = []; szf = [];
+X % Find FUN and FLAG
+Xfor jj = 2:nargin
+X  iss(jj) = eval(['isstr(arg' num2str(jj) ')']);
+X  if iss(jj)
+X    eval(['str=arg' num2str(jj) ';']);
+X    l_str = length(str);
+X    l_m = min(l_fl,l_str);
+X    a = str(ones(size(Flags,1),1),1:l_m)==Flags(:,1:l_m);
+X    iss(jj) = .5+max(all(a').*(1:n_fl));
+X  end
+Xend
+Xfnd = min(find(iss>1));
+Xflag = floor(iss(fnd));
+Xiss(fnd) = 0.75*ones(size(fnd));
+Xfnd = min(find(iss==.5));
+Xif fnd~=[]
+X  eval(['fun = arg' num2str(fnd) ';']);
+X  fun_arg = fnd;
+Xend
+Xmain_arg = max([find(iss==.75); fun_arg; 2]); % Nmb. of main arg.
+X
+Xif fun_arg>2
+X  if iss(2), szf = szfdflt;
+X  else, szf = arg2;
+X  end
+Xelse
+X  filt = arg2;
+X  szf = szfdflt;
+Xend
+Xif length(szf)==1, szf = [szf szf]; end  % If square
+Xif flag==[], flag = 1; end
+X
+X % Compose function call .........
+Xcall = [fun '(A'];
+Xfor jj = main_arg+1:nargin
+X  call = [call ',arg' num2str(jj-1)];
+Xend
+Xcall = [call ')'];
+X
+X
+X % Padded value ..................
+XminM = min(min(M));
+XmaxM = max(max(M));
+Xif minM>=1&all(floor(M)==M), m_pad = 1;
+Xelse, m_pad = 0;
+Xend
+X
+X % Sizes .........................
+XszM = size(M);
+Xif szf == [], szf = size(filt); end
+Xif any(szM<szf)
+X  error('  Matrix M must be larger than filter window.')
+Xend
+Xlb = max(floor(szM(2)/n_blocks),szf(2));  % Nmb. col in a block
+Xn_blocks = ceil(szM(2)/lb);
+XMf = zeros(size(M));  % Initialize output matrix
+X
+X
+X % Calculate vectors for margins ................................
+X
+X % Top and bottom ...................
+XoM = ones(szM(1),1);
+XvM = (1:szM(1))'; vMf = vM;
+Xmg_b = floor((szf(1)-1)/2);
+XvM(1:mg_b) = mg_b+ones(mg_b,1);
+Xmg_t = floor(szf(1)/2);
+XvM(szM(1)-mg_t+1:szM(1)) = szM(1)-mg_t+1-ones(mg_t,1);
+X
+X % Left and right ...................
+Xmg_l = floor((szf(2)-1)/2);
+Ximg_l = (mg_l+1:-1:1)*szM(1);
+Ximg_l = img_l(oM,2:mg_l+1);
+Xmg_r = floor(szf(2)/2);
+Ximg_r = (1:mg_r)*szM(1);
+Ximg_r = img_r(oM,:);
+X
+Xib = 1:mg_b; it = szM(1)-mg_t+1:szM(1);
+Xil = 1:mg_l; ir = lb-mg_r+1:lb;
+X
+X
+X % Calculate indices ..............................................
+X
+X % Filter window ....................
+Xof = ones(prod(szf),1);
+X[ind_fx,ind_fy] = meshgrid(-mg_l:mg_r,-mg_b:mg_t);
+Xind_fx = ind_fx(:);
+Xind_fy = ind_fy(:);
+Xind_f = ind_fx*szM(1)+ind_fy;
+X
+X % Block of matrix M ................
+Xob = ones(1,lb);
+Xobv = ones(1,lb*szM(1));
+Xvb = 0:lb-1;
+Xind_bx = vb(oM,:)+1;
+Xind_by = vMf(:,ob);
+Xind_bx = ind_bx(:)';
+Xind_by = ind_by(:)';
+XindM = vb(oM,:)*szM(1)+vM(:,ob);
+XindMf = vb(oM,:)*szM(1)+vMf(:,ob);
+XindMf = indMf(:)';
+X
+Xfilt = filt(:)';
+Xoffset = 0;
+X
+X % Perform filtering for each block
+Xfor jj = 1:n_blocks    % Begin jj (block counting) `````````````0
+X
+X  % Calculate offset for a block
+X  offset0 = offset;
+X  offset = min((jj-1)*lb,szM(2)-lb);
+X  offset_c = offset*szM(1);
+X
+X  % Calculate indices into current block
+X  if flag == 1  % Shifted .................
+X    ind_b = indM;
+X    ind_b(:,il) = indM(:,il)+img_l.*(jj==1);
+X    ind_b(:,ir) = indM(:,ir)-img_r.*(jj==n_blocks);
+X    ind_b = ind_b(:)'+offset_c;
+X
+X    % Index for matrix A for column-wise processing
+X    Ind = ind_b(of,:)+ind_f(:,obv);
+X
+X  else        % Periodic or padded ........
+X
+X    ind_bx = ind_bx+offset-offset0;
+X    Ind = ind_bx(of,:)+ind_fx(:,obv);
+X    A = ind_by(of,:)+ind_fy(:,obv);
+X    if any(jj == [1 2 n_blocks-1 n_blocks])
+X      ind_mgxl = find(Ind<=0);
+X      ind_mgxr = find(Ind>szM(2));
+X      ind_mgyb = find(A<=0);
+X      ind_mgyt = find(A>szM(1));
+X    end
+X
+X    % Translate indices for margins
+X    Ind(ind_mgxl) = Ind(ind_mgxl)+szM(2);
+X    Ind(ind_mgxr) = Ind(ind_mgxr)-szM(2);
+X    A(ind_mgyb) = A(ind_mgyb)+szM(1);
+X    A(ind_mgyt) = A(ind_mgyt)-szM(1);
+X
+X    Ind = (Ind-1)*szM(1)+A;    % Composite index
+X  end
+X
+X  A = M(Ind);  % Get values of block of M
+X
+X  % Pad values at margins for "padded" mode .........
+X  if flag == 3
+X    A(ind_mgxl) = A(ind_mgxl)*0+m_pad;  % Left
+X    A(ind_mgxr) = A(ind_mgxr)*0+m_pad;  % Right
+X    A(ind_mgyb) = A(ind_mgyb)*0+m_pad;  % Bottom
+X    A(ind_mgyt) = A(ind_mgyt)*0+m_pad;  % Top
+X  end
+X
+X  % Now the actual filtering ***********************************
+X  if fun~=[]         % Nonlinear (call function)
+X    Mf(indMf+offset_c) = eval(call);
+X  else               % Linear (convolution)
+X    Mf(indMf+offset_c) = filt*A;
+X  end
+X
+Xend    %  End jj (block counting) ''''''''''''''''''''''''''''''0
+X
+END_OF_FILE
+if test 6734 -ne `wc -c <'locfilt.m'`; then
+    echo shar: \"'locfilt.m'\" unpacked with wrong size!
+fi
+chmod +x 'locfilt.m'
+# end of 'locfilt.m'
+fi
+if test -f 'mapinfo' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'mapinfo'\"
+else
+echo shar: Extracting \"'mapinfo'\" \(8317 characters\)
+sed "s/^X//" >'mapinfo' <<'END_OF_FILE'
+X% MAPINFO "Info" for mapping roitines in SaGA.
+X%	This is "INFO" file for the following
+X%	programs contained in SaGA toolbox:
+X%	OBJMAP, KRIGING, MINCURVI
+X%	It can be called from MATLAB by typing:
+X%	>> type mapinfo    or
+X%	>> objmap info 
+X%	   (or kriging info or mincurvi info)
+X
+X% Kirill K. Pankratov, kirill@plume.mit.edu
+X
+X  OBJMAP, KRIGING and MINCURVI programs stand for
+X2-D interpolation from irregular points by objective
+Xmapping, kriging, and minimum curvature methods 
+Xrespectively.
+X
+X  These programs are quite similar in structure and
+Xsyntax (especially OBJMAP and KRIGING).
+X  All these methods are based on the inversion of the 
+X"Green's function" matrix G where G_ij element depends 
+Xon the distance r_ij between i-th and j-th points of a
+Xset.
+X  Yet the Green's function itself is different in these
+Xfunctions:
+X  OBJMAP uses a 2-point correlation function <z1*z2>
+X  KRIGING - 2-point semi-variogram: 1/2*<(z1-z2)^2>
+X  MINCURVI is most closely related to GRIDDATA and uses
+X           r^2*(log(r)-1) as a Green's function.
+X
+X
+X  ADAPTIVE  QUADTREE DIVISION:
+X
+X  All these routines use QUADTREE adaptive "tree" division for
+Xmemory efficiency. The domain with limits [min(x) max(x)] and
+X[min(y) max(y)] encompassing data is divided succesively into 
+Xsubdomains (blocks) until no subdomain contains more than a 
+Xspecified number of points N.
+X
+X  Then the interpolation procedure is performed as follows:
+XFor each subdomain we find basis and interpolation points 
+Xinside it and its immediate neighbours (sharing an edge or at 
+Xleast a vertex). We use the known (basis) points in these
+Xregions for gridding to interpolation points within these
+Xregions also. The resulting interpolation is taken with weight
+Xequal to 1 for "center" subdomain and weights rapidly 
+Xdecreasing away from it for neighbouring subdomains. Therefore
+Xfinal estimate at each interpolation points is obtained as a 
+Xcombination of weighted estimates from several sets of 
+Xsurrounding known points. This ensures smooth interpolated 
+Xvalues at the boundaries of regions.
+X
+X  If a neighbouring region contains fewer than a specified
+X"depopulation threshold" number of points, then its own 
+X"secondary" neighbours are found and basis points inside them
+Xare also used. This implies that interpolation points will most
+Xlikely be "completely surrounded" by known points and at the 
+Xsame time very distant points are not used, thus easing memory 
+Xand computational load.
+X  Because subdomains has variable sizes, each subdomain has a 
+Xdifferent number of neighbours (typically about 10) and
+Xdifferent number of known points are used in the interpolation.
+X
+X  The parameters of the Quadtree division can be specified as
+Xthe last input argument into MINCURVI, OBJMAP or KRIGING.
+XThey must compose a vector of length from 1 to 3 with
+Xfollowing integer parameters:
+XOPT = [N ND NMAX], where N is max. number of points in a block
+X(subdomain), ND - "depopulation threshold" below which new
+X"secondary" neighbours are sought, NMAX - maximum number of
+Xpoints in a set below which the QUADTREE procedure is not used.
+XDefaults are OPT=[32 8 500].
+X  See TREEDEMO for demonstration of QUADTREE division.
+X
+X
+X  SYNTAX, OPTIONS AND PARAMETERS:
+X
+X  All these 3 routines must have at least 5 arguments
+Xsimilar to the "standard" MATLAB interpolation routines
+Xsuch as GRIDDATA or INTERP2. For example:
+X  MINCURVI(X,Y,Z,XI,YI)   where 
+XX,Y,Z (vectors of the same lengths) are "basis" (known)
+Xcoordinates and values,
+XXI, YI (vectors or matrices of the same size) - coordinates
+Xof interpolation points.
+X If XI is a row vector and YI - column vector of (possibly)
+Xdifferent sizes, they specify matrices of constant rows and
+Xcolumns respectively.
+X
+X  The rest are optional parameters, which are different for
+Xthese three routines.
+X  MINCURVI(...,N) also specifies upper threshold number for
+XQuatree division - the maximum number of points allowed
+Xinside one block.
+X  MINCURVI(...,OPT) where OPT = [N ND NMAX] also allows to 
+Xinput depopulation threshhold and "whole set" threshold for
+XQuadtree division (see above section about QUADTREE).
+XFor example OPT = [20 5] specifies max. block population 2
+Xand minimal (depopulation threshold) 5. In this case the whole
+Xset threshold has default value (500).
+X
+X  OBJMAP(...,[LX LY],E) specifies horizontal scales LX, LY
+Xand relative measurement error E for the classical gaussian
+Xcorrelation function in the form
+X  C(x,y) = E*D(x,y)+(1-E)*exp(-(x/LX)^2-(y/LY)^2),
+Xwhere D - Dirac delta function.
+X  OBJMAP(...,L,E) uses the same scale l for LX and LY.
+X  OBJMAP(...,[LX LY],E,OPT) also include OPTions:
+Xthe complete syntax is 
+XOPT = [N ND NMAX PB VERBOSE] where the first 3 numbers specify
+Xparameters of Quadtree division (see above).
+XPB - lengthscales as parts of the average block size (when they
+Xare not supplied directly, in this case this agument can be
+Xempty). Default is 1/3 of the block size.
+XVERBOSE - 1 or 0 - whether to display some information
+X(scales, number of blocks and progress in processing them)
+Xduring computations. default value is 1 - "verbose" mode.
+X
+X  OBJMAP(...,FUN,P,E,OPT) uses another approach to correlation
+Xfunction: it is specified as a function name or expression
+X(string) FUN. This function or expression can depend on 
+Xarguments x, y, r=sqrt(x^2+y^2) and also parameters (such as
+Xlengthscales) stored in the vector P (next input argument).
+XFor example:
+X  objmap(...,'myfun(x,y,z,p)',p)
+X  objmap(...,'1/(1+(x/p(1))^2+(y/p(2))^2)',p)
+XE and OPT are the same arguments as was discussed above.
+X
+X!!!  Note that the results can be sensitive to the choice of
+Xthe correlation function. Generally speaking, it must be
+X"possible" correlation function, the one which can be realized
+Xfor some random field. More rigorously, matrix G must be
+Xpositive-definite, otherwise the results can be meaningless.
+XFor example, the function such as '1/(1+(r/p)^2)'  will likely
+Xbehave reasonably well, while similar-looking '1/(1+(r/p)^4)' 
+Xwill give extremely bad results. One should be careful in 
+Xchoosing the functional form of a correlation function.
+X
+X
+XOBJMAP can have from 1 to 4 output arguments. If number is 1
+Xor 3 then the form ZI or [XI,YI,ZI] is assumed. If number is
+X2 or 4 then it also returns error map EM:
+X[ZI,EM] = ...  or  [XI,YI,ZI,EM] = ...
+XError map is a matrix of the same size as ZI. It shows a
+Xrelative error of interpolation at the same points as ZI.
+XIf the correlaion function is "feasible", then EM has values
+Xbetween 0 and 1, if not - its values can be very unrealistic -
+X<0 or >>1.
+XWhen input argument Z is empty Z==[], then only error map is
+Xcalculated and returned.
+X
+X  KRIGING is similar to the OBJMAP in syntax. The only
+Xdifference is that it uses  a semi-variogram as opposed to
+Xthe correlation matrix.
+X  KRIGING(...,[LX LY],E,OPT) assumes gaussian form of a
+Xsemi-variogram:
+X  V(x,y) = V0*(1-(1-E)*exp(-(x/LX)^2-(y/LY)^2)-E*D(x,y)), 
+Xwhere D - Dirac delta function, V0 - variance of Z (<z^2>).
+XE is a value of a semi-variogram at point (0,0) and is
+Xequivalent to a relative error for objective mapping.
+XOPT is again the same vector of options as in OBJMAP.
+X
+X  KRIGING(...,FUN,P,E,OPT) uses functional form of semi-
+Xvariogram (expression of function name), similar to the OBJMAP.
+X
+X
+X  INTERPOLATION OF VECTOR FIELDS.
+X
+X  In case when several variables measured at the same points
+XX, Y  need to be interpolated this can be done in one call to 
+Xthe OBJMAP of KRIGING functions. The advantage of this is that
+Xonly the most computationally intensive procedure of
+Xcalculating the Green's function matrix is performed only once
+Xand the weights of the basis points are the same for each
+Xvariable. This is reasonable only for the case when all
+Xvariables have the same coorelation function (and correspondingly,
+Xsemi-variogram), otherwise each variable should be calculated
+Xseparately.
+X  In case of several variables (or vector fields) all variables 
+Xmust be combined in one matrix with number of columns or number
+Xof rows equal to the number of known points (length of X, Y).
+XFor example, if velocities U, V and temperature T are measured
+Xin the ocean at points X, Y, the call should be constructed as
+X
+X[ZI,EM] = objmap(X,Y,[U(:) V(:) T(:)],XI,YI,...) 
+X
+XIn this case the output matrix ZI has the form 
+XZI = [UI VI TI], where each column has the length of prod(XI).
+XErrormap in this case is the same for all variables.
+X
+END_OF_FILE
+if test 8317 -ne `wc -c <'mapinfo'`; then
+    echo shar: \"'mapinfo'\" unpacked with wrong size!
+fi
+chmod +x 'mapinfo'
+# end of 'mapinfo'
+fi
+if test -f 'mincurvi.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'mincurvi.m'\"
+else
+echo shar: Extracting \"'mincurvi.m'\" \(4672 characters\)
+sed "s/^X//" >'mincurvi.m' <<'END_OF_FILE'
+Xfunction [xi,yi,zi] = mincurvi(xb,yb,zb,xi,yi,n)
+X% MINCURVI  Interpolation by minimum curvature method.
+X%	ZI = MINCURVI(X,Y,Z,XI,YI) Interpolates values Z
+X%	at known at points with coordinates X, Y to
+X%	values ZI at points with coordinates XI, YI
+X%	using minimum curvature method.
+X%
+X%	For large number of known points it divides
+X%	the domain into subdomains using the adaptive
+X%	QUADTREE procedure.
+X%	MINCURVI(X,Y,Z,XI,YI,[NB ND NMAX]) also allows
+X%	to specify several parameters of quadtree
+X%	division:
+X%	NB   - max. number of points in one block
+X%	ND   - "depopulation" threshold - if number of
+X%	  points in a block is less than ND is is
+X%	  considered "depopulated" and its own "secondary"
+X%	  neighbours are used for interpolation.
+X%	NMAX - max. number of points below which domain
+X%	  is not divided into blocks.
+X%	Default values [NB ND NMAX] = [32 8 400].
+X%
+X%	XI can be a row vector, in which case it specifies
+X%	a matrix with constant columns. Similarly, YI can
+X%	be a column vector and it specifies a matrix with 
+X%	constant rows.
+X%	[XI,YI,ZI] = MINCURVI(...) also returns matrices
+X%	XI, YI formed from input vectors XI,YI in the way
+X%	described above.
+X%
+X%	See also GRIDDATA, OBJMAP, QUADTREE.
+X
+X%	Method used in MINCURVI is similar to that of
+X%	used in GRIDDATA. However MINCURVI is much more
+X%	memory-efficient for large number of points and
+X%	more robust since it uses mean and slope removal
+X%	(program DETREND2).
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	05/25/95, 09/15/95
+X
+X % Defaults and parameters ...............
+Xn_dflt = [32 8]; % Default for max. number of 
+X                  % points in elementary block and
+X                  % "depopulation" threshold
+Xnmax = 400;       % Default for max. number of points
+X                  % not to be divided into blocks
+Xverbose = 1;      % Verbosity (shows number of blocks
+X                  % processed
+Xis_scale = 1;     % Scale variables
+X
+X % Handle input ..........................
+Xif nargin==0, help mincurvi, return, end
+Xif nargin==1
+X if strcmp(xb,'info'), more on, type mapinfo, more off, return, end
+Xend
+Xif nargin<5
+X  error('  Not enough input arguments')
+Xend
+Xif nargin<6,
+X  n = n_dflt;
+Xend
+Xif n==[], n = n_dflt; end
+Xn = max(n,1);
+Xif length(n)==1, n(2) = ceil(n(1)/4); end
+Xif length(n)>=3, nmax = n(3); end
+Xn = n(:)';
+Xn(1:2) = fliplr(sort(n(1:2)));
+X
+X % Check input coordinates and make matrices XI, YI
+X % if necessary
+X[msg,xb,yb,zb,xi,yi] = xyzchk(xb,yb,zb,xi,yi);
+Xif length(msg)>0, error(msg); end
+X
+X % Check for coincident points ................
+X[r,zb] = uniquept([xb(:) yb(:)],zb(:));
+Xxb = r(:,1); yb = r(:,2);
+X
+X % Scales ...............
+Xif is_scale
+X  xsc = max(xb)-min(xb);
+X  ysc = max(yb)-min(yb);
+X  xb = xb/xsc; xi = xi/xsc;
+X  yb = yb/ysc; yi = yi/ysc;
+Xend
+X
+X
+X % Calculate quadtree divison into blocks and
+X % related objects
+X[x,y,s,nb,lb,ind,bx,by,Na,Lx,Ly,Sp,npb] = ...
+X           mkblocks(xb,yb,xi,yi,n(1),nmax);
+Xzb = zb(:);
+X
+X % Mask for underpopulated blocks .......
+Xisup = npb<n(2);
+X
+X % Remove mean and trend ................
+X[zb,r0,g] = detrend2(xb,yb,zb);
+Xzsc = max(zb)-min(zb);
+X
+X % Quick exit if residual z is 0
+Xif zsc==0
+X  % Put mean and slope back
+X  zi = g(1)+(xi-r0(1))*g(2)+(yi-r0(2))*g(3);
+X  if nargout<=1, xi = zi; end
+X  return
+Xend
+Xzb = zb/zsc;
+X
+X % Initialize output and weights
+Xzi = zeros(size(xi));
+Xwi = zi;
+X
+Xif verbose
+X  fprintf('Number of blocks: %g\nProcessing:\n',lb) 
+Xend
+X
+X % Process each block sequentially *****************
+Xfor jj=1:lb
+X
+X  [ibp,iip,w,Dx,Dy] = ptsinblk(jj,x,y,Na,Sp,...
+X                             Lx,Ly,nb,isup);
+X  ob = ones(size(ibp));
+X
+X  % Green's function matrix for basis points
+X  r = Dx.^2+Dy.^2;
+X  mask = find(~r);
+X  r(mask) = ones(size(mask));
+X  r = r.*(log(r)-2);
+X  r(mask) = zeros(size(mask));
+X  v = r\zb(ibp);
+X
+X  % Interpolation points ...................
+X  len = length(iip);
+X  n_chunk = ceil(len/nmax);
+X  for j1=1:n_chunk    % Process each chunk
+X    % Get current chunk
+X    nn = min(len,j1*nmax);
+X    i_ch = (j1-1)*nmax+1:nn;
+X    w_ch = w(i_ch);
+X    i_ch = iip(i_ch);
+X    och = ones(size(i_ch));
+X
+X    Dx = x(i_ch,ob)-x(ibp,och)';
+X    Dy = y(i_ch,ob)-y(ibp,och)';
+X    r = Dx.^2+Dy.^2;
+X    mask = find(~r);
+X    r(mask) = 2*ones(size(mask));
+X    r = r.*(log(r)-2);
+X    r(mask) = zeros(size(mask));
+X
+X    % Interpolation itself ...................
+X    i_ch = i_ch-nb;
+X    zi(i_ch) = zi(i_ch)+w_ch.*(r*v);
+X    wi(i_ch) = wi(i_ch)+w_ch;
+X  end
+X
+X  % Verbose mode, tell tyhe block is processed
+X  if verbose, fprintf('%g,',jj); end
+X
+Xend
+Xif verbose, fprintf('\n All done.\n'); end
+X
+Xzi = zi./wi;     % Divide by weights
+X
+X % Put mean and slope back
+Xzi = zi*zsc;
+Xzi = zi+g(1)+(xi-r0(1))*g(2)+(yi-r0(2))*g(3);
+X
+Xif nargout<=1, xi = zi; end
+X
+END_OF_FILE
+if test 4672 -ne `wc -c <'mincurvi.m'`; then
+    echo shar: \"'mincurvi.m'\" unpacked with wrong size!
+fi
+chmod +x 'mincurvi.m'
+# end of 'mincurvi.m'
+fi
+if test -f 'mkblocks.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'mkblocks.m'\"
+else
+echo shar: Extracting \"'mkblocks.m'\" \(834 characters\)
+sed "s/^X//" >'mkblocks.m' <<'END_OF_FILE'
+Xfunction [x,y,s,nb,nbl,ind,bx,by,Na,Lx,Ly,Sp,npb] = ...
+X           mkblocks(xb,yb,xi,yi,n0,nmax)
+X% MKBLOCKS Auxillary routine for block-processing.
+X%	Used in MINCURVI, OBJMAP, KRIGING.
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	05/25/95
+X
+Xnb = prod(size(xb));
+Xni = prod(size(xi));
+Xif nb<=nmax, n0=nmax; end
+X
+X % Combine known and interp. points in one vector
+Xx = [xb(:); xi(:)];
+Xy = [yb(:); yi(:)];
+Xs = [ones(nb,1); zeros(ni,1)];
+X
+X % Calculate "quadtree" .........................
+X[ind,bx,by,Na,Lx,Ly] = quadtree(x,y,s,n0);
+Xif Na==[],
+X  Na=1;
+X  Lx = [min(min(x)) max(max(x))];
+X  Ly = [min(min(y)) max(max(y))];
+Xend
+Xnbl = size(Na,1);
+X
+X % Construct sparse matrix for indexing .........
+Xnp = length(ind);
+XSp = sparse(ind,1:np,1,nbl,np);
+X
+X % Number of points in each block ...............
+Xnpb = full(sum(Sp'));
+X
+END_OF_FILE
+if test 834 -ne `wc -c <'mkblocks.m'`; then
+    echo shar: \"'mkblocks.m'\" unpacked with wrong size!
+fi
+chmod +x 'mkblocks.m'
+# end of 'mkblocks.m'
+fi
+if test -f 'objmap.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'objmap.m'\"
+else
+echo shar: Extracting \"'objmap.m'\" \(6750 characters\)
+sed "s/^X//" >'objmap.m' <<'END_OF_FILE'
+Xfunction [xi,yi,zi,em] = objmap(xb,yb,zb,xi,yi,fun,p,err,n)
+X% OBJMAP Objective mapping interpolation.
+X%	[ZI,EM] = OBJMAP(...,[LX LY],E) Specifies
+X%	lengthscales LX, LY and relative error E
+X%	(0 < E < 1) for "classical" gaussian correlation 
+X%	function 
+X%	C(x,y) = E*D(x,y)+(1-E)*exp(-(x/LX)^2-(y/LY)^2),
+X%	where D - Dirac delta function.
+X%
+X%	OBJMAP(...,'FUN',P,E)  Allows to specify the
+X%	correlation function 'FUN' as a string (expression
+X%	or function name) depending on x, y, r(r^2=x^2+y^2)
+X%	and parameters (such as lengthscales) in the vector
+X%	P.
+X%
+X%	For large number of known points it divides
+X%	the domain into subdomains using the adaptive
+X%	QUADTREE procedure.
+X%
+X%	OBJMAP(...,[LX LY],E,OPT) or 
+X%	OBJMAP(...,'FUN',P,E,OPT) also allows OPT vector
+X%	argument to specify several parameters of quadtree
+X%	division:
+X%	OPT = [NB ND NMAX PB VERBOSE], where
+X%	NB   - max. number of points in one block
+X%	ND   - "depopulation" threshold - if number of
+X%	  points in a block is less than ND is is
+X%	  considered "depopulated" and its own "secondary"
+X%	  neighbours are used for interpolation.
+X%	NMAX - max. number of points below which domain
+X%	  is not divided into blocks.
+X%	PB - X,Y scales as part of average block sizes,
+X%	VERBOSE - verbosity (1 - display some values and
+X%	  number of processed blocks.
+X%	Default values [NB ND NMAX PB V] = [32 8 500 1/3 1].
+X%
+X%	For more information about quadtree division and
+X%	options see TREEINFO and TREEDEMO.
+X%
+X%	XI can be a row vector, in which case it specifies
+X%	a matrix with constant columns. Similarly, YI can
+X%	be a column vector and it specifies a matrix with 
+X%	constant rows.
+X%	[XI,YI,ZI] = OBJMAP(...) also returns matrices
+X%	XI, YI formed from input vectors XI,YI in the way
+X%	described above.
+X%
+X%	See also GRIDDATA, MINCURVI, KRIGING, QUADTREE.
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	05/25/95, 05/31/95
+X
+X % Defaults and parameters .............................
+Xn_dflt = [32 8];  % Default for max. and min number of 
+X                  %  points in elementary block
+Xnmax = 500;       % Default for max number of points
+X                  %  to be treated as one block
+Xpart_blk = 1/3;   % Default for x and y lengthscales
+X                  %  as parts of average block sizes
+X                  % when LY, LY not specified.
+Xverbose = 1;      % Verbosity (shows some parameters and 
+X                  % number of blocks processed).
+X
+X
+X % Handle input ........................................
+Xif nargin==0, help objmap, return, end
+Xif nargin==1
+X if strcmp(xb,'info'), more on, type mapinfo, more off, return, end
+Xend
+Xif nargin<5
+X  error('  Not enough input arguments')
+Xend
+X
+X % Insert defaults for missing arguments
+Xif nargin<9, n = 0; end
+Xif nargin<8, err = 0; end
+Xif nargin<7, p = 0; end
+Xif nargin<6, fun = 0; end
+Xis_call = isstr(fun);  % If function name or expression
+X
+Xif is_call   % Function name or expression
+X  call = callchk(fun,'r');
+Xelse         % Lengthscales for gaussian form
+X  n = err;
+X  err = p;
+X  sc = fun;
+X  call = '';
+Xend
+X
+Xif ~length(sc), sc = [0 0]; end
+Xif length(sc)==1, sc = sc([1 1]); end
+Xsc = max(sc,0); end
+X
+X % Options (vector n)
+Xif n==0 | n==[], n = n_dflt; end
+Xlen = length(n);
+Xif len>=3, nmax = n(3); end
+Xif len>=4, part_blk = n(4); end
+Xif len>=5, verbose = n(5); end
+X
+X % Relative error:
+Xif err==[], err=0; end  % Not empty
+Xerr = min(err,1);       % Not larger than 1
+X
+X % If error map is needed
+Xis_err = (nargout==2) | (nargout==4);
+Xif is_err, em = zeros(size(xi)); end
+X
+X % Check input coordinates and make matrices XI, YI
+X % if necessary
+X[msg,xb,yb,zb,xi,yi] = xyzchk(xb,yb,zb,xi,yi);
+Xif length(msg)>0, error(msg); end
+X
+X
+X % Calculate quadtree divison into blocks and
+X % related objects
+X[xx,yy,s,nb,lb,ind,bx,by,Na,Lx,Ly,Sp,npb] = ...
+X           mkblocks(xb,yb,xi,yi,n(1),nmax);
+X
+Xif any(~sc) | sc==[]
+X  if lb==1, part_blk = part_blk/sqrt(nb/n(1)); end
+X  sc = max(sc,[mean(diff(Lx')), mean(diff(Ly'))]*part_blk);
+Xend
+X
+X % Process basis values vector ZB
+Xszb = size(zb);
+Xis_vec = 0; err_only = 0;
+Xif any(szb==1) | prod(szb)==nb
+X  zb = zb(:);
+Xelseif min(szb)>1
+X  if szb(2)==nb, zb = zb'; end
+X  is_vec = 1;
+Xelseif zb==[]
+X  err_only = 1;
+Xend
+Xszb = size(zb);
+Xoz = ones(1,szb(2));
+X
+X % Mask for underpopulated blocks .......
+Xisup = npb<n(2);
+X
+X % Remove mean and trend ................
+Xfor jj=1:szb(2)
+X  [zb(:,jj),rc,gc] = detrend2(xb,yb,zb(:,jj));
+X  r0(jj,:) = rc;
+X  g(jj,:) = gc;
+Xend
+X
+X % Initialize output and weights
+Xzi = zeros(prod(size(xi)),szb(2));
+Xwi = zeros(prod(size(xi)),1);
+Xer1 = 1-err;
+X
+X % Tell some parameters and number of blocks ......
+Xif verbose
+X  fprintf('\n')
+X  if ~is_call
+X    fprintf('Scales: %g, %g\n',sc(1),sc(2))
+X  end
+X  fprintf('Relative error: %g \n',err) 
+X  fprintf('Number of blocks: %g\nProcessing:\n',lb) 
+Xend
+X
+X % Process each block sequentially **********************
+Xfor jj=1:lb   % Begin blocks ```````````````````````````0
+X
+X  [ibp,iip,w,x,y] = ptsinblk(jj,xx,yy,Na,Sp,...
+X                             Lx,Ly,nb,isup);
+X  ob = ones(size(ibp));
+X  oi = ones(size(iip));
+X
+X  % Green's function (covariance) matrix for basis points
+X  if is_call
+X    r = sqrt(x.^2+y.^2);
+X    eval(call);
+X  else
+X    r = exp(-(x/sc(1)).^2-(y/sc(2)).^2);
+X  end
+X  r = er1*r+err*eye(size(r));    % Add errors
+X  A = r;
+X  if ~err_only, v = r\zb(ibp,:); end
+X
+X  % Interpolation points ...................
+X  len = length(iip);
+X  n_chunk = ceil(len/nmax);
+X  for j1=1:n_chunk    % Process each chunk
+X
+X    % Get current chunk
+X    nn = min(len,j1*nmax);
+X    i_ch = (j1-1)*nmax+1:nn;
+X    w_ch = w(i_ch);
+X    i_ch = iip(i_ch);
+X    och = ones(size(i_ch));
+X    x = xx(i_ch,ob)-xx(ibp,och)';
+X    y = yy(i_ch,ob)-yy(ibp,och)';
+X
+X    % Calculate covariance matrix
+X    if is_call
+X      r = sqrt(x.^2+y.^2);
+X      eval(call);
+X    else
+X      r = exp(-(x/sc(1)).^2-(y/sc(2)).^2);
+X    end
+X    r = r*er1;
+X
+X    % Interpolation itself ...................
+X    i_ch = i_ch-nb;
+X    if ~err_only
+X      zi(i_ch,:) = zi(i_ch,:)+w_ch(:,oz).*(r*v);
+X    end
+X    wi(i_ch) = wi(i_ch)+w_ch;
+X
+X    % Calculate errors
+X    if is_err & err>0
+X      r = r';
+X      em(i_ch) = em(i_ch)+w_ch./(1-sum(r.*(A\r))/er1)';
+X    end
+X
+X  end
+X
+X  % Verbose mode, tell that a block is processed
+X  if verbose, fprintf('%g,',jj); end
+X
+Xend  % End all blocks ''''''''''''''''''''''''''''''''''0
+X
+Xif verbose, fprintf('\n All done.\n'); end
+X
+Xzi = zi./wi(:,oz);     % Divide by weights
+X
+Xsz = size(xi);
+Xwi = reshape(wi,sz(1),sz(2));
+Xif is_err & err>0
+X  em = wi./em;     % Invert error map
+Xend
+X
+X % Put mean and slope back ...............
+Xfor jj = 1:szb(2)
+X  zi(:,jj) = zi(:,jj)+g(jj,1)+(xi(:)-r0(jj,1))*g(jj,2);
+X  zi(:,jj) = zi(:,jj)+(yi(:)-r0(jj,2))*g(jj,3);
+Xend
+X
+X % Reshape if scalar z value
+Xif ~is_vec & ~err_only
+X  zi = reshape(zi,sz(1),sz(2));
+Xend
+X
+X % If XI, YI are not needed
+Xif nargout<=2,  xi = zi; yi = em; end
+X
+END_OF_FILE
+if test 6750 -ne `wc -c <'objmap.m'`; then
+    echo shar: \"'objmap.m'\" unpacked with wrong size!
+fi
+chmod +x 'objmap.m'
+# end of 'objmap.m'
+fi
+if test -f 'ptsinblk.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'ptsinblk.m'\"
+else
+echo shar: Extracting \"'ptsinblk.m'\" \(2831 characters\)
+sed "s/^X//" >'ptsinblk.m' <<'END_OF_FILE'
+Xfunction [ibp,iip,w,Dx,Dy] = ptsinblk(jj,x,y,Nb,Sp,...
+X                             Lx,Ly,n0,isup)
+X% PTSINBLK  Block pre-processing for interpolation routines.
+X%	Used in MINCURVI, OBJMAP, KRIGING.
+X%
+X%	Input:
+X%	JJ    - index of current block
+X%	X,Y   - coordinates of basis and interp. points
+X%	NA    - adjacency matrix
+X%	SP    - sparse matrix of indices of points in blocks
+X%	LX,LY - matrices (nb by 2) of limits of blocks
+X%	N0    - number of basis points   
+X%	ISUP  - mask for underpopulated blocks
+X%
+X%	Output:
+X%	IBP   - indices of basis points used for current
+X%	        block
+X%	IIP   - indices of interpolation points
+X%	W     - weights
+X%	DX,DY - distance matrices of basis points
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	05/25/95
+X
+X%  1. Find neighbouring blocks, get all basis and 
+X%     interpolation points in all these blocks
+X%  2. For underpopulated neighb. blocks find "secondary"
+X%     neighbours. Get basis points from these new blocks.
+X%  3. Calculate distances Dx,Dy matrix between basis points
+X%  4. Calculate weights for interp. points outside the
+X%     current block
+X
+Xnp = length(x);
+X
+X % Neighbours of a current block
+Xmask_nb = Nb(jj,:);
+X
+X % Find "secondary" neighbouring blocks - neighbours of
+X % underpopulated blocks
+Xi_up = find(mask_nb & isup); % Underpopulated blocks
+Xa = zeros(size(mask_nb));
+Xlen = length(i_up);
+X
+Xif len==1
+X  a = Nb(i_up,:);
+Xelseif len>1
+X  a = any(Nb(i_up,:));  % Find neighb of underpop. blocks
+Xend
+Xa = a & ~mask_nb;     % Leave only those outside
+X
+X % Get all points in the current block and its immediate
+X % neighbours 
+Xi_nb = find(mask_nb);
+Xif length(i_nb)<=1
+X  mask_p = full(Sp(i_nb,:));
+Xelse
+X  mask_p = full(any(Sp(i_nb,:)));
+Xend      % All pts. in cur. blocks
+X
+X
+X % Get basis points from neighbours of underpopulated blocks
+Xi_nb = find(a);
+Xif length(i_nb)==1
+X  mask_p = mask_p+2*full(Sp(i_nb,:));
+Xelseif length(i_nb)>1
+X  mask_p = mask_p+2*full(any(Sp(i_nb,:)));
+Xend
+Xmask_p = mask_p';
+X
+X % Separate basis and interpolation points
+X % Basis points:
+Xibp = find(mask_p(1:n0));
+Xxb = x(ibp);
+Xyb = y(ibp);
+X
+X % Interpolation points
+Xiip = find( mask_p(n0+1:np)==1 | mask_p(n0+1:np)==3 );
+Xiip = iip+n0;
+X
+X % Distance matrix .................................
+Xob = ones(size(xb));
+XDx = xb(:,ob);
+XDx = Dx-Dx';
+XDy = yb(:,ob);
+XDy = Dy-Dy';
+X
+X
+X % Calulate weights ................................
+Xxi = x(iip);
+Xyi = y(iip);
+Xw = ones(size(xi));
+X
+X % Limits and size of current block
+Xlimx = Lx(jj,:);
+Xdx = diff(limx);
+Xlimy = Ly(jj,:);
+Xdy = diff(limy);
+X
+X % X-weights
+Xii = find(xi<limx(1));
+Xcc = limx(1)-xi(ii);
+Xw(ii) = 1./(1+16*(cc/dx).^2);
+Xii = find(xi>limx(2));
+Xcc = limx(1)-xi(ii);
+Xw(ii) = 1./(1+4*(cc/dx).^2);
+X
+X % Y-weights
+Xii = find(yi<limy(1));
+Xcc = limy(1)-yi(ii);
+Xw(ii) = w(ii)./(1+16*(cc/dy).^2);
+Xii = find(yi>limy(2));
+Xcc = limy(2)-yi(ii);
+Xw(ii) = w(ii)./(1+4*(cc/dy).^2);
+X
+END_OF_FILE
+if test 2831 -ne `wc -c <'ptsinblk.m'`; then
+    echo shar: \"'ptsinblk.m'\" unpacked with wrong size!
+fi
+chmod +x 'ptsinblk.m'
+# end of 'ptsinblk.m'
+fi
+if test -f 'qtree0.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'qtree0.m'\"
+else
+echo shar: Extracting \"'qtree0.m'\" \(2198 characters\)
+sed "s/^X//" >'qtree0.m' <<'END_OF_FILE'
+Xfunction  [ind,bx,by] = qtree0(x,y,s,lim,n0)
+X%	QTREE0  Primitive for QUADTREE.
+X%	[IND,BX,BY] = QTREE0(X,Y,S,LIM,N0)	
+X
+X%  Copyright (c) 1995  by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	01/26/95
+X
+X
+X % Divide and make further recursion if necessary
+XN = length(find(s));
+X
+X % If not to divide further .....................
+Xind = ones(size(x));
+Xif N <= n0
+X  bx = .5; by = .5;
+X  return
+Xend
+X
+X % Further division is needed ...................
+X
+X % Calculate middle of the current range
+Xx_mid = (lim(2)+lim(1))/2;
+Xy_mid = (lim(4)+lim(3))/2;
+X
+X % Branch for current level
+Xbx0 = [0 0 1 1]';
+Xby0 = [0 1 0 1]';
+X 
+Xn1 = find( x<=x_mid & y<=y_mid );   % Lower-left
+Xlm = [lim(1)  x_mid  lim(3)  y_mid];
+X[ind1,bx1,by1] = qtree0(x(n1),y(n1),s(n1),lm,n0);
+X
+Xn2 = find( x<x_mid & y>y_mid );     % Upper-left
+Xlm = [lim(1)  x_mid  y_mid  lim(4)];
+X[ind2,bx2,by2] = qtree0(x(n2),y(n2),s(n2),lm,n0);
+X
+Xn3 = find( x>x_mid & y<=y_mid );    % Lower-right
+Xlm = [x_mid  lim(2)  lim(3)  y_mid];
+X[ind3,bx3,by3] = qtree0(x(n3),y(n3),s(n3),lm,n0);
+X
+Xn4 = find( x>x_mid & y>y_mid );     % Upper-right
+Xlm = [x_mid  lim(2)  y_mid  lim(4)];
+X[ind4,bx4,by4] = qtree0(x(n4),y(n4),s(n4),lm,n0);
+X
+X % Make composite binary "tree matrices"
+XszB = [size(bx1); size(bx2); size(bx3); size(bx4)];
+Xszv = cumsum(szB(:,1));
+Xszh = max(szB(:,2))+1;
+X
+X % Initialize output matrices
+Xbx = .5*ones(szv(4),szh);
+Xby = bx;
+X
+X % Fill binary matrices ..................
+Xnnv = (1:szv(1))';        nnh = 2:szB(1,2)+1;
+Xbx(nnv,nnh) = bx1; by(nnv,nnh) = by1;
+Xbx(nnv,1) = bx0(1)*ones(size(nnv));
+Xby(nnv,1) = by0(1)*ones(size(nnv));
+X
+Xnnv = (szv(1)+1:szv(2))'; nnh = 2:szB(2,2)+1;
+Xbx(nnv,nnh) = bx2; by(nnv,nnh) = by2;
+Xbx(nnv,1) = bx0(2)*ones(size(nnv));
+Xby(nnv,1) = by0(2)*ones(size(nnv));
+X
+Xnnv = (szv(2)+1:szv(3))'; nnh = 2:szB(3,2)+1;
+Xbx(nnv,nnh) = bx3; by(nnv,nnh) = by3;
+Xbx(nnv,1) = bx0(3)*ones(size(nnv));
+Xby(nnv,1) = by0(3)*ones(size(nnv));
+X
+Xnnv = (szv(3)+1:szv(4))'; nnh = 2:szB(4,2)+1;
+Xbx(nnv,nnh) = bx4; by(nnv,nnh) = by4;
+Xbx(nnv,1) = bx0(4)*ones(size(nnv));
+Xby(nnv,1) = by0(4)*ones(size(nnv));
+X  
+X % Calculate indices .....................
+Xind2 = ind2+szv(1);
+Xind3 = ind3+szv(2);
+Xind4 = ind4+szv(3);
+Xind(n1) = ind1;
+Xind(n2) = ind2;
+Xind(n3) = ind3;
+Xind(n4) = ind4;
+END_OF_FILE
+if test 2198 -ne `wc -c <'qtree0.m'`; then
+    echo shar: \"'qtree0.m'\" unpacked with wrong size!
+fi
+chmod +x 'qtree0.m'
+# end of 'qtree0.m'
+fi
+if test -f 'quadtree.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'quadtree.m'\"
+else
+echo shar: Extracting \"'quadtree.m'\" \(2066 characters\)
+sed "s/^X//" >'quadtree.m' <<'END_OF_FILE'
+Xfunction  [ind,bx,by,Nb,lx,ly] = quadtree(x,y,s,n0)
+X% QUADTREE  Recursive division of a 2-dimensional set.
+X%	[IND,BX,BY,NB,LX,LY] = QUADTREE(X,Y,S,N0)
+X%	Performs recursive tree-like division of a set
+X%	of points with coordinates  X,Y.
+X%	S is binary mask showing which points of a set
+X%	are to be counted. N0 is maximum permissible
+X%	number of "counted" points in the elementary
+X%	block.
+X%	Returns vector IND of the same size as X, Y
+X%	showing which region each point of a set belongs
+X%	to; binary matrices BX, BY where each row shows
+X%	"binary address" of each region.
+X%	Also returns "Adjacency matrix" NB which is 1 if 
+X%	i and j regions are neighbours and 0 otherwise;
+X%	and matrices of limits for each region, LX and LY
+X%	so that  PLOT(LX(:,[1 2 2 1 1])',LY(:,[1 1 2 2 1])')
+X%	plots the boundaries of all regions.
+X
+X%  Copyright (c) 1995  by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	01/30/95
+X
+X % Default for maximal block size 
+Xn0_dflt = 10;
+X
+X % Handle input ..............................
+Xif nargin < 2
+X  error(' Not enough input arguments.')
+Xend
+Xif nargin<4, n0 = n0_dflt; end
+Xif nargin<3, s = []; end
+Xif s==[], s = ones(size(x)); end
+X
+X % If no need to divide ......................
+Xif length(x(find(s))) <= n0
+X  bx = []; by = []; Nb = [];
+X  ind = ones(size(x));
+X  return
+Xend
+X
+X % Calculate limits ................
+Xlim = [min(x) max(x) min(y) max(y)];
+X
+X % Recursively construct quadtree ............
+X[ind,bx,by] = qtree0(x,y,s,lim,n0);
+Xbx = bx(:,1:size(bx,2)-1);
+Xby = by(:,1:size(by,2)-1);
+X
+X % Compose "adjacency matrix" ................
+Xszb = size(bx);
+Xob = ones(1,szb(1));
+Xpow = 2.^(0:szb(2)-1);
+Xpow = flipud(pow');
+X
+X % "Lower" and "upper" bounds for trees
+Xbxmax = ceil(bx)*pow;
+Xbxmin = floor(bx)*pow;
+Xbymax = ceil(by)*pow;
+Xbymin = floor(by)*pow;
+X
+X % "Physical" limits of each regions
+Xlx = [bxmin bxmax+1];
+Xly = [bymin bymax+1];
+Xlx = lim(1)+lx*(lim(2)-lim(1))/pow(1)/2;
+Xly = lim(3)+ly*(lim(4)-lim(3))/pow(1)/2;
+X
+XB0 = bxmin(:,ob);
+XB1 = bxmax(:,ob);
+XNb = (B0'-B1<=1) & (B1'-B0>=-1);
+X
+XB0 = bymin(:,ob);
+XB1 = bymax(:,ob);
+XNb = Nb & (B0'-B1<=1) & (B1'-B0>=-1);
+X
+END_OF_FILE
+if test 2066 -ne `wc -c <'quadtree.m'`; then
+    echo shar: \"'quadtree.m'\" unpacked with wrong size!
+fi
+chmod +x 'quadtree.m'
+# end of 'quadtree.m'
+fi
+if test -f 'treedemo.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'treedemo.m'\"
+else
+echo shar: Extracting \"'treedemo.m'\" \(1995 characters\)
+sed "s/^X//" >'treedemo.m' <<'END_OF_FILE'
+X% TREEDEMO   Demonstration program for QUADTREE.M
+X
+X%  Copyright (c) 1995  by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	01/30/95
+X
+Xecho on
+X
+X%  Hello!
+X% This is a short demonstration of the QUADTREE routine.
+X% This program divides a 2-dimensional region containing
+X% a set of points (x,y), into smaller rectangular regions
+X% containing no more than a specified number of points.
+X% QUADTREE calculates indices showing which region
+X% each point of a set belongs to and "binary address"
+X% bx, by  of each region.
+X% The program also returns the "Adjacency matrix" Nb
+X% which is 1 if (i,j) regions are neighbours and
+X% 0 otherwise.
+X
+X pause    % Hit any key to continue ...
+X
+X % Generate  a set of points x, y
+Xnp = 400;
+Xx = randn(np,1);
+Xy = randn(np,1);
+X
+X% Let's divide the plane (x,y) into non-intersecting
+X% rectangular regions so that each of them will contain
+X% no more than 40 points:
+X
+Xs = ones(size(x));   % Auxillary vector
+Xn0 = 40;             % Maximal allowed number of points
+X
+X pause    % Hit any key to continue ...
+X
+X% Call QUADTREE:
+X
+X [ind,bx,by,Nb,lx,ly] = quadtree(x,y,s,n0);
+X
+X% Plot boundaries of divided regions:
+X close
+X xb = lx(:,[1 2 2 1 1])';
+X yb = ly(:,[1 1 2 2 1])';
+X plot(xb,yb,'w')
+X
+X
+X% Now plot point belonging to each of these regions
+X% and also points adjacent in adjacent regions
+X
+X pause    % Hit any key to continue ...
+X
+X% For each region .......
+Xfor jj = 1:size(Nb,2)
+X
+X  nn = find(ind==jj);
+X  if jj==1
+X    l = line('xdata',x(nn),'ydata',y(nn));
+X    set(l,'linestyle','o','erasemode','xor')
+X    set(l,'color','y','markersize',7)
+X    ln = line('xdata',x(nn),'ydata',y(nn));
+X    set(ln,'linestyle','.','erasemode','xor')
+X    set(ln,'color','c','markersize',10)
+X  else
+X    set(l,'xdata',x(nn),'ydata',y(nn));
+X  end
+X
+X  % Now show neighbouring regions:
+X  xn = []; yn = [];
+X  for jjn = find(Nb(jj,:)); % For each neighbour ....
+X    nnn = find(ind==jjn);
+X    xn = [xn; x(nnn)];
+X    yn = [yn; y(nnn)];
+X    set(ln,'xdata',xn,'ydata',yn);
+X    drawnow
+X  end
+X
+X  pause(1)
+Xend
+X
+Xecho off
+X
+END_OF_FILE
+if test 1995 -ne `wc -c <'treedemo.m'`; then
+    echo shar: \"'treedemo.m'\" unpacked with wrong size!
+fi
+chmod +x 'treedemo.m'
+# end of 'treedemo.m'
+fi
+if test -f 'triangul.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'triangul.m'\"
+else
+echo shar: Extracting \"'triangul.m'\" \(6400 characters\)
+sed "s/^X//" >'triangul.m' <<'END_OF_FILE'
+Xfunction  [no,p,nc] = triangul(x,y,trace)
+X%  TRIANGUL  Triangulation of a set of points on a plane.
+X%	N3 = TRIANGUL(X,Y) Performs triangulation of a set of
+X%	points with coordinates X, Y. Returns a matrix N3 
+X%	(3 by number of triangles) each row of which represents
+X%	indices of a triangle (indices into vectors x,y).
+X%
+X%	TRIANGUL(X,Y,TRACE) plots results of the triangulation
+X%	(a patch for every triangle).
+X%	TRACE = 1  plots results at every iteration.
+X%	TRACE = 2  plots only final results.
+X%	TRACE = 3  Creates patches but makes them invisible
+X%	(can be used for some demonstration purposes).
+X%
+X%	TRIANGUL DEMO  is a demonstration of this routine.	
+X
+X%  Copyright (c) 1995 by Kirill K. Pankratov
+X%       kirill@plume.mit.edu
+X%       11/22/94, 02/23/95, 05/22/95
+X
+Xtol = 1e-14;       % Tolerance for cos(angle) comparison
+Xtol_area = 1e-5;   % Tolerance for rel. area of triangles
+Xp_inflate  = 1e-4; % Inflation parameter (0 - no change)
+X
+Xif nargin==0, help triangul, return, end
+Xif nargin<3, trace = 0; end
+X
+Xif nargin==1,     % DEMO mode ..........................
+X  if strcmp(x,'demo')
+X    trace = 1;
+X    disp(' ')
+X    disp(' This is a demonstration of a triangulation program')
+X    disp(' ')
+X
+X    % Generate random data x,y
+X    n = 200;
+X    dx1 = rand(1,n).^(1/2);
+X    dy1 = rand(1,n)*2*pi;
+X    x = dx1.*cos(dy1);
+X    y = dx1.*sin(dy1);
+X  end
+Xend
+X
+Xx = x(:); y = y(:);   % Make column vectors
+Xl = length(x);
+Xif l~=length(y)
+X  error(' Vectors X and Y must have the same length.')
+Xend
+X
+X % Start with a convex hull .................
+X % "Inflate" dataset to increase convexity
+XEdge = inflate([x y],p_inflate);
+Xx = Edge(:,1);
+Xy = Edge(:,2);
+Xi_new = convex2(x,y);
+Xi_new = [i_new(:)' i_new(1)];
+Xl_e = length(i_new);
+Xnc = l_e-1;           % Length of the convex hull
+X%plot(x(i_new),y(i_new),'*',x,y,'o'),pause %///////////////////
+X
+X % Determine sign of contour ................
+Xxc = x(i_new);
+Xyc = y(i_new);
+Xsgn = (xc(2:l_e)-xc(1:l_e-1))'*(yc(2:l_e)+yc(1:l_e-1));
+Xsgn = sign(sgn);
+X
+X % Index vector (0 - for points out of "active zone"
+Xind = ones(size(x))';
+X
+X % Initialization ...........................
+XEdge = [i_new(1:l_e-1); i_new(2:l_e)];
+Xl_e = l_e-1;
+Xnum3 = [];         % Initialize output matrix
+Xp = [];
+Xiter = 0;
+XSall = sparse(Edge(1,:),Edge(2,:),1,l,l);
+X
+X
+X % Start moving "front" inside .................................
+Xwhile any(ind) & Edge~=[]   % Until front collapses ```````````0
+X  iter = iter+1;
+X
+X  l_e = size(Edge,2);
+X  ind = ind>0;
+X  ind(Edge(:)) = 1:l_e*2;
+X
+X  % Extract still "active" points
+X  i_ind = find(ind);
+X  xc = x(i_ind);
+X  yc = y(i_ind);
+X
+X  % Reshape Edge matrix
+X  num3c = Edge;
+X  Edge = zeros(2,l_e*2);
+X  Edge(:,1:2:2*l_e) = num3c;
+X
+X  % Calculate maximal angle points ........................
+X  % Loops to save memory
+X  i_new = zeros(1,l_e);
+X  for jj = 1:l_e % For all valid pairs ````````````````````1
+X    jc = jj*2-1;
+X    ic0 = (jc-1)*2+[1 4];
+X    ic1 = ic0+[1 -1];
+X    xc_fr = x(Edge(:,jc));
+X    yc_fr = y(Edge(:,jc));
+X    Edge(ic0) = Edge(:,jc);
+X    Edge(ic1) = [0 0]';
+X
+X    dx1 = xc_fr(1)-xc; % First lever
+X    dy1 = yc_fr(1)-yc;
+X    dx2 = xc_fr(2)-xc; % Second lever
+X    dy2 = yc_fr(2)-yc;
+X    a = (dx1.*dx2+dy1.*dy2); % Cross product
+X
+X    % Mask (eliminate) points "behind" the front line
+X    mask = sign(dx1.*dy2-dx2.*dy1);
+X    mask = (mask==sgn);
+X
+X    % Product of lengths
+X    dx1 = (dx1.^2+dy1.^2);
+X    dx2 = (dx2.^2+dy2.^2);
+X    dx1 = sqrt(dx1.*dx2);
+X
+X    % Take care of zero length
+X    nn = find(~dx1);
+X    dx1(nn) = dx1(nn)+1;
+X
+X    a = a./dx1+2*mask;      % Cosine
+X    a(nn) = a(nn)+2;
+X
+X    nn = find(a<-1+tol);
+X    a(nn) = a(nn)+2;
+X
+X    % Find minimum cosine (max. angle)
+X    amin = min(a);
+X    nn = find(a<=amin+tol);
+X    nn = i_ind(nn);
+X
+X    % If several points, check that new edge does not
+X    % cross other existing edges
+X    mask = find(all(Edge)); % All other edges
+X    lc = length(mask)+jj;
+X    len = length(nn);
+X    ii = zeros(size(nn));
+X    % For each point and edge check crossing .........
+X    for jj1 = 1:len-(len==1)
+X      dy1 = [Edge(:,mask) num3c(:,1:jj)];
+X      dx1 = reshape(x(dy1),2,lc);
+X      dy1 = reshape(y(dy1),2,lc);
+X
+X      dd = [xc_fr(1); x(nn(jj1))];
+X      dx2 = dd(:,ones(1,lc));
+X      dd = [yc_fr(1); y(nn(jj1))];
+X      dy2 = dd(:,ones(1,lc));
+X      a = iscross(dx1,dy1,dx2,dy2);
+X      ii(jj1) = any(a==1);
+X
+X      dd = [xc_fr(2); x(nn(jj1))];
+X      dx2 = dd(:,ones(1,lc));
+X      dd = [yc_fr(2); y(nn(jj1))];
+X      dy2 = dd(:,ones(1,lc));
+X      a = iscross(dx1,dy1,dx2,dy2);
+X      ii(jj1) = ii(jj1) | any(a==1);
+X    end
+X
+X    nn = [nn(~ii) nn(1)];
+X    nn = nn(1);  % Now the unique point
+X
+X    % Insert the point into Edge matrix
+X    Edge(ic1) = [nn nn]';
+X
+X  end   % End all pairs of the front points '''''''''''''''1
+X
+X  % Add new triangles ......................
+X  num3c = reshape(Edge,4,l_e);
+X  num3c = num3c([1 2 4],:);
+X  num3 = [num3 num3c];
+X
+X  ind(Edge(:)) = 2*ones(1,l_e*4); % Front pts. = 2
+X
+X
+X  % Take care of repeat elements ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+X
+X  % Sparse matrices
+X  S = sparse(Edge(1,:),Edge(2,:),1:l_e*2,l,l);
+X
+X  % Exclude symmetric pairs (folded edges)
+X  % and repeated pairs
+X  Sb = S>0;
+X  Sb = Sb-(Sb&Sb');               % Folded edges
+X  Sb = Sb-((Sb&Sall)|(Sb&Sall')); % Old repeats
+X  S = S.*Sb;
+X
+X  Sall = Sall|Sb;  % Add current pairs to collection
+X
+X  [dx1,dx2] = find(S);
+X  Edge = [dx1 dx2]';
+X  l_e = size(Edge,2);
+X
+X  % Update list of active points ............
+X  ind(Edge(:)) = 3*ones(1,l_e*2);
+X  ind = ind==1 | ind==3;
+X
+X  if trace  % Show work in progress ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+X    % Initialize a plot .....................
+X    if iter==1
+X      cla
+X      if trace==1, plot(x,y,'o'),drawnow, end
+X      hold on
+X    end
+X
+X    % Update a plot (new triangles) .........
+X    l3c = size(num3c,2);
+X    x3 = reshape(x(num3c),3,l3c);
+X    y3 = reshape(y(num3c),3,l3c);
+X    p = [p; patch(x3,y3,iter*ones(1,1))];
+X    set(p,'erasemode','back')
+X    if trace==1, drawnow, end
+X  end
+X
+Xend   % End while '''''''''''''''''''''''''''''''''''''''''''''0
+X
+Xif trace==3, set(p,'visible','off'), end
+X
+X % Check uniqueness of triangles ............
+Xnum3 = sort(num3)';
+Xnum3 = unique(num3)';
+X
+X % Check if any triangle have zeros area .......................
+Xa = ( x(num3(2,:))-x(num3(1,:)) ) .* ( y(num3(3,:))-y(num3(1,:)) );
+Xa = a-( x(num3(3,:))-x(num3(1,:)) ) .* ( y(num3(2,:))-y(num3(1,:)) );
+Xa = abs(a);
+Xa = a/mean(a);
+Xii = find(abs(a)<tol_area);
+Xnum3(:,ii) = [];
+X
+Xif nargout>0, no = num3; end
+X
+Xif ~trace & nargout>1, p = nc; end
+X
+END_OF_FILE
+if test 6400 -ne `wc -c <'triangul.m'`; then
+    echo shar: \"'triangul.m'\" unpacked with wrong size!
+fi
+chmod +x 'triangul.m'
+# end of 'triangul.m'
+fi
+if test -f 'unique.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'unique.m'\"
+else
+echo shar: Extracting \"'unique.m'\" \(875 characters\)
+sed "s/^X//" >'unique.m' <<'END_OF_FILE'
+Xfunction [D,nr,c] = unique(R)
+X% UNIQUE  Extraction of unique rows out of matrix
+X%	[D,NR,C] = UNIQUE(R)  Returns matrix D containing
+X%	unique rows of input matrix R,
+X%	vector NR (size(R,1) by 1) showing index into rows
+X%	of D for each row of R,
+X%	vector C (size(D,1) by 1) containing number of
+X%	occurences (count) in R of each row of D.
+X
+X%  Based on the program MUNIQUE.M by Richard Aufrichtig
+X%  (winner of M-file contest V3.0)
+X
+X%  Copyright (c) 1995  by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	8/10/94, 05/12/95
+X
+Xif nargin==0, help unique, return, end
+X
+Xy = R*rand(size(R,2),1);
+X[y,i] = sort(y);
+Xy = find([1; diff(y)]);
+X
+Xnr = zeros(size(R,1),1);
+Xnr(y) = [i(1); diff(i(y))];
+Xnr(i) = cumsum(nr);
+Xy = sort(nr);
+Xc = find(diff([y; length(nr)+1]));
+Xc = [c(1); diff(c)];
+X
+Xy = zeros(size(nr));
+Xy(nr) = ones(size(nr));
+Xi = find(y);
+Xy(i) = 1:length(i);
+Xnr = y(nr);
+XD(nr,:) = R;
+X
+END_OF_FILE
+if test 875 -ne `wc -c <'unique.m'`; then
+    echo shar: \"'unique.m'\" unpacked with wrong size!
+fi
+chmod +x 'unique.m'
+# end of 'unique.m'
+fi
+if test -f 'uniquept.m' -a "${1}" != "-c" ; then 
+  echo shar: Will not clobber existing file \"'uniquept.m'\"
+else
+echo shar: Extracting \"'uniquept.m'\" \(1167 characters\)
+sed "s/^X//" >'uniquept.m' <<'END_OF_FILE'
+Xfunction [Ro,fo] = uniquept(R,f)
+X% UNIQUEPT Finding unique points in a set.
+X%	[RU,FU] = UNIQUEPT(R,F) where R is N by D
+X%	matrix of coordinates of N points in D-
+X%	dimensional space, F is N by K matrix of
+X%	K-dimensional vectors at these points.
+X%	Returns FU - NU by D matrix of unique
+X%	points chosen from a set R (NU<=N) and 
+X%	matrix FU of the size NU by K of values
+X%	at these unique points.
+X%	These values are equal to corresponding rows of
+X%	F for unique points and averaged over values 
+X%	at all coincident points.
+X%
+X%	Example: for 2-d case the syntax can be:
+X%	[R,z] = uniquept([x(:) y(:)],z(:));
+X
+X%  Copyright (c) 1995  by Kirill K. Pankratov
+X%	kirill@plume.mit.edu
+X%	09/14/95
+X
+X
+X % Handle input ..................
+Xif nargin==0, help uniquept, return, end
+X[np,dim] = size(R);
+X[np1,dim_f] = size(f);
+Xif np~=np1
+X  error(' Number of rows in R an F must be equal')
+Xend
+X
+X % Find unique points (rows in R)
+X[Ro,ind,c] = unique(R);
+Xlen = length(c);
+X
+X % Quick exit if no coincident points
+Xif len==np,
+X  Ro = R; fo = f; return
+Xend
+X
+X % Map values f to fo ...............
+Xfo = zeros(len,dim_f);
+Xfor jj = 1:dim_f
+X  a = sparse(ind,1,f(:,jj));
+X  fo(:,jj) = full(a)./c;
+Xend
+X
+END_OF_FILE
+if test 1167 -ne `wc -c <'uniquept.m'`; then
+    echo shar: \"'uniquept.m'\" unpacked with wrong size!
+fi
+chmod +x 'uniquept.m'
+# end of 'uniquept.m'
+fi
+echo shar: End of shell archive.
+exit 0

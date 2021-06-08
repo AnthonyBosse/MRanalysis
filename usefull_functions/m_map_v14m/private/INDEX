@@ -1,0 +1,13 @@
+currently distributing version 1.2 - May 18, 1999
+name           contents
+
+readme.txt     Description of GSHHS Global Shoreline data
+gshhs.h        Header file for programs
+gshhs.c        Program to extract ASCII data
+gshhs_dp.c     Program to decimate polygons
+gshhs_f.b.gz   Full resolution binary data
+gshhs_h.b.gz   High resolution data
+gshhs_i.b.gz   Intermediate resolution data
+gshhs_l.b.gz   Low resolution data
+gshhs_c.b.gz   Crude resolution data
+gshhstograss.c See readme file
