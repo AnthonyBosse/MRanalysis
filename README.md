@@ -1,0 +1,2 @@
+# MRanalysis
+This is a code package analyzing glider data collected along the Mohn Ridge in the ProVoLo project (PI Ilker Fer, [https://www.uib.no/en/rg/fysos/97330/provolo#summary-of-activity-and-results) and reproducing to results published in  Bosse, A., &amp; Fer, I. (2019). Mean structure and seasonality of the Norwegian Atlantic Front Current along the Mohn Ridge from repeated glider transects. Geophysical Research Letters, 46, 13170– 13179. https://doi.org/10.1029/2019GL084723 
