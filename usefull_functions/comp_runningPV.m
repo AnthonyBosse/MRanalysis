@@ -39,11 +39,11 @@ dir_x = dir_x./dir_norm;dir_y = dir_y./dir_norm; % normalized along-track vector
 
 [xxkmvel yykmvel] = earthcoord('flat',glid_stru.LTV,glid_stru.LGV,lg_ref,lt_ref);
 
-vxn_pro = interp1d(glid_stru.TVEL,glid_stru.VX./sqrt(glid_stru.VX.^2+glid_stru.VY.^2),nanmean(glid_stru.DAYS));
-vyn_pro = interp1d(glid_stru.TVEL,glid_stru.VY./sqrt(glid_stru.VX.^2+glid_stru.VY.^2),nanmean(glid_stru.DAYS));
-
 vx_pro = interp1d(glid_stru.TVEL,glid_stru.VX,nanmean(glid_stru.DAYS));
 vy_pro = interp1d(glid_stru.TVEL,glid_stru.VY,nanmean(glid_stru.DAYS));
+
+vxn_pro = vx_pro./sqrt(vx_pro.^2+vy_pro.^2);
+vyn_pro = vy_pro./sqrt(vx_pro.^2+vy_pro.^2);
 
 %%% angle between glider track and DAC
 theta = real(acosd(dot([dir_x ; dir_y],[vxn_pro ; vyn_pro])));
@@ -105,6 +105,8 @@ vort_cor = vort./sint./sint;
 glid_pv.glider_name = glid_stru.glider_name;
 glid_pv.deployment = glid_stru.deployment;
 glid_pv.dir_flow = [vxn_pro ; vyn_pro]; % direction of DAC (normalized)
+dac_sign = sign(dot([-dir_y ; dir_x],[vxn_pro ; vyn_pro]));
+glid_pv.dir_track = [-dir_y.*dac_sign ; dir_x.*dac_sign]; % direction of cross-track trajectory (normalized)
 glid_pv.pp = bin_p;
 glid_pv.d_along = bin_d; % distance along-track
 glid_pv.CTs = CTs;glid_pv.SAs = SAs;glid_pv.SIGs = SIGs; % smoothed T,S,rho used in thermal wind
