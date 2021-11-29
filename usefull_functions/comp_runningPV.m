@@ -24,8 +24,9 @@ disp(['### compute PV for ' glid_stru.glider_name '(' glid_stru.deployment ')'])
 
 %%% get along-track distance
 lg_ref = nanmean(glid_stru.ZLG(:));lt_ref = nanmean(glid_stru.ZLT(:));
-[xxkm yykm] = earthcoord('flat',glid_stru.ZLG,glid_stru.ZLT,lg_ref,lt_ref);
-d_along = [0; nancumsum(sqrt(diff(naninterp(xxkm(:))).^2 + diff(naninterp(yykm(:))).^2))];
+[xxkm yykm] = earthcoord('flat',nanmean(glid_stru.ZLG),nanmean(glid_stru.ZLT),lg_ref,lt_ref);
+d_along = NaN_interp(interp1(nanmean(glid_stru.DAYS),[0 nancumsum(sqrt(diff(xxkm).^2 + diff(yykm).^2))],glid_stru.DAYS(:)),1);
+xxkm = NaN_interp(interp1(nanmean(glid_stru.DAYS),xxkm,glid_stru.DAYS(:)),1);yykm = NaN_interp(interp1(nanmean(glid_stru.DAYS),yykm,glid_stru.DAYS(:)),1);
 
 xx_km = reshape(xxkm,size(glid_stru.ZLG));
 yy_km = reshape(yykm,size(glid_stru.ZLG));
