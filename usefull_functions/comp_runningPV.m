@@ -107,7 +107,8 @@ glid_pv.glider_name = glid_stru.glider_name;
 glid_pv.deployment = glid_stru.deployment;
 glid_pv.dir_flow = [vxn_pro ; vyn_pro]; % direction of DAC (normalized)
 dac_sign = sign(dot([-dir_y ; dir_x],[vxn_pro ; vyn_pro]));
-glid_pv.dir_track = [-dir_y.*dac_sign ; dir_x.*dac_sign]; % direction of cross-track trajectory (normalized)
+glid_pv.dir_DACflow = [vxn_pro.*dac_sign  ; vyn_pro.*dac_sign]; % direction of cross-stream flow (normalized)
+glid_pv.dir_crosstrack = [-dir_y ; dir_x]; % direction of cross-track trajectory (normalized)
 glid_pv.pp = bin_p;
 glid_pv.d_along = bin_d; % distance along-track
 glid_pv.CTs = CTs;glid_pv.SAs = SAs;glid_pv.SIGs = SIGs; % smoothed T,S,rho used in thermal wind
