@@ -93,9 +93,8 @@ end
 v_tot = v_geo + repmat(v_ref-nanmean(v_geo),size(bin_p,1),1); % total geostrophic vel, orthogonal to DAC
 
 %%%% rel vorticity and PV
-[vort XXX] = gradient(v_tot,nanmean(bin_d)*1000,-nanmean(bin_p,2)); % old style vort2 = diff(DD_vg.*vcyclo,1,2)/1000./red_x(DD_vg)./nanmean(diff(bin_d));
+[vort dVdz] = gradient(v_tot,nanmean(bin_d)*1000,-nanmean(bin_p,2)); % old style vort2 = diff(DD_vg.*vcyclo,1,2)/1000./red_x(DD_vg)./nanmean(diff(bin_d));
 if all(isnan(nanmean(vort))); vort = zeros(size(vort)); end % if no DAC
-[XXX dVdz] = gradient(v_tot,nanmean(bin_d)*1000,-nanmean(bin_p,2));
 pv_A = (ff + vort).*N2/9.81; pv_B = - dBdx.*dVdz/9.81;
 if all(isnan(nanmean(pv_B))); pv_B = -dBdx.^2./ff/9.81; end % if no DAC
 pv = pv_A + pv_B ;
