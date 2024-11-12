@@ -57,7 +57,7 @@ vx_pro = interp1d(nanmean(glid_stru.DAYS(:,indgood)),vx_pro(indgood),nanmean(gli
 vy_pro = interp1d(nanmean(glid_stru.DAYS(:,indgood)),vy_pro(indgood),nanmean(glid_stru.DAYS));
 sintheta = interp1(indgood,sintheta(indgood),1:length(sintheta));
 
-%%%% Smoothing of rho section to compute gradients
+%%%% Gridding and smoothing of T,S,sigma sections before computing gradients
 dz = 5; % interp on vertical every dz meters before computing diags
 dx = 0; % if dx>0, grid the data on a regular grid
 if dx==0
