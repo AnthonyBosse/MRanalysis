@@ -18,6 +18,7 @@ function [glid_pv] = comp_runningPV(glid_stru,Lsmo)
 %               TVEL: [1x673 double]
 %
 % Anthony Bosse, December 2019 (anthony.bosse@mio.osupytheas.fr)
+% last update, November 2024 (allows output on regular grid setting dx param >0)
 
 warning off
 disp(['### compute PV for ' glid_stru.glider_name '(' glid_stru.deployment ')'])
@@ -31,6 +32,7 @@ xxkm = NaN_interp(interp1(nanmean(glid_stru.DAYS),xxkm,glid_stru.DAYS(:)),1);yyk
 xx_km = reshape(xxkm,size(glid_stru.ZLG));
 yy_km = reshape(yykm,size(glid_stru.ZLG));
 d_along = reshape(d_along,size(glid_stru.ZLG));
+d_along=d_along-d_along(1); % reset first profile to 0 km
 
 %%% interp dive-average currents (DAC) on profiles time
 dir_x = gradient(nanmean(xx_km),nanmean(d_along));
@@ -40,11 +42,8 @@ dir_x = dir_x./dir_norm;dir_y = dir_y./dir_norm; % normalized along-track vector
 
 [xxkmvel yykmvel] = earthcoord('flat',glid_stru.LTV,glid_stru.LGV,lg_ref,lt_ref);
 
-vx_pro = interp1d(glid_stru.TVEL,glid_stru.VX,nanmean(glid_stru.DAYS));
-vy_pro = interp1d(glid_stru.TVEL,glid_stru.VY,nanmean(glid_stru.DAYS));
-
-vxn_pro = vx_pro./sqrt(vx_pro.^2+vy_pro.^2);
-vyn_pro = vy_pro./sqrt(vx_pro.^2+vy_pro.^2);
+vx_pro = interp1d(glid_stru.TVEL,glid_stru.VX,nanmean(glid_stru.DAYS));vy_pro = interp1d(glid_stru.TVEL,glid_stru.VY,nanmean(glid_stru.DAYS));
+vxn_pro=vx_pro./sqrt(vx_pro.^2+vy_pro.^2);vyn_pro=vy_pro./sqrt(vx_pro.^2+vy_pro.^2);
 
 %%% angle between glider track and DAC
 theta = real(acosd(dot([dir_x ; dir_y],[vxn_pro ; vyn_pro])));
@@ -58,19 +57,22 @@ vx_pro = interp1d(nanmean(glid_stru.DAYS(:,indgood)),vx_pro(indgood),nanmean(gli
 vy_pro = interp1d(nanmean(glid_stru.DAYS(:,indgood)),vy_pro(indgood),nanmean(glid_stru.DAYS));
 sintheta = interp1(indgood,sintheta(indgood),1:length(sintheta));
 
-%%%% Gridding and smoothing of T,S,sigma sections before computing gradients
+%%%% Smoothing of rho section to compute gradients
 dz = 5; % interp on vertical every dz meters before computing diags
+dx = 0; % if dx>0, grid the data on a regular grid
+if dx==0
 [bin_d bin_p] = meshgrid(nanmean(d_along),(0:dz:1000)');
-
+else
+[bin_d bin_p] = meshgrid(0:dx:nanmax(d_along(:)),(0:dz:1000)');
+end
 SIGb = griddata(d_along(:,indgood),repmat((1:size(glid_stru.PP,1))',1,length(indgood)),glid_stru.SIG(:,indgood),bin_d,bin_p);
 disp(['smoothing hor/vert : gaussian ' num2str(Lsmo) 'km / 5m'])
-SIGs = mean_av_gauss2(SIGb,nanmean(d_along),Lsmo);
-BBsmo = -9.81/1028*(1000+SIGs);iqnan = isnan(BBsmo);
-Bzsmo = naninterp2(mean_av_gauss2(BBsmo',bin_p(:,1)',5)');Bzsmo(iqnan) = NaN;
-[XXX N2] = gradient(Bzsmo,nanmean(bin_d)*1000,-nanmean(bin_p,2));
-[dBdx XXX] = gradient(Bzsmo,nanmean(bin_d)*1000,-nanmean(bin_p,2));
+SIGs = mean_av_gauss2(SIGb,nanmean(bin_d),Lsmo);
+BBsmo = -9.81/1028*(1000+SIGs);iqnan = isnan(BBsmo); % hor smooth
+Bzsmo = naninterp2(mean_av_gauss2(BBsmo',bin_p(:,1)',5)');Bzsmo(iqnan) = NaN; % vert smooth
+[dBdx N2] = gradient(Bzsmo,nanmean(bin_d)*1000,-nanmean(bin_p,2));
 
-ff = gsw_f(repmat(nanmean(glid_stru.ZLT),size(bin_p,1),1));
+ff = gsw_f(repmat(nanmean(glid_stru.ZLT(:)),size(bin_p,1),1));
 N = real(sqrt(N2));
 N(size(N,1)-round(20/dz):end,:) = NaN;N(1:round(20/dz),:) = NaN;
 
@@ -78,13 +80,16 @@ N(size(N,1)-round(20/dz):end,:) = NaN;N(1:round(20/dz),:) = NaN;
 disp(['computing geostr from dyn height: smoothing gaussian ' num2str(Lsmo) 'km'])
 SAb = griddata(d_along(:,indgood),repmat((1:size(glid_stru.PP,1))',1,length(indgood)),glid_stru.SA(:,indgood),bin_d,bin_p);
 CTb = griddata(d_along(:,indgood),repmat((1:size(glid_stru.PP,1))',1,length(indgood)),glid_stru.CT(:,indgood),bin_d,bin_p);
-SAs = mean_av_gauss2(SAb,nanmean(d_along),Lsmo);CTs = mean_av_gauss2(CTb,nanmean(d_along),Lsmo);
+SAs = mean_av_gauss2(SAb,nanmean(bin_d),Lsmo);CTs = mean_av_gauss2(CTb,nanmean(bin_d),Lsmo);
 geo_strf = gsw_geo_strf_dyn_height(SAs,CTs,bin_p,0);
 [v_geo XXX] = gradient(geo_strf./ff,nanmean(bin_d)*1000,-nanmean(bin_p,2));
 
 %%%%% get ref velocity from DAC
 v_ref = dot([-dir_y ; dir_x],[vx_pro ; vy_pro]);
 v_ref = mean_av_gauss(v_ref,nanmean(d_along),Lsmo);
+if dx>0 % if dx>0, interpolate DAC on a regular grid
+v_ref = interp1d(nanmean(d_along),v_ref,nanmean(bin_d));
+end
 v_tot = v_geo + repmat(v_ref-nanmean(v_geo),size(bin_p,1),1); % total geostrophic vel, orthogonal to DAC
 
 %%%% rel vorticity and PV
@@ -96,10 +101,20 @@ if all(isnan(nanmean(pv_B))); pv_B = -dBdx.^2./ff/9.81; end % if no DAC
 pv = pv_A + pv_B ;
 
 %%%% apply geometrical correction to get along-stream (along-DAC) vel and PV
+if dx>0 % if dx>0, interpolate on regular grid
+sintheta = interp1d(nanmean(d_along),sintheta,nanmean(bin_d));
+sintheta(1) = 1; % avoid NaN in first element due to interp
+end
 sint = repmat(sintheta,size(bin_p,1),1);
 pv_A_cor = (ff + vort./sint./sint).*N2/9.81;pv_B_cor = - dBdx.*dVdz/9.81./sint./sint;
 pv_cor = pv_A_cor + pv_B_cor;
-v_tot_cor = v_geo./sint + repmat(v_ref-nanmean(v_geo./sint),size(bin_p,1),1);
+%
+v_ref_cor = sign(dot([-dir_y ; dir_x],[vx_pro ; vy_pro])).*sqrt(vx_pro.^2 + vy_pro.^2);
+v_ref_cor = mean_av_gauss(v_ref_cor,nanmean(d_along),Lsmo);
+if dx>0 % if dx>0, interpolate DAC on a regular grid
+v_ref_cor = interp1d(nanmean(d_along),v_ref_cor,nanmean(bin_d));
+end
+v_tot_cor = v_geo./sint + repmat(v_ref_cor-nanmean(v_geo./sint),size(bin_p,1),1);
 vort_cor = vort./sint./sint;
 
 % store results in structure
@@ -109,8 +124,9 @@ glid_pv.dir_flow = [vxn_pro ; vyn_pro]; % direction of DAC (normalized)
 dac_sign = sign(dot([-dir_y ; dir_x],[vxn_pro ; vyn_pro]));
 glid_pv.dir_DACflow = [vxn_pro.*dac_sign  ; vyn_pro.*dac_sign]; % direction of cross-stream flow (normalized)
 glid_pv.dir_crosstrack = [-dir_y ; dir_x]; % direction of cross-track trajectory (normalized)
-glid_pv.pp = bin_p;
-glid_pv.d_along = bin_d; % distance along-track
+glid_pv.pp = bin_p(:,1);
+glid_pv.d_along = bin_d(1,:); % distance along-track
+glid_pv.d_along_cor = nancumsum([0 diff(glid_pv.d_along).*red_x(sintheta)]);
 glid_pv.CTs = CTs;glid_pv.SAs = SAs;glid_pv.SIGs = SIGs; % smoothed T,S,rho used in thermal wind
 glid_pv.sint = sint; % geometrical correction factor (angle between DAC and track)
 glid_pv.v_tot = v_tot; glid_pv.v_tot_cor = v_tot./sint; % across-track and along-DAC geotrophic vel
@@ -144,6 +160,10 @@ r = interp1(xu(iq),y(ind(iq)),xi);
 else
 r = nan(size(xi));
 end
+
+%%%%% reduce by one the dimension of 2D array by averaging
+function B = red_x(A)
+B = (A(:,1:end-1)+A(:,2:end))/2;
 
 %%%%% convert lg,lt into km
 function [x3,y3]=earthcoord(proj,lg,lt,lgc,ltc)
