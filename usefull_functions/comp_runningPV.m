@@ -1,5 +1,9 @@
-function [glid_pv] = comp_runningPV(glid_stru,Lsmo)
-% input : glider structure with following fields and filtering length scale Lsmo (gaussian variance)
+function [glid_pv] = comp_runningPV(glid_stru,Lsmo,dx)
+% input : glid_stru = glider structure with following fields
+%         Lsmo = filtering length scale Lsmo (gaussian variance)
+%         dx = 10; % if dx>0, grid the data on a regular grid (bin average), otherwise keep original profiles
+%
+% Example of required data structure:
 %        glider_name: 'sg560'
 %         deployment: 'MR1'
 % Vertical profiles : pressure PP, time DAYS, position lon-lat ZLG-ZLT, cons. temperature CT, abs. salinity SA, pot. density SIG (from Gibbs Seawater toolbox)
@@ -57,15 +61,19 @@ vx_pro = interp1d(nanmean(glid_stru.DAYS(:,indgood)),vx_pro(indgood),nanmean(gli
 vy_pro = interp1d(nanmean(glid_stru.DAYS(:,indgood)),vy_pro(indgood),nanmean(glid_stru.DAYS));
 sintheta = interp1(indgood,sintheta(indgood),1:length(sintheta));
 
-%%%% Gridding and smoothing of T,S,sigma sections before computing gradients
+%%%% Gridding and smoothing of CT,SA sections before computing gradients
 dz = 5; % interp on vertical every dz meters before computing diags
-dx = 0; % if dx>0, grid the data on a regular grid
 if dx==0
 [bin_d bin_p] = meshgrid(nanmean(d_along),(0:dz:1000)');
-else
+SAb = griddata(d_along(:,indgood),repmat((1:size(glid_stru.PP,1))',1,length(indgood)),glid_stru.SA(:,indgood),bin_d,bin_p);
+CTb = griddata(d_along(:,indgood),repmat((1:size(glid_stru.PP,1))',1,length(indgood)),glid_stru.CT(:,indgood),bin_d,bin_p);
+SIGb = gsw_sigma0(SAb,CTb);
+else % requires bin2d package for bin-averaging
 [bin_d bin_p] = meshgrid(0:dx:nanmax(d_along(:)),(0:dz:1000)');
+CTbin = bin2d(d_along(:,indgood),repmat((1:size(glid_stru.PP,1))',1,length(indgood)),glid_stru.CT(:,indgood),bin_d,bin_p);CTb = CTbin.mean;
+SAbin = bin2d(d_along(:,indgood),repmat((1:size(glid_stru.PP,1))',1,length(indgood)),glid_stru.SA(:,indgood),bin_d,bin_p);SAb = SAbin.mean;
+SIGb = gsw_sigma0(SAb,CTb);
 end
-SIGb = griddata(d_along(:,indgood),repmat((1:size(glid_stru.PP,1))',1,length(indgood)),glid_stru.SIG(:,indgood),bin_d,bin_p);
 disp(['smoothing hor/vert : gaussian ' num2str(Lsmo) 'km / 5m'])
 SIGs = mean_av_gauss2(SIGb,nanmean(bin_d),Lsmo);
 BBsmo = -9.81/1028*(1000+SIGs);iqnan = isnan(BBsmo); % hor smooth
@@ -78,8 +86,6 @@ N(size(N,1)-round(20/dz):end,:) = NaN;N(1:round(20/dz),:) = NaN;
 
 %%%% Compute geostrophic velocities from dynamic height (from hor smoothed of T and S)
 disp(['computing geostr from dyn height: smoothing gaussian ' num2str(Lsmo) 'km'])
-SAb = griddata(d_along(:,indgood),repmat((1:size(glid_stru.PP,1))',1,length(indgood)),glid_stru.SA(:,indgood),bin_d,bin_p);
-CTb = griddata(d_along(:,indgood),repmat((1:size(glid_stru.PP,1))',1,length(indgood)),glid_stru.CT(:,indgood),bin_d,bin_p);
 SAs = mean_av_gauss2(SAb,nanmean(bin_d),Lsmo);CTs = mean_av_gauss2(CTb,nanmean(bin_d),Lsmo);
 geo_strf = gsw_geo_strf_dyn_height(SAs,CTs,bin_p,0);
 [v_geo XXX] = gradient(geo_strf./ff,nanmean(bin_d)*1000,-nanmean(bin_p,2));
@@ -93,8 +99,9 @@ end
 v_tot = v_geo + repmat(v_ref-nanmean(v_geo),size(bin_p,1),1); % total geostrophic vel, orthogonal to DAC
 
 %%%% rel vorticity and PV
-[vort dVdz] = gradient(v_tot,nanmean(bin_d)*1000,-nanmean(bin_p,2)); % old style vort2 = diff(DD_vg.*vcyclo,1,2)/1000./red_x(DD_vg)./nanmean(diff(bin_d));
+[vort XXX] = gradient(v_tot,nanmean(bin_d)*1000,-nanmean(bin_p,2)); % old style vort2 = diff(DD_vg.*vcyclo,1,2)/1000./red_x(DD_vg)./nanmean(diff(bin_d));
 if all(isnan(nanmean(vort))); vort = zeros(size(vort)); end % if no DAC
+[XXX dVdz] = gradient(v_tot,nanmean(bin_d)*1000,-nanmean(bin_p,2));
 pv_A = (ff + vort).*N2/9.81; pv_B = - dBdx.*dVdz/9.81;
 if all(isnan(nanmean(pv_B))); pv_B = -dBdx.^2./ff/9.81; end % if no DAC
 pv = pv_A + pv_B ;
